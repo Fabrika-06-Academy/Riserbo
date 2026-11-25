@@ -3,6 +3,7 @@
     segnaposto pseudonimizza email.txt --tabella pratica-123.json [--anagrafica clienti.csv] > email-pulita.txt
     segnaposto ripristina risposta.txt --tabella pratica-123.json > risposta-vera.txt
     segnaposto valuta set-di-prova.jsonl
+    segnaposto servi --porta 8765
 """
 
 from __future__ import annotations
@@ -38,6 +39,12 @@ def main(argv: list[str] | None = None) -> int:
     v.add_argument("file")
     v.add_argument("--anagrafica")
 
+    s = sub.add_parser("servi", help="servizio HTTP locale (POST /pseudonimizza)")
+    s.add_argument("--host", default="127.0.0.1", help="predefinito 127.0.0.1: non esporlo su internet")
+    s.add_argument("--porta", type=int, default=8765)
+    s.add_argument("--anagrafica")
+    s.add_argument("--max-caratteri", type=int, default=20000)
+
     a = ap.parse_args(argv)
     from .motore import Segnaposto, ripristina
     from .riconoscitori import carica_anagrafica
@@ -54,6 +61,11 @@ def main(argv: list[str] | None = None) -> int:
 
     extra = [carica_anagrafica(a.anagrafica, getattr(a, "colonna", None))] if a.anagrafica else []
     sp = Segnaposto(riconoscitori=extra)
+
+    if a.comando == "servi":
+        from .servizio import servi
+        servi(a.host, a.porta, sp, a.max_caratteri)
+        return 0
 
     if a.comando == "valuta":
         from .valutazione import valuta

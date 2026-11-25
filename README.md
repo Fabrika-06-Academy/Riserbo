@@ -83,6 +83,18 @@ def controllo(testo: str) -> list[str]:
 sp = Segnaposto(controllo_finale=controllo)
 ```
 
+## Come servizio locale
+
+Per usarlo da un'automazione (n8n, Make in locale), da un gestionale o da un sito:
+
+```bash
+segnaposto servi --porta 8765          # ascolta solo su 127.0.0.1
+curl -X POST localhost:8765/pseudonimizza -d '{"testo": "Scrive Mario Rossi della Bianchi Srl"}'
+```
+
+Risponde con il testo pseudonimizzato, i dati trovati e la tabella dei segnaposto, che resta al chiamante. Non salva e non
+registra i testi. Un esempio di servizio systemd è in `deploy/segnaposto.service`. Non esporlo direttamente su internet.
+
 ## Misurare prima di fidarsi
 
 Nessuno strumento trova tutto. Prima di usarlo su un processo vero:

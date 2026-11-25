@@ -12,17 +12,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-14
+          - os: macos-latest
             nome: segnaposto-mac-apple-silicon.zip
           - os: windows-latest
             nome: segnaposto-windows.zip
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - run: pip install -e ".[test]" pyinstaller
+      - run: pip install -e ".[test]" pyinstaller pytest-github-actions-annotate-failures
       - run: pip install https://github.com/explosion/spacy-models/releases/download/it_core_news_sm-3.8.0/it_core_news_sm-3.8.0-py3-none-any.whl
       - run: pytest -q
       - run: pyinstaller --noconfirm --clean segnaposto.spec

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pytest
@@ -54,7 +55,8 @@ def test_tabella_salvata_con_permessi_stretti(tmp_path):
     t.segnaposto("PERSONA", "Paola")
     p = tmp_path / "x.tabella.json"
     t.salva(p)
-    assert oct(p.stat().st_mode)[-3:] == "600"
+    if os.name != "nt":  # su Windows i permessi Unix non esistono
+        assert oct(p.stat().st_mode)[-3:] == "600"
     assert Tabella.carica(p).valori == {"[PERSONA_1]": "Paola"}
 
 

@@ -27,7 +27,7 @@ test = ["pytest>=8"]
 segnaposto = "segnaposto.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/Fabrika-06/segnaposto"
+Homepage = "https://github.com/Fabrika-06-Academy/segnaposto"
 Lezione = "https://academy.fabrika06.com/corso/dati-protetti-dati-dal-web/"
 
 [tool.hatch.build.targets.wheel]

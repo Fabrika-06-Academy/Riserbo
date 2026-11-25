@@ -30,7 +30,24 @@ artificiale per le aziende. Il metodo è spiegato nel corso
 
 Lo stesso valore riceve sempre lo stesso segnaposto nella stessa pratica, così il modello capisce che si parla della stessa persona.
 
-## Installazione
+## Scarica l'app (Mac e Windows)
+
+Per usarlo ogni giorno con ChatGPT, Claude o Copilot, senza installare niente: scarica l'app dalla pagina
+[Releases](https://github.com/Fabrika-06/segnaposto/releases), decomprimi e apri. Si apre nel browser, gira solo sul tuo computer.
+
+1. Incolli il testo e premi **Pseudonimizza**: copi il risultato nella chat.
+2. Incolli la risposta della chat e premi **Rimetti i valori veri**: l'app sostituisce i segnaposto e ti avvisa se la chat
+   ne ha persi o inventati.
+3. **Nuova pratica** cancella la tabella; chiudendo l'app si cancella comunque.
+
+**Primo avvio su Mac.** L'app non è firmata con un certificato Apple a pagamento, quindi la prima volta macOS la blocca
+(«non è possibile verificare lo sviluppatore»). Aprila una volta con doppio clic, poi vai in *Impostazioni di Sistema →
+Privacy e sicurezza* e premi **Apri comunque**. In alternativa, da Terminale: `xattr -dr com.apple.quarantine segnaposto.app`.
+Il codice è tutto qui: se preferisci, puoi installarlo con Python come descritto sotto.
+
+**Primo avvio su Windows.** SmartScreen può mostrare «Windows ha protetto il PC»: *Ulteriori informazioni → Esegui comunque*.
+
+## Installazione con Python
 
 ```bash
 python -m venv .venv && . .venv/bin/activate
@@ -81,6 +98,12 @@ def controllo(testo: str) -> list[str]:
     return [...]
 
 sp = Segnaposto(controllo_finale=controllo)
+```
+
+## L'app dal terminale
+
+```bash
+segnaposto app            # apre l'interfaccia nel browser, su 127.0.0.1 con una chiave casuale
 ```
 
 ## Come servizio locale

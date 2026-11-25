@@ -21,7 +21,7 @@ from presidio_analyzer.predefined_recognizers import (
     PhoneRecognizer,
 )
 
-from .riconoscitori import IbanItRecognizer, TargaItRecognizer, TitoloPersonaRecognizer
+from .riconoscitori import FormaGiuridicaRecognizer, IbanItRecognizer, TargaItRecognizer, TitoloPersonaRecognizer
 from .tabella import Tabella
 
 # Nome dell'entità Presidio -> nome del segnaposto (in italiano, leggibile da chi rilegge).
@@ -32,7 +32,7 @@ NOMI = {
 }
 # Precedenza quando due riconoscitori trovano lo stesso pezzo: vince il più specifico.
 PRIORITA = {"IT_FISCAL_CODE": 9, "IT_VAT_CODE": 9, "IBAN": 9, "EMAIL_ADDRESS": 8, "PHONE_NUMBER": 7, "TARGA": 6,
-            "CLIENTE": 8, "FORNITORE": 8, "DIPENDENTE": 8, "PERSON": 3, "ORGANIZATION": 3, "LOCATION": 2}
+            "CLIENTE": 8, "FORNITORE": 8, "DIPENDENTE": 8, "PERSON": 3, "ORGANIZATION": 4, "LOCATION": 2}
 SEGNAPOSTO = re.compile(r"\[[A-Z_]+_\d+\]")
 # Parole che il modello piccolo scambia per nomi o luoghi, soprattutto a inizio frase nelle email.
 PAROLE_COMUNI = {
@@ -87,7 +87,7 @@ class Segnaposto:
             if r.name not in ("SpacyRecognizer",):
                 reg.remove_recognizer(r.name)
         for r in (ItFiscalCodeRecognizer(), ItVatCodeRecognizer(), EmailRecognizer(supported_language="it"),
-                  PhoneRecognizer(supported_language="it", supported_regions=("IT",)), IbanItRecognizer(), TargaItRecognizer(), TitoloPersonaRecognizer(),
+                  PhoneRecognizer(supported_language="it", supported_regions=("IT",)), IbanItRecognizer(), TargaItRecognizer(), TitoloPersonaRecognizer(), FormaGiuridicaRecognizer(),
                   *riconoscitori):
             reg.add_recognizer(r)
         self.analyzer = AnalyzerEngine(registry=reg, nlp_engine=nlp, supported_languages=["it"])

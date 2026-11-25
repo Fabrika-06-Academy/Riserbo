@@ -7,3 +7,5 @@ build/
 # Le tabelle dei segnaposto contengono i dati veri: non vanno mai nel repository.
 *.tabella.json
 tabelle/
+packaging/build/
+packaging/dist/

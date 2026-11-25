@@ -94,3 +94,18 @@ class TitoloPersonaRecognizer(EntityRecognizer):
 
     def analyze(self, text, entities, nlp_artifacts=None):
         return [RecognizerResult("PERSON", m.start(1), m.end(1), 0.9) for m in self._re.finditer(text)]
+
+
+class FormaGiuridicaRecognizer(PatternRecognizer):
+    """Ragioni sociali con forma giuridica (Bianchi Srl, F.lli Rossi S.p.A., Coop. Agricola Sas): segnale fortissimo."""
+
+    FORMA = r"(?:S\.?r\.?l\.?s?|S\.?p\.?A\.?|S\.?n\.?c\.?|S\.?a\.?s\.?|S\.?s\.?|Soc\.?\s?[Cc]oop\.?(?:\s?a\s?r\.?l\.?)?|[Ss]\.?c\.?a\.?r\.?l\.?)(?![\w])"
+    NOME = r"(?:(?:F\.lli|Fratelli|Officine|Officina|Industrie|Costruzioni)\s)?[A-ZÀ-Ý0-9][\w&'’.-]*(?:\s(?:&\s)?[A-ZÀ-Ý0-9][\w&'’.-]*){0,3}"
+
+    def __init__(self) -> None:
+        super().__init__(
+            supported_entity="ORGANIZATION",
+            supported_language="it",
+            patterns=[Pattern("forma_giuridica", r"\b" + self.NOME + r"\s" + self.FORMA, 0.75)],
+            global_regex_flags=re.DOTALL | re.MULTILINE,  # niente IGNORECASE: le maiuscole distinguono i nomi
+        )

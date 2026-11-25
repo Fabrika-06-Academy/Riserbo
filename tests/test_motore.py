@@ -62,3 +62,10 @@ def test_titoli_e_saluti(sp):
     r = sp.pseudonimizza("Buongiorno, gentile Sig.ra Pellizzari, l'Ing. Marco Dal Santo la richiamerà.")
     assert r.testo.startswith("Buongiorno")
     assert "Pellizzari" not in r.testo and "Dal Santo" not in r.testo
+
+
+def test_forma_giuridica():
+    sp = Segnaposto()
+    r = sp.pseudonimizza("La Sig.ra Pellizzari di Bianchi Srl e i F.lli Dal Molin S.p.A. hanno scritto.")
+    for v in ("Bianchi Srl", "Dal Molin S.p.A.", "Pellizzari"):
+        assert v not in r.testo, r.testo

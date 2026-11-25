@@ -4,6 +4,7 @@
     segnaposto ripristina risposta.txt --tabella pratica-123.json > risposta-vera.txt
     segnaposto valuta set-di-prova.jsonl
     segnaposto servi --porta 8765
+    segnaposto app
 """
 
 from __future__ import annotations
@@ -39,6 +40,10 @@ def main(argv: list[str] | None = None) -> int:
     v.add_argument("file")
     v.add_argument("--anagrafica")
 
+    sa = sub.add_parser("app", help="apre l'app locale nel browser (pseudonimizza e ripristina)")
+    sa.add_argument("--anagrafica")
+    sa.add_argument("--no-browser", action="store_true", help="non aprire il browser (stampa solo l'indirizzo)")
+
     s = sub.add_parser("servi", help="servizio HTTP locale (POST /pseudonimizza)")
     s.add_argument("--host", default="127.0.0.1", help="predefinito 127.0.0.1: non esporlo su internet")
     s.add_argument("--porta", type=int, default=8765)
@@ -61,6 +66,11 @@ def main(argv: list[str] | None = None) -> int:
 
     extra = [carica_anagrafica(a.anagrafica, getattr(a, "colonna", None))] if a.anagrafica else []
     sp = Segnaposto(riconoscitori=extra)
+
+    if a.comando == "app":
+        from .app import avvia
+        avvia(sp, apri_browser=not a.no_browser)
+        return 0
 
     if a.comando == "servi":
         from .servizio import servi

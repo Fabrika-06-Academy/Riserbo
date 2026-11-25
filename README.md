@@ -33,7 +33,7 @@ Lo stesso valore riceve sempre lo stesso segnaposto nella stessa pratica, così 
 ## Scarica l'app (Mac e Windows)
 
 Per usarlo ogni giorno con ChatGPT, Claude o Copilot, senza installare niente: scarica l'app dalla pagina
-[Releases](https://github.com/Fabrika-06-Academy/segnaposto/releases), decomprimi e apri. Si apre nel browser, gira solo sul tuo computer.
+[Releases](https://github.com/Fabrika-06-Academy/segnaposto/releases), su Mac apri il file `.dmg` e trascina segnaposto in Applicazioni, su Windows decomprimi lo zip e apri `segnaposto.exe`. Si apre nel browser, gira solo sul tuo computer.
 
 1. Incolli il testo e premi **Pseudonimizza**: copi il risultato nella chat.
 2. Incolli la risposta della chat e premi **Rimetti i valori veri**: l'app sostituisce i segnaposto e ti avvisa se la chat

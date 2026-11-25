@@ -23,4 +23,4 @@ exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="segnaposto", console=
 coll = COLLECT(exe, a.binaries, a.datas, name="segnaposto", upx=False)
 if sys.platform == "darwin":
     app = BUNDLE(coll, name="segnaposto.app", bundle_identifier="com.fabrika06.segnaposto",
-                 info_plist={"CFBundleShortVersionString": "0.2.1", "NSHighResolutionCapable": True, "LSUIElement": False})
+                 info_plist={"CFBundleShortVersionString": "0.2.2", "NSHighResolutionCapable": True, "LSUIElement": False})

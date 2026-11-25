@@ -27,17 +27,19 @@ jobs:
       - run: pytest -q
       - run: pyinstaller --noconfirm --clean segnaposto.spec
         working-directory: packaging
-      - name: Pacchetto Mac
+      - name: Pacchetto Mac (zip e dmg)
         if: runner.os == 'macOS'
-        run: ditto -c -k --keepParent packaging/dist/segnaposto.app "${{ matrix.nome }}"
+        run: |
+          ditto -c -k --keepParent packaging/dist/segnaposto.app "${{ matrix.nome }}"
+          mkdir -p dmg && cp -R packaging/dist/segnaposto.app dmg/ && ln -s /Applications dmg/Applicazioni
+          hdiutil create -volname "segnaposto" -srcfolder dmg -ov -format UDZO segnaposto-mac-apple-silicon.dmg
       - name: Pacchetto Windows
         if: runner.os == 'Windows'
         run: Compress-Archive -Path packaging/dist/segnaposto -DestinationPath "${{ matrix.nome }}"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.nome }}
-          path: ${{ matrix.nome }}
       - uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: ${{ matrix.nome }}
+          fail_on_unmatched_files: false
+          files: |
+            ${{ matrix.nome }}
+            segnaposto-mac-apple-silicon.dmg

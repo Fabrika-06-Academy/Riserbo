@@ -5,101 +5,218 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>segnaposto</title>
 <style>
-:root{--ink:#111013;--ink2:#1c1c21;--y:#FFC700;--y-soft:#fff4cc;--line:#e4dfd4;--paper:#faf8f4;--card:#fff;--muted:#5d5d66;--ok:#1d7a46;--warn:#a34a00;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--paper:#121215;--card:#1b1b20;--line:#2c2c33;--muted:#a8a8b3;--y-soft:#3a3214;--ink2:#0b0b0d;--ok:#5fd08f;--warn:#ffb46b;color-scheme:dark}body{color:#ececf1}}
+:root{--ink:#111013;--ink2:#1c1c21;--y:#FFC700;--y-soft:#fff4cc;--line:#e4dfd4;--paper:#f6f3ed;--card:#fff;--field:#faf8f4;--muted:#5d5d66;--ok:#1d7a46;--warn:#a34a00;--txt:#111013;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--paper:#121215;--card:#1b1b20;--field:#141418;--line:#2c2c33;--muted:#a8a8b3;--y-soft:#3a3214;--ink2:#0b0b0d;--ok:#5fd08f;--warn:#ffb46b;--txt:#ececf1;color-scheme:dark}}
 *{box-sizing:border-box}
-body{margin:0;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--paper);color:var(--ink)}
-header{background:var(--ink);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-header b{font-size:1.15rem;letter-spacing:-.01em}header b i{font-style:normal;color:var(--y)}
-header .pratica{margin-left:auto;display:flex;gap:10px;align-items:center;font-size:.9rem;color:#c9c9d1}
-header button{background:transparent;color:#fff;border:1px solid #55555f;border-radius:8px;padding:7px 12px;cursor:pointer;font:inherit}
+html,body{height:100%}
+body{margin:0;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--paper);color:var(--txt);display:flex;flex-direction:column}
+header{background:var(--ink);color:#fff;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;-webkit-user-select:none;user-select:none}
+.marchio{display:flex;align-items:center;gap:10px}
+.marchio svg{flex:none}
+.marchio b{font-size:1.15rem;letter-spacing:-.01em}.marchio b i{font-style:normal;color:var(--y)}
+.marchio small{color:#8d8d98;font-size:.78rem;margin-left:2px}
+.pillola{display:inline-flex;align-items:center;gap:7px;font-size:.82rem;border:1px solid #3a3a42;border-radius:99px;padding:4px 11px;color:#d6d6dd}
+.pillola::before{content:"";width:8px;height:8px;border-radius:50%;background:#8d8d98}
+.pillola.pronto::before{background:#5fd08f}.pillola.carica::before{background:var(--y);animation:pulsa 1s infinite alternate}
+.pillola.errore::before{background:#ff6b6b}
+@keyframes pulsa{to{opacity:.3}}
+header .pratica{margin-left:auto;display:flex;gap:10px;align-items:center;font-size:.88rem;color:#c9c9d1}
+header button{background:transparent;color:#fff;border:1px solid #4a4a54;border-radius:8px;padding:6px 12px;cursor:pointer;font:inherit;font-size:.88rem}
 header button:hover{border-color:var(--y);color:var(--y)}
-main{max-width:1200px;margin:0 auto;padding:22px 24px 40px}
-.nota{background:var(--y-soft);border-left:4px solid var(--y);border-radius:8px;padding:10px 14px;margin:0 0 20px;font-size:.92rem}
-.passi{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.passo{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.passo h2{margin:0;font-size:1.05rem;display:flex;align-items:center;gap:10px}
-.passo h2 span{background:var(--y);color:var(--ink);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;flex:none}
-.passo p.aiuto{margin:0;color:var(--muted);font-size:.88rem}
-textarea,.uscita{width:100%;min-height:170px;border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit;font-size:.95rem;background:var(--paper);color:inherit;resize:vertical}
-.uscita{white-space:pre-wrap;word-break:break-word;min-height:120px;background:var(--ink2);color:#f1f1f1}
+main{flex:1;width:100%;max-width:1440px;margin:0 auto;padding:18px 22px 10px;display:flex;flex-direction:column;gap:16px;min-height:0}
+.passi{display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1;min-height:0}
+.passo{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0;position:relative}
+.passo h2{margin:0;font-size:1rem;display:flex;align-items:center;gap:10px}
+.passo h2 .n{background:var(--y);color:var(--ink);width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;flex:none}
+.passo h2 .dx{margin-left:auto;display:flex;gap:8px}
+.aiuto{margin:0;color:var(--muted);font-size:.85rem}
+textarea,.uscita{width:100%;border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit;font-size:.93rem;background:var(--field);color:inherit;resize:none;tab-size:24}
+textarea{flex:1;min-height:150px}
+textarea:focus{outline:2px solid var(--y);outline-offset:-1px}
+.uscita{flex:1;min-height:150px;overflow:auto;white-space:pre-wrap;word-break:break-word;background:var(--ink2);color:#f1f1f1;tab-size:24}
 .uscita:empty::before{content:attr(data-vuoto);color:#8a8a95}
-mark{background:var(--y);color:#111;border-radius:4px;padding:0 4px;font-weight:700;font-size:.9em}
-.azioni{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.btn{background:var(--y);color:#111;border:0;border-radius:9px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}
-.btn:hover{filter:brightness(.95)}.btn:disabled{opacity:.5;cursor:default}
-.sec{background:transparent;color:inherit;border:1px solid var(--line);border-radius:9px;padding:9px 14px;font:inherit;cursor:pointer}
-.stato{font-size:.88rem;color:var(--muted)}
-.esito{font-size:.9rem;border-radius:8px;padding:8px 12px}
+.uscita.tab{white-space:pre;word-break:normal}
+mark{background:var(--y);color:#111;border-radius:4px;padding:0 4px;font-weight:700;font-size:.88em;cursor:pointer}
+mark:hover{outline:2px solid #fff}
+.azioni{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{background:var(--y);color:#111;border:0;border-radius:9px;padding:9px 16px;font:inherit;font-weight:700;cursor:pointer}
+.btn:hover{filter:brightness(.95)}.btn:disabled{opacity:.45;cursor:default;filter:none}
+.sec{background:transparent;color:inherit;border:1px solid var(--line);border-radius:9px;padding:8px 13px;font:inherit;font-size:.9rem;cursor:pointer}
+.sec:hover:not(:disabled){border-color:var(--y)}.sec:disabled{opacity:.45;cursor:default}
+select{font:inherit;font-size:.88rem;border:1px solid var(--line);border-radius:8px;padding:7px 8px;background:var(--card);color:inherit}
+.stato{font-size:.85rem;color:var(--muted)}
+.kbd{font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:0 5px;margin-left:2px}
+.file{display:flex;gap:10px;align-items:flex-start;background:var(--y-soft);border-radius:10px;padding:9px 12px;font-size:.86rem}
+.file b{word-break:break-all}.file ul{margin:4px 0 0;padding-left:18px}.file .x{margin-left:auto;cursor:pointer;border:0;background:none;color:inherit;font-size:1.1rem;line-height:1}
+.conte{display:flex;gap:6px;flex-wrap:wrap}
+.conte span{font-size:.78rem;background:var(--field);border:1px solid var(--line);border-radius:99px;padding:2px 9px}
+.esito{font-size:.88rem;border-radius:8px;padding:8px 12px}
 .esito.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent)}
 .esito.warn{color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)}
-details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-top:20px}
-summary{cursor:pointer;font-weight:700}
-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.92rem}
-th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-footer{max-width:1200px;margin:0 auto;padding:0 24px 30px;color:var(--muted);font-size:.85rem}
+.rilascia{position:absolute;inset:0;border:3px dashed var(--y);border-radius:14px;background:color-mix(in srgb,var(--card) 88%,transparent);display:none;align-items:center;justify-content:center;flex-direction:column;gap:6px;font-weight:700;z-index:5;pointer-events:none}
+.passo.sopra .rilascia{display:flex}
+.rilascia small{font-weight:400;color:var(--muted)}
+.pop{position:fixed;z-index:20;background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.25);padding:10px 12px;font-size:.86rem;max-width:340px;display:flex;flex-direction:column;gap:8px}
+.pop .azioni{gap:6px}
+details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+summary{cursor:pointer;font-weight:700;font-size:.92rem}
+.scorri{max-height:260px;overflow:auto;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);position:sticky;top:0;background:var(--card)}
+td button{font-size:.78rem;padding:3px 8px}
+footer{padding:4px 22px 14px;color:var(--muted);font-size:.8rem;text-align:center}
 footer a{color:inherit}
-@media (max-width:860px){.passi{grid-template-columns:1fr}}
+.avviso-on{display:none}
+@media (max-width:900px){.passi{grid-template-columns:1fr}textarea,.uscita{min-height:200px}}
 </style>
 </head>
 <body>
 <header>
-  <b>segna<i>posto</i></b><span style="color:#b8b8c2;font-size:.9rem">pseudonimizzare prima del cloud</span>
+  <div class="marchio">
+    <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1f1f25"/><path d="M22 14h-8v36h8" fill="none" stroke="#FFC700" stroke-width="6" stroke-linejoin="round"/><path d="M42 14h8v36h-8" fill="none" stroke="#FFC700" stroke-width="6" stroke-linejoin="round"/><rect x="24" y="29" width="16" height="6" rx="3" fill="#fff"/></svg>
+    <b>segna<i>posto</i></b><small>v__VERSIONE__</small>
+  </div>
+  <span class="pillola carica" id="pill">Carico il modello italiano…</span>
   <div class="pratica"><span id="conta">Pratica nuova</span><button id="nuova" title="Cancella la tabella e ricomincia">Nuova pratica</button><button id="chiudi">Chiudi</button></div>
 </header>
 <main>
-  <p class="nota">Tutto gira su questo computer: niente viene mandato a internet. La tabella che collega i segnaposto ai valori veri resta in memoria solo per questa pratica, e si cancella con «Nuova pratica» o chiudendo l'app.</p>
   <div class="passi">
-    <section class="passo">
-      <h2><span>1</span>Il testo da proteggere</h2>
-      <p class="aiuto">Incolla un'email, un reclamo, una richiesta d'offerta.</p>
-      <textarea id="in" placeholder="Incolla qui il testo…"></textarea>
-      <div class="azioni"><button class="btn" id="vai">Pseudonimizza →</button><span class="stato" id="st1"></span></div>
-      <p class="aiuto" style="margin-top:6px"><b>Da copiare nella chat</b> (ChatGPT, Claude, Copilot…):</p>
-      <div class="uscita" id="out" data-vuoto="Qui comparirà il testo con i segnaposto."></div>
-      <div class="azioni"><button class="sec" id="copia1" disabled>Copia</button><span class="stato" id="cp1"></span></div>
+    <section class="passo" id="p1">
+      <div class="rilascia">Rilascia qui il documento<small>Word, PDF, Excel, CSV, email .eml, testo</small></div>
+      <h2><span class="n">1</span>Il testo da proteggere<span class="dx"><button class="sec" id="apri">Apri un file…</button></span></h2>
+      <input type="file" id="scegli" hidden accept=".txt,.md,.docx,.pdf,.eml,.xlsx,.xlsm,.csv,.tsv">
+      <div class="file" id="file" hidden></div>
+      <textarea id="in" placeholder="Incolla qui un'email, un reclamo, un'offerta…&#10;&#10;Oppure trascina qui un documento: Word, PDF, Excel, CSV, email salvata (.eml)."></textarea>
+      <div class="azioni"><button class="btn" id="vai" disabled>Pseudonimizza →</button><span class="kbd">⌘/Ctrl + Invio</span><span class="stato" id="st1"></span></div>
     </section>
     <section class="passo">
-      <h2><span>2</span>La risposta della chat</h2>
-      <p class="aiuto">Incolla qui la risposta che contiene i segnaposto: li sostituisco con i valori veri.</p>
-      <textarea id="risp" placeholder="Incolla qui la risposta…"></textarea>
-      <div class="azioni"><button class="btn" id="rip">Rimetti i valori veri →</button></div>
-      <div class="esito" id="esito" hidden></div>
-      <div class="uscita" id="vero" data-vuoto="Qui comparirà la risposta con i nomi veri."></div>
-      <div class="azioni"><button class="sec" id="copia2" disabled>Copia</button><span class="stato" id="cp2"></span></div>
+      <h2><span class="n">2</span>Da mandare alla chat<span class="dx"><span class="conte" id="conte"></span></span></h2>
+      <p class="aiuto">Rileggi: <b>clic su un segnaposto</b> per rimettere in chiaro un falso allarme, <b>seleziona</b> una parola per nasconderla.</p>
+      <div class="uscita" id="out" data-vuoto="Qui comparirà il testo con i segnaposto."></div>
+      <div class="azioni"><button class="btn" id="copia1" disabled>Copia</button>
+        <select id="fmt1" title="Formato del file"><option value="txt">.txt</option><option value="docx">.docx</option><option value="xlsx">.xlsx</option><option value="csv">.csv</option><option value="md">.md</option></select>
+        <button class="sec" id="salva1" disabled>Salva…</button><span class="stato" id="cp1"></span></div>
     </section>
   </div>
-  <details id="tab"><summary>La tabella di questa pratica (<span id="ntab">0</span>)</summary>
-    <table><thead><tr><th>Segnaposto</th><th>Valore vero</th></tr></thead><tbody id="righe"></tbody></table>
+  <section class="passo" style="flex:none">
+    <h2><span class="n">3</span>La risposta della chat</h2>
+    <div class="passi" style="flex:none">
+      <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+        <textarea id="risp" style="min-height:120px" placeholder="Incolla qui la risposta che contiene i segnaposto…"></textarea>
+        <div class="azioni"><button class="btn" id="rip">Rimetti i valori veri →</button></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+        <div class="esito" id="esito" hidden></div>
+        <div class="uscita" id="vero" style="min-height:120px" data-vuoto="Qui comparirà la risposta con i nomi veri."></div>
+        <div class="azioni"><button class="btn" id="copia2" disabled>Copia</button>
+          <select id="fmt2"><option value="txt">.txt</option><option value="docx">.docx</option><option value="xlsx">.xlsx</option><option value="csv">.csv</option><option value="md">.md</option></select>
+          <button class="sec" id="salva2" disabled>Salva…</button><span class="stato" id="cp2"></span></div>
+      </div>
+    </div>
+  </section>
+  <details id="tab"><summary>La tabella di questa pratica (<span id="ntab">0</span>) — resta su questo computer</summary>
+    <div class="scorri"><table><thead><tr><th>Segnaposto</th><th>Valore vero</th><th></th></tr></thead><tbody id="righe"></tbody></table></div>
   </details>
 </main>
-<footer>Nessuno strumento trova tutto: rileggi sempre il testo prima di incollarlo. ·
+<footer>Tutto gira su questo computer: niente viene mandato a internet. Nessuno strumento trova tutto: rileggi sempre prima di incollare. ·
   <a href="https://github.com/Fabrika-06-Academy/segnaposto" target="_blank" rel="noopener">segnaposto</a> è open source (MIT), di
   <a href="https://academy.fabrika06.com" target="_blank" rel="noopener">Fabrika 06 Academy</a>.</footer>
 <script>
 (function(){
 var CHIAVE="__CHIAVE__";
 function $(i){return document.getElementById(i)}
-function esc(s){return s.replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
-function evidenzia(s){return esc(s).replace(/\[[A-Z_]+_\d+\]/g,function(m){return "<mark>"+m+"</mark>"})}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function api(p,d){return fetch(p,{method:"POST",headers:{"Content-Type":"application/json","X-Chiave":CHIAVE},body:JSON.stringify(d||{})}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.errore||"errore");return j})})}
-var testoOut="",testoVero="";
-function tabella(t){var k=Object.keys(t);$("ntab").textContent=k.length;$("conta").textContent=k.length?k.length+" dati in questa pratica":"Pratica nuova";
-  $("righe").innerHTML=k.map(function(s){return "<tr><td><mark>"+esc(s)+"</mark></td><td>"+esc(t[s])+"</td></tr>"}).join("")}
-$("vai").onclick=function(){var t=$("in").value;if(!t.trim())return;this.disabled=true;$("st1").textContent="Analizzo…";var b=this;
-  api("/api/pseudonimizza",{testo:t}).then(function(d){testoOut=d.testo;$("out").innerHTML=evidenzia(d.testo);$("copia1").disabled=false;
-    $("st1").textContent=d.trovati.length+" dati sostituiti. Rileggi prima di copiare.";tabella(d.tabella)}).catch(function(e){$("st1").textContent=e.message}).finally(function(){b.disabled=false})};
-$("rip").onclick=function(){var t=$("risp").value;if(!t.trim())return;
-  api("/api/ripristina",{testo:t}).then(function(d){testoVero=d.testo;$("vero").textContent=d.testo;$("copia2").disabled=false;var e=$("esito");e.hidden=false;
+function nativo(){return window.pywebview&&window.pywebview.api}
+var S={tab:{},out:"",vero:"",doc:null,pronto:false,lavoro:false};
+var TIPI=["DATO","PERSONA","AZIENDA","CLIENTE","FORNITORE","LUOGO","INDIRIZZO","CODICE"];
+
+/* ---- avvio: la finestra è già aperta mentre il modello si carica ---- */
+function controlla(){api("/api/stato").then(function(d){var p=$("pill");
+  if(d.errore){p.className="pillola errore";p.textContent=d.errore;return}
+  if(d.pronto){p.className="pillola pronto";p.textContent="100% su questo computer · pronto";S.pronto=true;aggiornaVai();return}
+  setTimeout(controlla,600)}).catch(function(){setTimeout(controlla,1000)})}
+controlla();
+function aggiornaVai(){$("vai").disabled=!S.pronto||S.lavoro||!$("in").value.trim()}
+$("in").addEventListener("input",aggiornaVai);
+
+/* ---- pseudonimizza ---- */
+function evidenzia(s){return esc(s).replace(/\[[A-Z_]+_\d+\]/g,function(m){return '<mark data-s="'+m+'">'+m+"</mark>"})}
+function tabella(t){S.tab=t;var k=Object.keys(t);$("ntab").textContent=k.length;$("conta").textContent=k.length?k.length+" dati in questa pratica":"Pratica nuova";
+  $("righe").innerHTML=k.map(function(s){return "<tr><td><mark data-s=\""+esc(s)+"\">"+esc(s)+"</mark></td><td>"+esc(t[s])+"</td><td><button class=\"sec\" data-mostra=\""+esc(t[s])+"\">Non è un dato</button></td></tr>"}).join("")}
+function pseudonimizza(){var t=$("in").value;if(!t.trim()||!S.pronto)return Promise.resolve();S.lavoro=true;aggiornaVai();$("st1").textContent="Analizzo…";
+  return api("/api/pseudonimizza",{testo:t}).then(function(d){S.out=d.testo;var o=$("out");o.innerHTML=evidenzia(d.testo);o.classList.toggle("tab",!!(S.doc&&S.doc.tabellare));
+    $("copia1").disabled=$("salva1").disabled=false;
+    $("st1").textContent=d.trovati.length+" dati sostituiti.";
+    $("conte").innerHTML=Object.keys(d.conta).sort().map(function(k){return "<span>"+esc(k.toLowerCase().replace(/_/g," "))+" "+d.conta[k]+"</span>"}).join("");
+    tabella(d.tabella)}).catch(function(e){$("st1").textContent=e.message}).finally(function(){S.lavoro=false;aggiornaVai()})}
+$("vai").onclick=pseudonimizza;
+document.addEventListener("keydown",function(e){if((e.metaKey||e.ctrlKey)&&e.key==="Enter"){e.preventDefault();if(document.activeElement===$("risp"))ripristina();else pseudonimizza()}if(e.key==="Escape")chiudiPop()});
+
+/* ---- documenti: apri o trascina ---- */
+function formatoPredefinito(nome,tabellare){var e=(nome.split(".").pop()||"").toLowerCase();if(tabellare)return e==="csv"?"csv":"xlsx";if(e==="docx")return "docx";if(e==="md")return "md";return "txt"}
+function caricaDati(nome,b64){$("st1").textContent="Leggo "+nome+"…";
+  return api("/api/leggi",{nome:nome,dati:b64}).then(function(d){S.doc={nome:nome,tabellare:d.tabellare};$("in").value=d.testo;
+    var f=formatoPredefinito(nome,d.tabellare);$("fmt1").value=f;$("fmt2").value=f;
+    var info=[];if(d.colonne.length)info.push("Colonne nascoste per intero: "+d.colonne.map(esc).join(", "));d.avvisi.forEach(function(a){info.push(esc(a))});
+    $("file").innerHTML="<div>📄 <b>"+esc(nome)+"</b> · "+d.testo.length.toLocaleString("it")+" caratteri"+(info.length?"<ul><li>"+info.join("</li><li>")+"</li></ul>":"")+"</div><button class=\"x\" title=\"Togli il documento\">×</button>";
+    $("file").hidden=false;$("file").querySelector(".x").onclick=function(){S.doc=null;$("file").hidden=true;$("in").value="";aggiornaVai()};
+    $("st1").textContent="";aggiornaVai();if(S.pronto)return pseudonimizza()}).catch(function(e){$("st1").textContent=e.message})}
+function leggiFile(f){if(!f)return;var r=new FileReader();r.onload=function(){caricaDati(f.name,String(r.result).split(",")[1]||"")};r.readAsDataURL(f)}
+$("apri").onclick=function(){if(nativo()&&window.pywebview.api.apri){window.pywebview.api.apri().then(function(d){if(d&&d.nome)caricaDati(d.nome,d.dati)})}else $("scegli").click()};
+$("scegli").onchange=function(){leggiFile(this.files[0]);this.value=""};
+var p1=$("p1"),dentro=0;
+["dragenter","dragover"].forEach(function(ev){document.addEventListener(ev,function(e){e.preventDefault()})});
+document.addEventListener("drop",function(e){e.preventDefault()});
+p1.addEventListener("dragenter",function(e){dentro++;p1.classList.add("sopra")});
+p1.addEventListener("dragleave",function(){if(--dentro<=0){dentro=0;p1.classList.remove("sopra")}});
+p1.addEventListener("drop",function(e){e.preventDefault();dentro=0;p1.classList.remove("sopra");var f=e.dataTransfer.files[0];if(f)leggiFile(f);else{var t=e.dataTransfer.getData("text");if(t){$("in").value=t;aggiornaVai()}}});
+
+/* ---- correzioni: clic su un segnaposto, selezione di testo ---- */
+var pop=null;
+function chiudiPop(){if(pop){pop.remove();pop=null}}
+function apriPop(x,y,html){chiudiPop();pop=document.createElement("div");pop.className="pop";pop.innerHTML=html;document.body.appendChild(pop);
+  var w=pop.offsetWidth,h=pop.offsetHeight;pop.style.left=Math.max(8,Math.min(x,innerWidth-w-8))+"px";pop.style.top=(y+h+8>innerHeight?y-h-28:y+8)+"px";return pop}
+function correggi(d){chiudiPop();return api("/api/correggi",d).then(pseudonimizza).catch(function(e){$("st1").textContent=e.message})}
+document.addEventListener("click",function(e){var m=e.target.closest&&e.target.closest("mark[data-s]");var b=e.target.closest&&e.target.closest("[data-mostra]");
+  if(b){correggi({azione:"mostra",valore:b.getAttribute("data-mostra")});return}
+  if(m&&$("out").contains(m)){var s=m.getAttribute("data-s"),v=S.tab[s];if(v===undefined)return;var r=m.getBoundingClientRect();
+    var p=apriPop(r.left,r.bottom,"<div><mark>"+esc(s)+"</mark> = <b>"+esc(v)+"</b></div><div class=\"azioni\"><button class=\"btn\" id=\"pm\">Non è un dato: mostralo</button><button class=\"sec\" id=\"pa\">Lascia</button></div>");
+    p.querySelector("#pm").onclick=function(){correggi({azione:"mostra",valore:v})};p.querySelector("#pa").onclick=chiudiPop;return}
+  if(pop&&!pop.contains(e.target))chiudiPop()});
+$("out").addEventListener("mouseup",function(){setTimeout(function(){var sel=getSelection(),t=sel.toString().trim();
+  if(t.length<2||t.length>120||/\[[A-Z_]+_\d+\]/.test(t)||!sel.rangeCount)return;var r=sel.getRangeAt(0).getBoundingClientRect();
+  var p=apriPop(r.left,r.bottom,"<div>Nascondi <b>«"+esc(t)+"»</b> ovunque, come</div><div class=\"azioni\"><select id=\"pt\">"+TIPI.map(function(x){return "<option>"+x+"</option>"}).join("")+"</select><button class=\"btn\" id=\"pn\">Nascondi</button><button class=\"sec\" id=\"pa\">Annulla</button></div>");
+  p.querySelector("#pn").onclick=function(){correggi({azione:"nascondi",valore:t,tipo:p.querySelector("#pt").value})};p.querySelector("#pa").onclick=chiudiPop},0)});
+
+/* ---- ritorno ---- */
+function ripristina(){var t=$("risp").value;if(!t.trim())return;
+  api("/api/ripristina",{testo:t}).then(function(d){S.vero=d.testo;$("vero").textContent=d.testo;$("vero").classList.toggle("tab",!!(S.doc&&S.doc.tabellare));$("copia2").disabled=$("salva2").disabled=false;var e=$("esito");e.hidden=false;
     var w=[];if(d.inventati.length)w.push("La chat ha usato segnaposto che non esistono: "+d.inventati.join(", ")+". Controlla quei punti.");
     if(d.mancanti.length)w.push("Nella risposta mancano: "+d.mancanti.join(", ")+". Può essere normale, ma verifica che non manchi un pezzo.");
-    e.className="esito "+(w.length?"warn":"ok");e.textContent=w.length?w.join(" "):"Tutti i segnaposto sono stati rimessi.";}).catch(function(e){alert(e.message)})};
-function copia(t,el){navigator.clipboard.writeText(t).then(function(){el.textContent="Copiato.";setTimeout(function(){el.textContent=""},2000)})}
-$("copia1").onclick=function(){copia(testoOut,$("cp1"))};$("copia2").onclick=function(){copia(testoVero,$("cp2"))};
-$("nuova").onclick=function(){api("/api/nuova").then(function(){["in","risp"].forEach(function(i){$(i).value=""});["out","vero"].forEach(function(i){$(i).innerHTML=""});
-  $("esito").hidden=true;$("copia1").disabled=$("copia2").disabled=true;testoOut=testoVero="";tabella({})})};
-$("chiudi").onclick=function(){api("/api/chiudi").finally(function(){document.body.innerHTML="<main><h2>segnaposto è chiuso.</h2><p>La tabella della pratica è stata cancellata. Puoi chiudere questa scheda.</p></main>"})};
+    e.className="esito "+(w.length?"warn":"ok");e.textContent=w.length?w.join(" "):"Tutti i segnaposto sono stati rimessi.";}).catch(function(e){var x=$("esito");x.hidden=false;x.className="esito warn";x.textContent=e.message})}
+$("rip").onclick=ripristina;
+
+/* ---- copia e salva ---- */
+function copiaVecchia(t){var a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();var ok=false;try{ok=document.execCommand("copy")}catch(e){}a.remove();return ok}
+function copia(t,el){function fatto(){el.textContent="Copiato.";setTimeout(function(){el.textContent=""},2000)}
+  function ripiego(){if(copiaVecchia(t))fatto();else el.textContent="Copia non riuscita: seleziona il testo e usa ⌘C / Ctrl+C."}
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(fatto,ripiego);else ripiego()}
+$("copia1").onclick=function(){copia(S.out,$("cp1"))};$("copia2").onclick=function(){copia(S.vero,$("cp2"))};
+function salva(testo,formato,suffisso,el){var nome=S.doc?S.doc.nome:"testo";
+  api("/api/esporta",{testo:testo,formato:formato,nome:nome,suffisso:suffisso}).then(function(d){
+    if(nativo()&&window.pywebview.api.salva){return window.pywebview.api.salva(d.nome,d.dati).then(function(p){el.textContent=p?"Salvato.":""})}
+    var bin=atob(d.dati),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+    var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([u]));a.download=d.nome;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1000);el.textContent="Scaricato."
+  }).catch(function(e){el.textContent=e.message})}
+$("salva1").onclick=function(){salva(S.out,$("fmt1").value,"pseudonimizzato",$("cp1"))};
+$("salva2").onclick=function(){salva(S.vero,$("fmt2").value,"risposta",$("cp2"))};
+
+/* ---- pratica ---- */
+$("nuova").onclick=function(){api("/api/nuova").then(function(){["in","risp"].forEach(function(i){$(i).value=""});["out","vero","conte"].forEach(function(i){$(i).innerHTML=""});
+  S.doc=null;$("file").hidden=true;$("esito").hidden=true;$("copia1").disabled=$("copia2").disabled=$("salva1").disabled=$("salva2").disabled=true;S.out=S.vero="";$("st1").textContent="";tabella({});aggiornaVai()})};
+$("chiudi").onclick=function(){api("/api/chiudi").finally(function(){document.body.innerHTML="<main><h2>segnaposto è chiuso.</h2><p>La tabella della pratica è stata cancellata. Puoi chiudere questa finestra.</p></main>"})};
 })();
 </script>
 </body>

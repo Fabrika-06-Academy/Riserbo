@@ -22,11 +22,17 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - run: pip install -e ".[test]" pyinstaller pytest-github-actions-annotate-failures
+      - run: pip install -e ".[test,app]" pyinstaller pillow pytest-github-actions-annotate-failures
       - run: pip install https://github.com/explosion/spacy-models/releases/download/it_core_news_sm-3.8.0/it_core_news_sm-3.8.0-py3-none-any.whl
       - run: pytest -q
       - run: pyinstaller --noconfirm --clean segnaposto.spec
         working-directory: packaging
+      - name: Prova del pacchetto (modello, documenti, finestra)
+        shell: bash
+        env:
+          SEGNAPOSTO_PROVA: "1"
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then packaging/dist/segnaposto.app/Contents/MacOS/segnaposto; else packaging/dist/segnaposto/segnaposto.exe; fi
       - name: Pacchetto Mac (zip e dmg)
         if: runner.os == 'macOS'
         run: |

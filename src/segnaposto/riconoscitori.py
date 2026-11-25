@@ -109,3 +109,24 @@ class FormaGiuridicaRecognizer(PatternRecognizer):
             patterns=[Pattern("forma_giuridica", r"\b" + self.NOME + r"\s" + self.FORMA, 0.75)],
             global_regex_flags=re.DOTALL | re.MULTILINE,  # niente IGNORECASE: le maiuscole distinguono i nomi
         )
+
+
+class IndirizzoRecognizer(PatternRecognizer):
+    """Indirizzi italiani: «Via G. Garibaldi 12», «p.zza dei Mille, 3/b», «Corso XX Settembre 45, 36100 Vicenza (VI)».
+
+    Serve il numero civico: senza, «via Roma» è troppo spesso un modo di dire o un luogo generico.
+    """
+
+    TIPO = r"(?i:via|viale|v\.le|piazza|p\.zza|piazzale|corso|c\.so|largo|vicolo|strada|contrada|c\.da|localit[àa]|loc\.|borgo|riviera|lungomare|galleria|traversa)"
+    PAROLA = r"(?:[A-ZÀ-Ý0-9][\w'’.]*|(?:di|del|dello|della|dei|degli|delle|d'|de|da|e|san|santa|s\.)(?=\s?[A-ZÀ-Ý]))"
+    CIVICO = r"\d{1,4}\s?(?:[a-zA-Z]\b|/\s?[a-zA-Z0-9]{1,3}|bis\b)?"
+    CITTA = r"(?:\s*[,-]?\s*\d{5}\s+[A-ZÀ-Ý][\w'’]*(?:\s+(?:[A-ZÀ-Ý][\w'’]*|di|del|sul|in))*(?:\s*\(\s?[A-Z]{2}\s?\))?)?"
+
+    def __init__(self) -> None:
+        regex = r"\b" + self.TIPO + r"\s+" + self.PAROLA + r"(?:\s+" + self.PAROLA + r"){0,5}?\s*,?\s*(?:n\.?\s?)?" + self.CIVICO + self.CITTA
+        super().__init__(
+            supported_entity="INDIRIZZO",
+            supported_language="it",
+            patterns=[Pattern("indirizzo", regex, 0.6)],
+            global_regex_flags=re.MULTILINE,
+        )

@@ -28,10 +28,21 @@ class Tabella:
         k = self._chiave(valore)
         if k in self._inversa:
             return self._inversa[k]
-        n = 1 + sum(1 for s in self.valori if s.startswith(f"[{tipo}_"))
+        # Il numero successivo al più alto usato: un segnaposto tolto non viene mai riassegnato a un altro valore.
+        usati = [int(s[len(tipo) + 2:-1]) for s in self.valori if s.startswith(f"[{tipo}_") and s[len(tipo) + 2:-1].isdigit()]
+        self._ultimo = getattr(self, "_ultimo", {})
+        n = max([*usati, self._ultimo.get(tipo, 0)]) + 1
+        self._ultimo[tipo] = n
         s = f"[{tipo}_{n}]"
         self.valori[s] = valore
         self._inversa[k] = s
+        return s
+
+    def rimuovi(self, valore: str) -> str | None:
+        """Toglie un valore (era un falso allarme). Restituisce il segnaposto che aveva, se c'era."""
+        s = self._inversa.pop(self._chiave(valore), None)
+        if s:
+            self.valori.pop(s, None)
         return s
 
     def scaduta(self) -> bool:

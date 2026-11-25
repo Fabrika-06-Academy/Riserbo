@@ -40,9 +40,10 @@ def main(argv: list[str] | None = None) -> int:
     v.add_argument("file")
     v.add_argument("--anagrafica")
 
-    sa = sub.add_parser("app", help="apre l'app locale nel browser (pseudonimizza e ripristina)")
+    sa = sub.add_parser("app", help="apre l'app locale (finestra, o browser): documenti, pseudonimizza e ripristina")
     sa.add_argument("--anagrafica")
-    sa.add_argument("--no-browser", action="store_true", help="non aprire il browser (stampa solo l'indirizzo)")
+    sa.add_argument("--no-browser", action="store_true", help="non aprire nulla (stampa solo l'indirizzo)")
+    sa.add_argument("--browser", action="store_true", help="usa il browser anche se la finestra nativa è disponibile")
 
     s = sub.add_parser("servi", help="servizio HTTP locale (POST /pseudonimizza)")
     s.add_argument("--host", default="127.0.0.1", help="predefinito 127.0.0.1: non esporlo su internet")
@@ -65,12 +66,15 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     extra = [carica_anagrafica(a.anagrafica, getattr(a, "colonna", None))] if a.anagrafica else []
-    sp = Segnaposto(riconoscitori=extra)
 
     if a.comando == "app":
         from .app import avvia
-        avvia(sp, apri_browser=not a.no_browser)
+        # Senza anagrafica il modello si carica in background, con la finestra già aperta.
+        avvia(Segnaposto(riconoscitori=extra) if extra else None, apri_browser=not a.no_browser,
+              finestra=False if a.browser else None)
         return 0
+
+    sp = Segnaposto(riconoscitori=extra)
 
     if a.comando == "servi":
         from .servizio import servi

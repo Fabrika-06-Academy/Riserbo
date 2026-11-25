@@ -21,18 +21,19 @@ from presidio_analyzer.predefined_recognizers import (
     PhoneRecognizer,
 )
 
-from .riconoscitori import FormaGiuridicaRecognizer, IbanItRecognizer, TargaItRecognizer, TitoloPersonaRecognizer
+from .riconoscitori import (FormaGiuridicaRecognizer, IbanItRecognizer, IndirizzoRecognizer, TargaItRecognizer,
+                            TitoloPersonaRecognizer)
 from .tabella import Tabella
 
 # Nome dell'entità Presidio -> nome del segnaposto (in italiano, leggibile da chi rilegge).
 NOMI = {
     "PERSON": "PERSONA", "ORGANIZATION": "AZIENDA", "LOCATION": "LUOGO",
     "IT_FISCAL_CODE": "CODICE_FISCALE", "IT_VAT_CODE": "PARTITA_IVA", "IBAN": "IBAN",
-    "EMAIL_ADDRESS": "EMAIL", "PHONE_NUMBER": "TELEFONO", "TARGA": "TARGA",
+    "EMAIL_ADDRESS": "EMAIL", "PHONE_NUMBER": "TELEFONO", "TARGA": "TARGA", "INDIRIZZO": "INDIRIZZO",
 }
 # Precedenza quando due riconoscitori trovano lo stesso pezzo: vince il più specifico.
 PRIORITA = {"IT_FISCAL_CODE": 9, "IT_VAT_CODE": 9, "IBAN": 9, "EMAIL_ADDRESS": 8, "PHONE_NUMBER": 7, "TARGA": 6,
-            "CLIENTE": 8, "FORNITORE": 8, "DIPENDENTE": 8, "PERSON": 3, "ORGANIZATION": 4, "LOCATION": 2}
+            "CLIENTE": 8, "FORNITORE": 8, "DIPENDENTE": 8, "INDIRIZZO": 7, "PERSON": 3, "ORGANIZATION": 4, "LOCATION": 2}
 SEGNAPOSTO = re.compile(r"\[[A-Z_]+_\d+\]")
 # Parole che il modello piccolo scambia per nomi o luoghi, soprattutto a inizio frase nelle email.
 PAROLE_COMUNI = {
@@ -88,6 +89,7 @@ class Segnaposto:
                 reg.remove_recognizer(r.name)
         for r in (ItFiscalCodeRecognizer(), ItVatCodeRecognizer(), EmailRecognizer(supported_language="it"),
                   PhoneRecognizer(supported_language="it", supported_regions=("IT",)), IbanItRecognizer(), TargaItRecognizer(), TitoloPersonaRecognizer(), FormaGiuridicaRecognizer(),
+                  IndirizzoRecognizer(),
                   *riconoscitori):
             reg.add_recognizer(r)
         self.analyzer = AnalyzerEngine(registry=reg, nlp_engine=nlp, supported_languages=["it"])
@@ -95,24 +97,51 @@ class Segnaposto:
         self.entita_ner = set(entita_ner)
         self.controllo_finale = controllo_finale
 
-    def trova(self, testo: str) -> list[dict]:
-        grezzi = self.analyzer.analyze(text=testo, language="it", score_threshold=self.soglia)
+    def trova(self, testo: str, forzati: dict[str, str] | None = None, ignora: Iterable[str] = ()) -> list[dict]:
+        """Trova i dati da sostituire.
+
+        `forzati`: valore -> tipo, da sostituire sempre (colonne «Nome» di un Excel, correzioni a mano, anagrafica).
+        `ignora`: valori che chi rilegge ha indicato come non personali (falsi allarmi).
+        """
         ner = ("PERSON", "ORGANIZATION", "LOCATION")
-        grezzi = [g for g in grezzi if g.entity_type not in ner
-                  or (g.entity_type in self.entita_ner and testo[g.start:g.end].strip(" ,.:;").casefold() not in PAROLE_COMUNI)]
+        no = {_chiave(v) for v in ignora}
+        candidati = []  # (tipo, inizio, fine, punteggio, priorità)
+        for g in self.analyzer.analyze(text=testo, language="it", score_threshold=self.soglia):
+            if g.entity_type in ner:
+                if g.entity_type not in self.entita_ner:
+                    continue
+                # Un nome non attraversa una cella o una riga: si spezza sui tab e sugli a capo.
+                pezzi = [(g.start + m.start(), g.start + m.end()) for m in re.finditer(r"[^\t\n]+", testo[g.start:g.end])]
+            else:
+                pezzi = [(g.start, g.end)]
+            for a, b in pezzi:
+                while a < b and testo[a] in " ,.:;": a += 1
+                while b > a and testo[b - 1] in " ,:;": b -= 1
+                if b - a < 2 or (g.entity_type in ner and testo[a:b].casefold().rstrip(".") in PAROLE_COMUNI):
+                    continue
+                candidati.append((g.entity_type, a, b, g.score, PRIORITA.get(g.entity_type, 5)))
+        for valore, tipo in (forzati or {}).items():
+            v = valore.strip()
+            if len(v) < 2:
+                continue
+            for m in re.finditer(r"(?<![\w])" + re.escape(v) + r"(?![\w])", testo, flags=re.IGNORECASE):
+                candidati.append((tipo, m.start(), m.end(), 1.0, 10))
+        candidati = [c for c in candidati if _chiave(testo[c[1]:c[2]]) not in no]
         # Sovrapposizioni: si ordina per priorità, poi per lunghezza, e si tiene il primo che non tocca gli altri.
-        grezzi.sort(key=lambda g: (-PRIORITA.get(g.entity_type, 5), -(g.end - g.start), -g.score))
+        candidati.sort(key=lambda c: (-c[4], -(c[2] - c[1]), -c[3]))
         scelti: list = []
-        for g in grezzi:
-            if all(g.end <= s.start or g.start >= s.end for s in scelti):
-                scelti.append(g)
-        scelti.sort(key=lambda g: g.start)
-        trovati = [{"tipo": NOMI.get(g.entity_type, g.entity_type), "valore": testo[g.start:g.end],
-                    "inizio": g.start, "fine": g.end, "punteggio": round(g.score, 2)} for g in scelti]
+        for c in candidati:
+            if all(c[2] <= s[1] or c[1] >= s[2] for s in scelti):
+                scelti.append(c)
+        scelti.sort(key=lambda c: c[1])
+        trovati = [{"tipo": NOMI.get(c[0], c[0]), "valore": testo[c[1]:c[2]],
+                    "inizio": c[1], "fine": c[2], "punteggio": round(c[3], 2)} for c in scelti]
         # Strato 3: il modello in casa segnala cosa è sfuggito (stringhe esatte presenti nel testo).
         if self.controllo_finale:
             occupati = [(t["inizio"], t["fine"]) for t in trovati]
             for valore in self.controllo_finale(testo):
+                if _chiave(valore) in no:
+                    continue
                 for m in re.finditer(re.escape(valore), testo):
                     if all(m.end() <= a or m.start() >= b for a, b in occupati):
                         trovati.append({"tipo": "DATO", "valore": valore, "inizio": m.start(), "fine": m.end(), "punteggio": 0.5})
@@ -120,9 +149,10 @@ class Segnaposto:
             trovati.sort(key=lambda t: t["inizio"])
         return trovati
 
-    def pseudonimizza(self, testo: str, tabella: Tabella | None = None) -> Risultato:
+    def pseudonimizza(self, testo: str, tabella: Tabella | None = None, forzati: dict[str, str] | None = None,
+                      ignora: Iterable[str] = ()) -> Risultato:
         tabella = tabella or Tabella()
-        trovati = self.trova(testo)
+        trovati = self.trova(testo, forzati, ignora)
         parti, pos = [], 0
         for t in trovati:
             parti.append(testo[pos:t["inizio"]])
@@ -130,6 +160,10 @@ class Segnaposto:
             pos = t["fine"]
         parti.append(testo[pos:])
         return Risultato("".join(parti), tabella, trovati)
+
+
+def _chiave(valore: str) -> str:
+    return " ".join(valore.split()).casefold()
 
 
 def ripristina(testo: str, tabella: Tabella, attesi: Iterable[str] | None = None) -> Ripristino:

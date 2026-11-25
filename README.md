@@ -23,8 +23,9 @@ artificiale per le aziende. Il metodo è spiegato nel corso
 
 | Strato | Cosa trova | Come |
 |---|---|---|
-| 1. Regole | codice fiscale (anche con omocodia), partita IVA, IBAN, email, telefoni, targhe | forma fissa e **controllo delle cifre di verifica**, così un numero a caso non viene scambiato per un IBAN |
+| 1. Regole | codice fiscale (anche con omocodia), partita IVA, IBAN, email, telefoni, targhe, indirizzi con civico | forma fissa e **controllo delle cifre di verifica**, così un numero a caso non viene scambiato per un IBAN |
 | 1. Anagrafica e codici tuoi | i nomi dei tuoi clienti e fornitori, i codici di commesse e ordini | un CSV esportato dal gestionale, espressioni regolari tue |
+| 1. Colonne riconosciute | in Excel e CSV, intere colonne «Nome», «Ragione sociale», «Email», «Codice fiscale», «Indirizzo»… | l'intestazione dice cosa c'è sotto: il valore viene nascosto anche dove compare nel resto del documento |
 | 2. Riconoscitore di entità | persone, aziende, luoghi | modello spaCy italiano tramite [Presidio](https://github.com/data-privacy-stack/presidio) |
 | 3. Controllo finale (facoltativo) | quello che è sfuggito: «il figlio del titolare», un soprannome | una funzione tua, per esempio un modello piccolo in casa |
 
@@ -32,13 +33,19 @@ Lo stesso valore riceve sempre lo stesso segnaposto nella stessa pratica, così 
 
 ## Scarica l'app (Mac e Windows)
 
-Per usarlo ogni giorno con ChatGPT, Claude o Copilot, senza installare niente: scarica l'app dalla pagina
-[Releases](https://github.com/Fabrika-06-Academy/segnaposto/releases), su Mac apri il file `.dmg` e trascina segnaposto in Applicazioni, su Windows decomprimi lo zip e apri `segnaposto.exe`. Si apre nel browser, gira solo sul tuo computer.
+Per usarlo ogni giorno con ChatGPT, Claude o Copilot, senza installare Python: scarica l'app dalla pagina
+[Releases](https://github.com/Fabrika-06-Academy/segnaposto/releases). Su Mac apri il file `.dmg` e trascina segnaposto in
+Applicazioni; su Windows decomprimi lo zip e apri `segnaposto.exe`. Si apre in una finestra sua e gira solo sul tuo computer.
 
-1. Incolli il testo e premi **Pseudonimizza**: copi il risultato nella chat.
-2. Incolli la risposta della chat e premi **Rimetti i valori veri**: l'app sostituisce i segnaposto e ti avvisa se la chat
-   ne ha persi o inventati.
-3. **Nuova pratica** cancella la tabella; chiudendo l'app si cancella comunque.
+1. **Incolla un testo o trascina un documento**: Word (.docx), PDF con testo, Excel (.xlsx), CSV, email salvate (.eml, con
+   gli allegati leggibili), testo semplice. Premi **Pseudonimizza** (⌘/Ctrl + Invio).
+2. **Rileggi e correggi**: clic su un segnaposto per rimettere in chiaro un falso allarme, seleziona una parola per nasconderla
+   ovunque. Le correzioni valgono per tutta la pratica.
+3. **Copia o salva** il risultato nel formato che ti serve (.docx, .xlsx, .csv, .txt): un Excel torna Excel, con le colonne
+   al loro posto e i numeri ancora numeri.
+4. **Incolla la risposta della chat** e premi **Rimetti i valori veri**: l'app sostituisce i segnaposto e ti avvisa se la
+   chat ne ha persi o inventati. Anche la risposta si può salvare come file.
+5. **Nuova pratica** cancella la tabella; chiudendo l'app si cancella comunque.
 
 **Primo avvio su Mac.** L'app non è firmata con un certificato Apple a pagamento, quindi la prima volta macOS la blocca
 («non è possibile verificare lo sviluppatore»). Aprila una volta con doppio clic, poi vai in *Impostazioni di Sistema →
@@ -103,7 +110,8 @@ sp = Segnaposto(controllo_finale=controllo)
 ## L'app dal terminale
 
 ```bash
-segnaposto app            # apre l'interfaccia nel browser, su 127.0.0.1 con una chiave casuale
+pip install -e ".[app]"   # documenti e finestra nativa (pywebview)
+segnaposto app            # finestra nativa; senza pywebview, o con --browser, si apre nel browser (127.0.0.1, chiave casuale)
 ```
 
 ## Come servizio locale
@@ -131,8 +139,9 @@ Una soglia ragionevole: zero fughe sui dati a forma fissa, sotto l'uno per cento
 ## Limiti noti
 
 - Il riconoscitore di entità `it_core_news_sm` è piccolo e veloce, ma sbaglia sui cognomi che sono anche parole comuni (Ferro, Costa) e sui nomi in minuscolo. Per testi difficili usa `it_core_news_lg` o aggiungi lo strato 3.
-- Indirizzi, date di nascita e importi non vengono sostituiti di proposito: spesso servono al modello per fare il lavoro. Se nel tuo caso vanno tolti, aggiungi un riconoscitore.
-- I PDF vanno prima convertiti in testo.
+- Gli indirizzi vengono sostituiti quando hanno il numero civico; una città da sola dipende dal riconoscitore di entità, che sui piccoli comuni sbaglia spesso. Date di nascita e importi restano di proposito (servono al modello), salvo nelle colonne di un Excel intitolate così.
+- I PDF scansionati e le foto richiedono il riconoscimento del testo (OCR): è il prossimo passo, vedi [ROADMAP.md](ROADMAP.md).
+- Le email .msg di Outlook non si leggono ancora: trascinale sul desktop come .eml o copia il testo.
 
 ## Licenza
 

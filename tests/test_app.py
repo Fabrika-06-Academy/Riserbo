@@ -46,3 +46,34 @@ def test_andata_e_ritorno(app):
     r = post(app, "/api/ripristina", {"testo": risposta})
     assert "Mario Rossi" in r["testo"] and "Bianchi Srl" in r["testo"]
     assert r["inventati"] == ["[PERSONA_9]"] and r["mancanti"] == ["[TELEFONO_1]"]
+
+
+def test_stato_pronto(app):
+    assert post(app, "/api/stato", {})["pronto"] is True
+
+
+def test_documento_correzioni_ed_esportazione(app):
+    import base64
+    post(app, "/api/nuova", {})
+    csv = "Referente;Note\nGino Pilotto;cliente storico di Schio\n".encode()
+    d = post(app, "/api/leggi", {"nome": "contatti.csv", "dati": base64.b64encode(csv).decode()})
+    assert d["tabellare"] and any("Referente" in c for c in d["colonne"])
+    r = post(app, "/api/pseudonimizza", {"testo": d["testo"] + "\nRichiamare Gino Pilotto. Magazzino Ovest."})
+    assert "Pilotto" not in r["testo"] and r["conta"]["PERSONA"] == 2
+    post(app, "/api/correggi", {"azione": "nascondi", "valore": "Magazzino Ovest", "tipo": "dato"})
+    post(app, "/api/correggi", {"azione": "mostra", "valore": "Schio"})
+    r = post(app, "/api/pseudonimizza", {"testo": d["testo"] + "\nRichiamare Gino Pilotto. Magazzino Ovest."})
+    assert "Magazzino Ovest" not in r["testo"] and "Schio" in r["testo"]
+    r2 = post(app, "/api/pseudonimizza", {"testo": "Consegna al deposito Sud."})
+    post(app, "/api/correggi", {"azione": "nascondi", "valore": "deposito Sud", "tipo": "dato"})
+    r2 = post(app, "/api/pseudonimizza", {"testo": "Consegna al deposito Sud."})
+    assert r2["testo"] == "Consegna al [DATO_1]."
+    e = post(app, "/api/esporta", {"testo": r["testo"], "formato": "xlsx", "nome": "contatti.csv", "suffisso": "pseudonimizzato"})
+    assert e["nome"] == "contatti-pseudonimizzato.xlsx" and base64.b64decode(e["dati"])[:2] == b"PK"
+
+
+def test_formato_non_leggibile_spiega(app):
+    import base64
+    with pytest.raises(urllib.error.HTTPError) as e:
+        post(app, "/api/leggi", {"nome": "vecchio.doc", "dati": base64.b64encode(b"x").decode()})
+    assert e.value.code == 422 and "docx" in json.loads(e.value.read())["errore"]

@@ -87,14 +87,15 @@ def scarica_modello(avanzamento=print) -> Path:
     """Scarica il modello (circa 110 MB) dalla release del repository e controlla l'impronta SHA-256 di ogni file."""
     dest = cartella_cache()
     dest.mkdir(parents=True, exist_ok=True)
-    attese = SHA256 or json.loads(urllib.request.urlopen(URL_BASE + "sha256.json", timeout=60).read())
+    from .rete import apri
+    attese = SHA256 or json.loads(apri(URL_BASE + "sha256.json", 60).read())
     for f in FILE:
         finale = dest / f
         if finale.exists() and hashlib.sha256(finale.read_bytes()).hexdigest() == attese.get(f):
             continue
         avanzamento(f"segnaposto: scarico il riconoscitore di entità ({f})…")
         tmp = dest / (f + ".parziale")
-        with urllib.request.urlopen(URL_BASE + f, timeout=120) as r, open(tmp, "wb") as out:
+        with apri(URL_BASE + f, 120) as r, open(tmp, "wb") as out:
             h = hashlib.sha256()
             while blocco := r.read(1 << 20):
                 h.update(blocco)

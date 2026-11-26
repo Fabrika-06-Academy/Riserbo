@@ -290,10 +290,12 @@ function inChiaro(){return (ls("sp-in-chiaro")||"").split("\n").map(function(x){
 function disegnaVoci(){$("voci").innerHTML="<p class=\"stato\" style=\"margin:0 0 4px\">Togli la spunta a quello che il modello deve poter leggere: per esempio le città, se servono per rispondere su consegne o sedi.</p>"+
   VOCI.map(function(v){var on=escluse.indexOf(v[0])<0;return "<label class=\"voce\"><input type=\"checkbox\" data-k=\""+v[0]+"\""+(on?" checked":"")+"><span><b>"+v[1]+"</b>"+(v[2]?"<small>"+esc(v[2])+"</small>":"")+"</span><mark class=\""+fam(v[0])+"\" style=\"margin-left:auto;align-self:center;cursor:default\">["+v[0]+"_1]</mark></label>"}).join("");
   $("voci").innerHTML+="<div class=\"sezione\">Sempre in chiaro</div><label class=\"campo\"><span class=\"stato\">Nomi da non nascondere mai, uno per riga: i tuoi prodotti, i tuoi fornitori di servizi, la tua azienda se serve. I marchi più noti (PayPal, Google, WordPress…) restano già in chiaro.</span><textarea id=\"vociChiaro\" placeholder=\"Fabrika 06\nBuddyBoss\">"+esc(ls("sp-in-chiaro")||"")+"</textarea></label>"+
-    "<div class=\"sezione\">Aggiornamenti</div><label class=\"interruttore\"><input type=\"checkbox\" id=\"vociAgg\""+(ls("sp-agg")==="no"?"":" checked")+"><span><b>Controlla se c'è una versione nuova</b><small class=\"stato\" style=\"display:block\">All'avvio l'app chiede a GitHub solo il numero dell'ultima versione. Non manda nulla dei tuoi testi.</small></span></label>";
+    "<div class=\"sezione\">Aggiornamenti</div><label class=\"interruttore\"><input type=\"checkbox\" id=\"vociAgg\""+(ls("sp-agg")==="no"?"":" checked")+"><span><b>Controlla se c'è una versione nuova</b><small class=\"stato\" style=\"display:block\">All'avvio l'app chiede a GitHub solo il numero dell'ultima versione. Non manda nulla dei tuoi testi.</small></span></label><div style=\"display:flex;gap:8px;align-items:center;flex-wrap:wrap\"><button class=\"sec\" id=\"aggOra\">Controlla adesso</button><span class=\"stato\" id=\"aggEsito\"></span></div>";
   $("voci").querySelectorAll("input[data-k]").forEach(function(c){c.onchange=function(){var k=c.getAttribute("data-k");escluse=escluse.filter(function(x){return x!==k});if(!c.checked)escluse.push(k);ls("sp-escluse",escluse.join(","));inviaPreferenze();if(S.out)pseudonimizza()}});
   $("vociChiaro").onchange=function(){ls("sp-in-chiaro",this.value);inviaPreferenze();if(S.out)pseudonimizza()};
-  $("vociAgg").onchange=function(){ls("sp-agg",this.checked?"si":"no")}}
+  $("vociAgg").onchange=function(){ls("sp-agg",this.checked?"si":"no")};
+  $("aggOra").onclick=function(){var e=$("aggEsito");e.textContent="Controllo…";
+    api("/api/aggiornamento").then(function(d){mostraAggiornamento(d);e.textContent=d.errore?"Controllo non riuscito: "+d.errore:d.nuova?"C'è la versione "+d.versione+": usa il pulsante giallo in alto.":"Hai l'ultima versione ("+d.attuale+")."}).catch(function(x){e.textContent="Controllo non riuscito: "+x.message})}}
 
 function controlla(){api("/api/stato").then(function(d){var p=$("pill");
   if(d.errore){p.className="pillola errore";p.textContent=d.errore;return}
@@ -316,8 +318,9 @@ function sorveglia(){api("/api/stato").then(function(d){
 function usaAppunti(azione){$("appEsito").textContent="…";api("/api/appunti",{azione:azione}).then(function(d){S.appunti=d.messaggio;$("appEsito").textContent=d.messaggio}).catch(function(e){$("appEsito").textContent=e.message})}
 $("appProteggi").onclick=function(){usaAppunti("proteggi")};$("appRipristina").onclick=function(){usaAppunti("ripristina")};
 $("apriAppunti").onclick=function(){$("appunti").hidden=false};
-function controllaAggiornamento(){if(ls("sp-agg")==="no")return;api("/api/aggiornamento").then(function(d){if(!d.nuova)return;var b=$("agg");
-  b.textContent="Nuova versione "+d.versione+" · Scarica";b.title=d.note||"";b.hidden=false;b.onclick=function(){api("/api/apri",{url:d.url})}}).catch(function(){})}
+function mostraAggiornamento(d){if(!d.nuova)return;var b=$("agg");
+  b.textContent="Nuova versione "+d.versione+" · Scarica";b.title=d.note||"";b.hidden=false;b.onclick=function(){api("/api/apri",{url:d.url})}}
+function controllaAggiornamento(){if(ls("sp-agg")==="no")return;api("/api/aggiornamento").then(mostraAggiornamento).catch(function(x){if(window.console)console.warn("aggiornamento:",x.message)})}
 function apriLink(e){var a=e.target.closest&&e.target.closest("a[href]");if(!a)return;var u=a.getAttribute("href");
   if(/^https:\/\/(github\.com\/Fabrika-06-Academy\/|academy\.fabrika06\.com\/)/.test(u)){e.preventDefault();api("/api/apri",{url:u})}}
 document.addEventListener("click",apriLink,true);

@@ -10,6 +10,8 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
   app locale, pacchetti per Mac e Windows, servizio HTTP locale.
 - **v0.3**: finestra nativa. Documenti in ingresso: Word, PDF con testo, Excel, CSV, email .eml con allegati. Colonne
   riconosciute dall'intestazione, indirizzi, correzioni a mano (clic e selezione), salvataggio nel formato d'origine.
+- **v0.7.2**: avviso di aggiornamento e pareri funzionanti anche nell'app impacchettata (certificati HTTPS inclusi),
+  pulsante «Controlla adesso».
 - **v0.7.1**: icona [–] nella barra dei menu (Mac) e nell'area di notifica (Windows): chiudendo la finestra l'app resta
   attiva, con le scorciatoie. Apri all'accensione, una sola istanza alla volta, tabella cancellata dopo un'ora senza uso.
 - **v0.7**: da qualunque programma: ⌃⌥P / Ctrl+Alt+P protegge il testo copiato, ⌃⌥R / Ctrl+Alt+R rimette i nomi, con

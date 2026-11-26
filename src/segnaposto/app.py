@@ -16,6 +16,7 @@ from __future__ import annotations
 import base64
 import json
 import urllib.error
+import urllib.request
 import os
 import re
 import secrets
@@ -53,7 +54,8 @@ def controlla_aggiornamento() -> dict:
     import sys
     import urllib.request
     req = urllib.request.Request(REPO_API, headers={"User-Agent": f"segnaposto/{__version__}", "Accept": "application/vnd.github+json"})
-    d = json.loads(urllib.request.urlopen(req, timeout=6).read())
+    from .rete import apri
+    d = json.loads(apri(req, 6).read())
     tag = str(d.get("tag_name", ""))
     file = {a["name"]: a["browser_download_url"] for a in d.get("assets", [])}
     if sys.platform == "darwin":
@@ -75,7 +77,8 @@ def invia_parere(dati: dict) -> None:
     req = urllib.request.Request(URL_PARERI, data=json.dumps(corpo).encode("utf-8"), method="POST",
                                  headers={"Content-Type": "application/json", "User-Agent": f"segnaposto/{__version__}"})
     try:
-        urllib.request.urlopen(req, timeout=10).read()
+        from .rete import apri
+        apri(req, 10).read()
     except urllib.error.HTTPError as e:
         try:
             msg = json.loads(e.read()).get("errore")
@@ -248,8 +251,9 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
             if percorso == "/api/aggiornamento":
                 try:
                     return self._json(200, controlla_aggiornamento())
-                except Exception:
-                    return self._json(200, {"nuova": False, "errore": "controllo non riuscito"})
+                except Exception as e:  # il motivo serve: «Controlla adesso» lo mostra
+                    motivo = getattr(e, "reason", None) or e
+                    return self._json(200, {"nuova": False, "errore": f"GitHub non raggiungibile ({motivo})"[:200]})
             if percorso == "/api/apri":
                 url = str(dati.get("url", ""))
                 if not url.startswith(LINK_AMMESSI):
@@ -560,6 +564,12 @@ def prova_pacchetto() -> None:
     assert "Ferrett" in letto.testo, letto.testo
     o = _oscura("prova.png", buf.getvalue(), {"347 123 4567": "[TELEFONO_1]"})
     assert o.coperti == 1 and o.pdf[:4] == b"%PDF", o
+    from .rete import apri as _apri  # HTTPS con i certificati inclusi: senza, niente avviso di aggiornamento né pareri
+    try:
+        _apri(urllib.request.Request(REPO_API, headers={"User-Agent": f"segnaposto/{__version__}"}), 20).read()
+    except urllib.error.HTTPError:
+        pass  # GitHub ha risposto (anche con un limite di richieste): la connessione HTTPS funziona
+    nota("::notice::HTTPS verso GitHub: ok")
     import webview  # noqa: F401
     import sys as _sys
     if _sys.platform == "darwin" or os.name == "nt":

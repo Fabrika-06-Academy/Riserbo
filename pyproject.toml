@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "segnaposto"
-version = "0.7.1"
+version = "0.7.2"
 description = "Pseudonimizzare testi italiani prima di mandarli a un modello in cloud, e rimettere i valori veri al ritorno."
 readme = "README.md"
 license = "MIT"
@@ -18,7 +18,7 @@ classifiers = [
   "Topic :: Security",
   "Topic :: Text Processing :: Linguistic",
 ]
-dependencies = ["presidio-analyzer>=2.2.360", "phonenumbers>=8.13", "onnxruntime>=1.18", "tokenizers>=0.15", "numpy"]
+dependencies = ["presidio-analyzer>=2.2.360", "phonenumbers>=8.13", "onnxruntime>=1.18", "tokenizers>=0.15", "numpy", "certifi"]
 
 [project.optional-dependencies]
 # Leggere e scrivere Word, PDF ed Excel (l'app li usa; il servizio da riga di comando no).

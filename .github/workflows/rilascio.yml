@@ -35,8 +35,11 @@ jobs:
         shell: bash
         env:
           SEGNAPOSTO_PROVA: "1"
+          SEGNAPOSTO_PROVA_ESITO: ${{ github.workspace }}/esito-prova.txt
         run: |
           if [ "$RUNNER_OS" = "macOS" ]; then packaging/dist/segnaposto.app/Contents/MacOS/segnaposto; else packaging/dist/segnaposto/segnaposto.exe; fi
+          cat esito-prova.txt
+          grep -q "pacchetto completo" esito-prova.txt
       - name: Pacchetto Mac (zip e dmg)
         if: runner.os == 'macOS'
         run: |

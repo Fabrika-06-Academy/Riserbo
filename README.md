@@ -56,6 +56,11 @@ incollare nella chat. Copi la risposta, premi **⌃⌥R** (**Ctrl+Alt+R**) e tor
 quanti dati sono stati sostituiti. Su Mac le scorciatoie non richiedono il permesso di Accessibilità. Se un altro
 programma le usa già, nel pannello «Appunti» ci sono gli stessi comandi come pulsanti.
 
+**Sempre pronta, senza finestra.** Chiudendo la finestra segnaposto resta nell'icona **[–]** vicino all'orologio (barra dei
+menu su Mac, area di notifica su Windows) e le scorciatoie continuano a funzionare. Dall'icona riapri la finestra, proteggi
+o ripristini gli appunti, inizi una nuova pratica, scegli **Apri all'accensione** ed esci davvero. Dopo un'ora senza usarla
+la tabella della pratica si cancella da sola: i dati veri non restano in memoria per giorni.
+
 **Cosa esce dal computer, e solo se lo vuoi.** I testi e i documenti mai. All'avvio l'app chiede a GitHub il numero
 dell'ultima versione, per proporti l'aggiornamento (si spegne in «Cosa nascondere → Aggiornamenti»). Il pannello
 **Parere** manda all'Academy solo quello che scrivi lì, con versione e sistema operativo, quando premi «Invia».

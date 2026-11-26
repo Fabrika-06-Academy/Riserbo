@@ -19,6 +19,7 @@ import urllib.error
 import os
 import re
 import secrets
+import sys
 import threading
 import time
 import webbrowser
@@ -97,6 +98,8 @@ class Stato:
         self.versione_pratica = 0              # cresce a ogni cambiamento: la pagina si aggiorna se cambia
         self.ultimo_appunti = ""               # cosa è successo con l'ultima scorciatoia
         self.scorciatoie = None
+        self.vassoio = None
+        self.mostra_finestra = None
         self.nuova_pratica()
 
     def nuova_pratica(self) -> None:
@@ -226,7 +229,12 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                 sc = stato.scorciatoie
                 return self._json(200, {"pronto": stato.sp is not None, "errore": stato.errore_avvio, "versione": __version__,
                                         "pratica": stato.versione_pratica, "appunti": stato.ultimo_appunti,
-                                        "scorciatoie": {"attive": sc.attive, "errore": sc.errore} if sc else None})
+                                        "scorciatoie": {"attive": sc.attive, "errore": sc.errore} if sc else None,
+                                        "vassoio": bool(stato.vassoio and stato.vassoio.attivo)})
+            if percorso == "/api/mostra":  # un secondo avvio dell'app chiede a questa di farsi vedere
+                if stato.mostra_finestra:
+                    threading.Thread(target=stato.mostra_finestra, daemon=True).start()
+                return self._json(200, {"ok": True})
             if percorso == "/api/tabella":
                 return self._json(200, {"tabella": stato.tabella.valori, "pratica": stato.versione_pratica})
             if percorso == "/api/preferenze":
@@ -366,13 +374,17 @@ class Ponte:
             return {"nome": os.path.basename(percorso), "dati": base64.b64encode(f.read()).decode("ascii")}
 
 
-def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 0, finestra: bool | None = None) -> None:
-    """Apre l'app. `finestra=None`: finestra nativa se pywebview c'è, altrimenti il browser."""
+def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 0, finestra: bool | None = None,
+          nascosta: bool = False) -> None:
+    """Apre l'app. `finestra=None`: finestra nativa se pywebview c'è, altrimenti il browser.
+    `nascosta`: parte solo con l'icona vicino all'orologio (avvio all'accensione)."""
     stato, chiave, porta_ref = Stato(sp), secrets.token_urlsafe(24), [0]
     httpd: ThreadingHTTPServer | None = None
     win = None
+    uscendo, in_finestra = [False], [False]
 
     def ferma() -> None:
+        uscendo[0] = True
         time.sleep(0.3)
         if win is not None:
             win.destroy()
@@ -388,27 +400,38 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
         while True:
             time.sleep(30)
             if time.time() - stato.ultimo_uso > INATTIVITA_MAX:
-                ferma()
-                return
+                if not in_finestra[0]:  # nel browser: nessuno chiude il server al posto tuo
+                    ferma()
+                    return
+                with stato.lock:  # nell'app resta aperta (scorciatoie, icona), ma la tabella non resta in memoria
+                    if stato.tabella.valori or stato.documento:
+                        stato.nuova_pratica()
+                    stato.ultimo_uso = time.time()
 
     threading.Thread(target=sorveglia, daemon=True).start()
 
     webview = None
-    if finestra is not False and apri_browser:
+    if finestra is not False and (apri_browser or nascosta):
         try:
             import webview  # type: ignore
         except ImportError:
             if finestra:
                 raise
     if webview is not None:
+        in_finestra[0] = True
         threading.Thread(target=httpd.serve_forever, daemon=True).start()
         ponte = Ponte()
         win = webview.create_window("segnaposto", url, js_api=ponte, width=1280, height=860, min_size=(820, 600),
-                                    text_select=True)
+                                    text_select=True, hidden=nascosta)
         ponte.finestra = win
+        from .scorciatoie import Scorciatoie, notifica
+        from .vassoio import (Voce, Vassoio, al_riaprire_mac, avvio_automatico, avvio_possibile, imposta_avvio, mostra_nel_dock,
+                              segna_istanza, sta_uscendo_mac, togli_istanza)
 
         def piccola_notifica(titolo: str, testo: str) -> None:
-            """Windows: un riquadro in basso a destra che non prende il fuoco e sparisce da solo."""
+            """Windows: la notifica dell'icona; se manca, un riquadro in basso a destra che non prende il fuoco."""
+            if vassoio.avviso(titolo, testo):
+                return
             html = ("<body style='margin:0;font:14px Segoe UI,sans-serif;background:#121116;color:#fff;padding:12px 16px'>"
                     f"<b style='color:#FFC700'>{titolo}</b><br>{testo.replace('<', '&lt;')}</body>")
             try:
@@ -423,16 +446,76 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
             except Exception:
                 pass
 
-        from .scorciatoie import Scorciatoie
+        def avvisa_fn(titolo: str, testo: str) -> None:
+            notifica(titolo, testo, piccola_notifica)
+
+        def apri_finestra() -> None:
+            mostra_nel_dock(True)
+            win.show()
+            try:
+                win.restore()
+            except Exception:
+                pass
+
+        def nuova() -> None:
+            with stato.lock:
+                stato.nuova_pratica()
+            avvisa_fn("segnaposto", "Nuova pratica: la tabella precedente è stata cancellata.")
+
+        def esci() -> None:
+            vassoio.togli()
+            ferma()
+
+        voci: list = [Voce("Apri segnaposto", apri_finestra), None,
+                      Voce("Proteggi gli appunti", lambda: proteggi_appunti(stato, avvisa_fn), tasto="proteggi"),
+                      Voce("Rimetti i nomi negli appunti", lambda: ripristina_appunti(stato, avvisa_fn), tasto="ripristina"),
+                      Voce("Nuova pratica", nuova), None]
+        if avvio_possibile():
+            voci += [Voce("Apri all'accensione", spunta=avvio_automatico, cambia=imposta_avvio), None]
+        voci.append(Voce("Esci da segnaposto", esci))
+        vassoio = Vassoio(voci, apri_finestra)
+        stato.vassoio, stato.mostra_finestra = vassoio, apri_finestra
+        segna_istanza(porta_ref[0], chiave)
+        avvisato = [False]
+
+        def chiudendo() -> bool:
+            """Con l'icona attiva, chiudere la finestra la nasconde: le scorciatoie continuano a funzionare."""
+            if uscendo[0] or not vassoio.attivo or sta_uscendo_mac():
+                vassoio.togli()
+                return True
+            win.hide()
+            mostra_nel_dock(False)
+            if not avvisato[0]:
+                avvisato[0] = True
+                avvisa_fn("segnaposto resta attivo",
+                          "Lo trovi nell'icona vicino all'orologio. Per uscire: icona → Esci da segnaposto.")
+            return False
+
+        win.events.closing += chiudendo
         sc = Scorciatoie({"proteggi": lambda: proteggi_appunti(stato, avvisa_fn),
                           "ripristina": lambda: ripristina_appunti(stato, avvisa_fn)})
         stato.scorciatoie = sc
 
-        def avvisa_fn(titolo: str, testo: str) -> None:
-            from .scorciatoie import notifica
-            notifica(titolo, testo, piccola_notifica)
+        def all_avvio() -> None:
+            sc.registra()
+            if sys.platform == "darwin":
+                from PyObjCTools import AppHelper
+                fatto = threading.Event()
+                AppHelper.callAfter(lambda: (vassoio.mostra(), fatto.set()))
+                fatto.wait(5)
+            else:
+                vassoio.mostra()
+            if sys.platform == "darwin":
+                al_riaprire_mac(apri_finestra)
+            if nascosta:
+                if vassoio.attivo:
+                    mostra_nel_dock(False)
+                else:  # senza icona una finestra nascosta sarebbe irraggiungibile
+                    apri_finestra()
 
-        webview.start(func=sc.registra, private_mode=True)  # niente cache né cookie su disco
+        webview.start(func=all_avvio, private_mode=True)  # niente cache né cookie su disco
+        vassoio.togli()
+        togli_istanza(chiave)
         httpd.shutdown()
         return
 
@@ -447,7 +530,14 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
 
 
 def prova_pacchetto() -> None:
-    """Controllo del pacchetto costruito (in CI): tutto quello che serve c'è dentro? Esce con errore se manca qualcosa."""
+    """Controllo del pacchetto costruito (in CI): tutto quello che serve c'è dentro? Esce con errore se manca qualcosa.
+    Le righe vanno anche nel file SEGNAPOSTO_PROVA_ESITO: l'app per Windows non ha una console su cui stampare."""
+    def nota(msg: str) -> None:
+        print(msg, flush=True)
+        if os.environ.get("SEGNAPOSTO_PROVA_ESITO"):
+            with open(os.environ["SEGNAPOSTO_PROVA_ESITO"], "a", encoding="utf-8") as f:
+                f.write(msg + "\n")
+
     from .documenti import _scrivi_docx, _scrivi_xlsx
 
     from .ner import cartella_cache, trova_modello
@@ -486,16 +576,30 @@ def prova_pacchetto() -> None:
             sc.registra_mac() if _sys.platform == "darwin" else sc.registra_win()
         except Exception as e:
             sc.errore = str(e)
-        print(f"scorciatoie registrate: {sc.attive} {sc.errore}", flush=True)
-    print(f"segnaposto {__version__}: pacchetto completo", flush=True)
+        nota(f"::notice::scorciatoie registrate: {sc.attive} {sc.errore}")
+        from . import vassoio as _v
+        assert (_v.QUI / "vassoio-mac.png").exists() and (_v.QUI / "vassoio-win.png").exists(), "mancano le icone"
+        if os.name == "nt":  # l'icona di Windows vive su un suo thread: si può provare anche qui
+            vs = _v.Vassoio([_v.Voce("Prova", lambda: None), None, _v.Voce("Esci", lambda: None)], lambda: None)
+            vs.mostra()
+            nota(f"::notice::icona nell'area di notifica: {'ok' if vs.attivo else vs.errore}")
+            vs.togli()
+        else:
+            from AppKit import NSMenu, NSStatusBar  # noqa: F401
+            import objc  # noqa: F401
+        nota(f"::notice::avvio all'accensione possibile: {_v.avvio_possibile()}")
+    nota(f"segnaposto {__version__}: pacchetto completo")
 
 
 def main() -> None:
     """Punto d'ingresso dell'app impacchettata (doppio clic su Mac e Windows)."""
     if os.environ.get("SEGNAPOSTO_PROVA"):
         return prova_pacchetto()
+    from .vassoio import ARGOMENTO_SOTTOFONDO, risveglia_istanza
+    if risveglia_istanza():  # è già aperta (magari solo nell'icona): mostra quella invece di aprirne un'altra
+        return
     avvia(apri_browser=not os.environ.get("SEGNAPOSTO_NO_BROWSER"),
-          finestra=False if os.environ.get("SEGNAPOSTO_BROWSER") else None)
+          finestra=False if os.environ.get("SEGNAPOSTO_BROWSER") else None, nascosta=ARGOMENTO_SOTTOFONDO in sys.argv)
 
 
 if __name__ == "__main__":

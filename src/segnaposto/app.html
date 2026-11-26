@@ -230,6 +230,7 @@ footer a{color:inherit}
   <div class="ctesta"><h3>Da qualunque programma</h3><div class="dx"><button class="sec" data-chiudi>Chiudi</button></div></div>
   <div class="corpo">
     <p style="margin:0">Lascia segnaposto aperto (anche ridotto a icona) e lavora dove vuoi: Outlook, il gestionale, WhatsApp Web.</p>
+    <p class="stato" id="appVassoio" style="margin:0" hidden>Puoi anche chiudere la finestra: segnaposto resta attivo nell'icona <b>[–]</b> vicino all'orologio, da cui riapri la finestra, avvii una nuova pratica o esci. Dopo un'ora senza usarlo la tabella della pratica si cancella da sola.</p>
     <div class="sezione">Andata</div>
     <p style="margin:0">1. Seleziona e copia il testo.<br>2. Premi <span class="kbd" data-tasto="proteggi">⌃⌥P</span>: negli appunti c'è la versione con i segnaposto.<br>3. Incolla nella chat.</p>
     <div class="sezione">Ritorno</div>
@@ -306,6 +307,7 @@ var MACOS=/Mac/i.test(navigator.platform||navigator.userAgent);
 document.querySelectorAll("[data-tasto]").forEach(function(k){k.textContent=k.getAttribute("data-tasto")==="proteggi"?(MACOS?"⌃⌥P":"Ctrl+Alt+P"):(MACOS?"⌃⌥R":"Ctrl+Alt+R")});
 function inviaPreferenze(){api("/api/preferenze",{escludi:escludi(),in_chiaro:inChiaro()}).catch(function(){})}
 function sorveglia(){api("/api/stato").then(function(d){
+  $("appVassoio").hidden=!d.vassoio;
   if(d.scorciatoie){var e=$("appStato");e.hidden=false;
     if(d.scorciatoie.attive.length===2){e.className="esito ok";e.textContent="Scorciatoie attive: "+(MACOS?"⌃⌥P e ⌃⌥R":"Ctrl+Alt+P e Ctrl+Alt+R")+"."}
     else{e.className="esito warn";e.textContent="Scorciatoie non disponibili"+(d.scorciatoie.errore?" ("+d.scorciatoie.errore+")":"")+": usa i pulsanti qui sotto."}}

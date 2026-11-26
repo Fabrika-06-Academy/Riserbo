@@ -129,3 +129,25 @@ def test_scorciatoie_sugli_appunti(app, monkeypatch):
     assert appunti["t"].startswith("Cara Giulia Ferro,") and "[PERSONA_7]" in m
     appunti["t"] = ""
     assert "vuoti" in post(app, "/api/appunti", {"azione": "proteggi"})["messaggio"]
+
+
+def test_seconda_istanza_sveglia_la_prima(monkeypatch, tmp_path):
+    """Il secondo avvio (doppio clic, avvio all'accensione) chiede alla prima di mostrare la finestra e si ferma."""
+    from segnaposto import vassoio
+    monkeypatch.setattr(vassoio, "_file_istanza", lambda: tmp_path / "istanza.json")
+    assert vassoio.risveglia_istanza() is False  # nessuna istanza aperta
+    stato, porta, mostrata = Stato(Segnaposto()), [0], threading.Event()
+    stato.mostra_finestra = mostrata.set
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), crea_gestore(stato, "chiave-istanza", porta, lambda: None))
+    porta[0] = httpd.server_address[1]
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    try:
+        vassoio.segna_istanza(porta[0], "chiave-istanza")
+        assert vassoio.risveglia_istanza() is True and mostrata.wait(2)
+        vassoio.togli_istanza("un'altra chiave")  # non tocca il file di un'altra istanza
+        assert (tmp_path / "istanza.json").exists()
+        vassoio.togli_istanza("chiave-istanza")
+        assert not (tmp_path / "istanza.json").exists()
+    finally:
+        httpd.shutdown()
+    assert vassoio.risveglia_istanza() is False

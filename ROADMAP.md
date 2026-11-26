@@ -10,6 +10,8 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
   app locale, pacchetti per Mac e Windows, servizio HTTP locale.
 - **v0.3**: finestra nativa. Documenti in ingresso: Word, PDF con testo, Excel, CSV, email .eml con allegati. Colonne
   riconosciute dall'intestazione, indirizzi, correzioni a mano (clic e selezione), salvataggio nel formato d'origine.
+- **v0.7.1**: icona [–] nella barra dei menu (Mac) e nell'area di notifica (Windows): chiudendo la finestra l'app resta
+  attiva, con le scorciatoie. Apri all'accensione, una sola istanza alla volta, tabella cancellata dopo un'ora senza uso.
 - **v0.7**: da qualunque programma: ⌃⌥P / Ctrl+Alt+P protegge il testo copiato, ⌃⌥R / Ctrl+Alt+R rimette i nomi, con
   notifica di conferma; pannello «Appunti» con gli stessi comandi come pulsanti. Nessun permesso di Accessibilità su Mac.
 - **v0.6.5**: avviso di nuova versione con scaricamento in un clic, pannello Parere (arriva all'Academy), elenco «sempre in
@@ -29,7 +31,6 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
 ## Prossimi passi
 
 ### Dopo la v0.7
-- Icona nella barra dei menu (Mac) e nell'area di notifica (Windows), per tenere l'app pronta senza finestra.
 - Menu *Servizi* di macOS e *Invia a* di Windows per i file.
 - Scorciatoie configurabili.
 

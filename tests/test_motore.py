@@ -107,3 +107,16 @@ def test_coerenza_nel_documento_e_falsi_tecnici(sp):
         assert v in r.testo
     assert "185.23.44.120" not in r.testo and "Ferraresi" not in r.testo
     assert "[SITO_1]" in r.testo
+
+
+def test_nome_dal_dominio_vince_sulle_etichette_sbagliate():
+    from presidio_analyzer import Pattern, PatternRecognizer
+    from segnaposto.motore import Segnaposto
+    # Simula l'errore visto su un PDF vero: il modello prende «Didattica» da sola per un segreto.
+    finto = PatternRecognizer(supported_entity="SEGRETO", supported_language="it", name="RiconoscitoreItaliano",
+                              patterns=[Pattern("finto", r"\bDidattica\b", 0.9)])
+    sp = Segnaposto(riconoscitori=[finto])
+    t = "Didattica Facile – Intervento\nIl sito didatticafacile.it è pulito.\nDidattica Facile – Pagina 2"
+    r = sp.pseudonimizza(t)
+    assert "Didattica" not in r.testo and "Facile" not in r.testo, r.testo
+    assert r.testo.startswith("[AZIENDA_1] – Intervento")

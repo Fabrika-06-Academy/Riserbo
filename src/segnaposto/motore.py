@@ -139,7 +139,12 @@ class Segnaposto:
                 while b > a and testo[b - 1] in " ,:;": b -= 1
                 if b - a < 2 or (g.entity_type in ner and testo[a:b].casefold().rstrip(".") in PAROLE_COMUNI):
                     continue
-                prio = 1 if dal_modello and g.entity_type in FORMA_FISSA else PRIORITA.get(g.entity_type, 5)
+                if dal_modello and g.entity_type in FORMA_FISSA:
+                    prio = 1
+                elif dal_modello and g.entity_type not in PRIORITA:
+                    prio = 3  # categorie in più del modello (segreti, documenti...): non scavalcano nomi e aziende
+                else:
+                    prio = PRIORITA.get(g.entity_type, 5)
                 candidati.append((g.entity_type, a, b, g.score, prio))
         for valore, tipo in (forzati or {}).items():
             v = valore.strip()
@@ -266,8 +271,10 @@ def _nomi_dai_domini(testo: str, scelti: list) -> list:
             if j > i and testo[parole[j - 1].end():parole[j].start()] not in (" ", "-", "", "'"):
                 break
             unite += parole[j].group(0).lower()
-            if unite in nomi:
-                out.append(("ORGANIZATION", parole[i].start(), parole[j].end(), 0.9, PRIORITA["ORGANIZATION"]))
+            a, b = parole[i].start(), parole[j].end()
+            dentro_dominio = (a > 0 and testo[a - 1] in "@./") or (testo[b:b + 1] in (".", "@") and testo[b + 1:b + 2].isalnum())
+            if unite in nomi and not dentro_dominio:
+                out.append(("ORGANIZATION", parole[i].start(), parole[j].end(), 0.95, 9))  # segnale fortissimo
                 break
             if len(unite) > max(map(len, nomi)):
                 break

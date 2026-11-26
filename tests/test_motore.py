@@ -95,3 +95,15 @@ def test_niente_falsi_allarmi_sulle_parole_comuni(sp):
 def test_etichetta_fuori_dal_dato(sp):
     r = sp.pseudonimizza("Scrive Mario Rossi, IBAN IT60X0542811101000000123456")
     assert r.tabella.valori["[IBAN_1]"] == "IT60X0542811101000000123456"
+
+
+def test_coerenza_nel_documento_e_falsi_tecnici(sp):
+    t = ("Didattica Facile – Intervento di sicurezza\nIl sito didatticafacile.it è stato ripulito. La versione installata è la 1.6.0.\n"
+         "WordPress 6.8.13 7.1.5. Le pagine wp-admin e wp-login.php sono nascoste. IP del server 185.23.44.120.\n"
+         "Account amministratore: Giovanna Ferraresi.\nDidattica Facile – Intervento di sicurezza")
+    r = sp.pseudonimizza(t)
+    assert "Didattica" not in r.testo and "didatticafacile" not in r.testo  # anche nell'ultima intestazione
+    for v in ("1.6.0", "6.8.13 7.1.5", "wp-login.php"):
+        assert v in r.testo
+    assert "185.23.44.120" not in r.testo and "Ferraresi" not in r.testo
+    assert "[SITO_1]" in r.testo

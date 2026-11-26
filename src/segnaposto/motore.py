@@ -148,13 +148,20 @@ class Segnaposto:
             for m in re.finditer(r"(?<![\w])" + re.escape(v) + r"(?![\w])", testo, flags=re.IGNORECASE):
                 candidati.append((tipo, m.start(), m.end(), 1.0, 10))
         candidati = [c for c in candidati if _chiave(testo[c[1]:c[2]]) not in no]
-        # Sovrapposizioni: si ordina per priorità, poi per lunghezza, e si tiene il primo che non tocca gli altri.
-        candidati.sort(key=lambda c: (-c[4], -(c[2] - c[1]), -c[3]))
-        scelti: list = []
-        for c in candidati:
-            if all(c[2] <= s[1] or c[1] >= s[2] for s in scelti):
-                scelti.append(c)
-        scelti.sort(key=lambda c: c[1])
+        scelti = _scegli(candidati)
+        # Coerenza: un dato trovato in un punto si nasconde ovunque compaia (intestazioni, piè di pagina, firme).
+        # Il modello a volte lo riconosce solo in alcuni punti, e un nome in chiaro altrove vanifica tutto il resto.
+        propagati = []
+        for tipo, a, b, punteggio, prio in scelti:
+            v = testo[a:b]
+            if len(v.strip()) < 3 or not re.search(r"[A-Za-zÀ-ÿ]", v) or _chiave(v) in no:
+                continue
+            for m in re.finditer(r"(?<![\w@.])" + re.escape(v) + r"(?![\w])", testo, flags=re.IGNORECASE):
+                if (m.start(), m.end()) != (a, b):
+                    propagati.append((tipo, m.start(), m.end(), punteggio, prio))
+        propagati += _nomi_dai_domini(testo, scelti)
+        if propagati:
+            scelti = _scegli(candidati + propagati)
         fuori = ESCLUSI_PREDEFINITI if escludi is None else set(escludi)
         scelti = [c for c in scelti if NOMI.get(c[0], c[0]) not in fuori]
         trovati = [{"tipo": NOMI.get(c[0], c[0]), "valore": testo[c[1]:c[2]],
@@ -206,6 +213,16 @@ def _rifinisci(testo: str, g):
         if m:
             a += m.end()
     valore = testo[a:b]
+    if g.entity_type == "ID_TECNICO" and not any(r.fullmatch(valore.strip()) for r in _TECNICI):
+        return None  # «1.6.0» è una versione, non un indirizzo IP
+    if g.entity_type == "EMAIL_ADDRESS" and "@" not in valore:
+        if not _DOMINIO.fullmatch(valore.strip()):
+            return None
+        g.entity_type = "SITO"  # «didatticafacile.it»: il sito del cliente, non un'email
+    if g.entity_type == "SITO" and (not _DOMINIO.fullmatch(valore.strip()) or valore[:1] in "-._"
+                                    or (a > 0 and (testo[a - 1].isalnum() or testo[a - 1] in "-_"))
+                                    or valore.rsplit(".", 1)[-1].split("/")[0].lower() in _ESTENSIONI):
+        return None  # «wp-login.php» è un file, non un sito
     if not re.search(r"[A-Za-zÀ-ÿ]", valore):  # solo cifre e segni: va bene per un CAP o un numero, non per un nome
         if g.entity_type in ("PERSON", "ORGANIZATION", "LOCATION"):
             return None
@@ -218,6 +235,60 @@ def _rifinisci(testo: str, g):
     if (a, b) != (g.start, g.end):
         g.start, g.end = a, b
     return g
+
+
+_GENERICI = {"gmail", "libero", "hotmail", "outlook", "yahoo", "icloud", "alice", "tiscali", "virgilio", "pec", "legalmail",
+             "aruba", "fastwebnet", "tim", "live", "me", "mac", "proton", "protonmail", "email", "mail", "info"}
+
+
+def _nomi_dai_domini(testo: str, scelti: list) -> list:
+    """Il nome scritto nel dominio: «didatticafacile.it» → anche «Didattica Facile», ovunque compaia nel testo.
+
+    Il dominio di un sito o di un'email aziendale è quasi sempre il nome del cliente senza spazi: se nel testo c'è una
+    sequenza di 1-4 parole che, unite, dà quel nome, è il nome del cliente anche se il riconoscitore non l'ha visto.
+    """
+    nomi = set()
+    for tipo, a, b, _, _ in scelti:
+        if tipo not in ("SITO", "EMAIL_ADDRESS"):
+            continue
+        dominio = testo[a:b].split("@")[-1].lower()
+        dominio = re.sub(r"^(?:https?://)?(?:www\.)?", "", dominio).split("/")[0]
+        nome = dominio.rsplit(".", 1)[0].split(".")[-1].replace("-", "")
+        if len(nome) >= 5 and nome not in _GENERICI:
+            nomi.add(nome)
+    if not nomi:
+        return []
+    out = []
+    parole = list(re.finditer(r"[A-Za-zÀ-ÿ0-9]+", testo))
+    for i in range(len(parole)):
+        unite = ""
+        for j in range(i, min(i + 4, len(parole))):
+            if j > i and testo[parole[j - 1].end():parole[j].start()] not in (" ", "-", "", "'"):
+                break
+            unite += parole[j].group(0).lower()
+            if unite in nomi:
+                out.append(("ORGANIZATION", parole[i].start(), parole[j].end(), 0.9, PRIORITA["ORGANIZATION"]))
+                break
+            if len(unite) > max(map(len, nomi)):
+                break
+    return out
+
+
+def _scegli(candidati: list) -> list:
+    """Sovrapposizioni: si ordina per priorità, poi per lunghezza, e si tiene il primo che non tocca gli altri."""
+    scelti: list = []
+    for c in sorted(candidati, key=lambda c: (-c[4], -(c[2] - c[1]), -c[3])):
+        if all(c[2] <= s[1] or c[1] >= s[2] for s in scelti):
+            scelti.append(c)
+    return sorted(scelti, key=lambda c: c[1])
+
+
+_IPV4 = re.compile(r"(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)")
+_TECNICI = (_IPV4, re.compile(r"[0-9A-Fa-f]{0,4}(?::[0-9A-Fa-f]{0,4}){2,7}"),  # IPv6
+            re.compile(r"[0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){5}"), re.compile(r"\d{15}"))  # MAC, IMEI
+_ESTENSIONI = {"php", "html", "htm", "js", "css", "json", "xml", "txt", "pdf", "doc", "docx", "xls", "xlsx", "csv", "png",
+               "jpg", "jpeg", "gif", "svg", "zip", "exe", "py", "md", "log", "sql", "msg", "eml"}
+_DOMINIO = re.compile(r"(?:https?://)?(?:www\.)?[\w-]+(?:\.[\w-]+)*\.[a-z]{2,}(?:/\S*)?", re.IGNORECASE)
 
 
 def _salta_cortesie(testo: str, a: int, b: int) -> int:

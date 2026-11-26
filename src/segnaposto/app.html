@@ -232,11 +232,11 @@ function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorag
 var S={tab:{},out:"",vero:"",doc:null,pronto:false,lavoro:false,pdf:null,vista:"proteggi",rvista:"evid"};
 
 var FAM={PERSONA:"per",DIPENDENTE:"per",ETA:"per",DATA_NASCITA:"per",STATO_CIVILE:"per",AZIENDA:"az",CLIENTE:"az",FORNITORE:"az",LUOGO:"luo",INDIRIZZO:"luo",
-  EMAIL:"con",TELEFONO:"con",ID_TECNICO:"con",SALUTE:"san",CODICE_FISCALE:"cod",PARTITA_IVA:"cod",IBAN:"cod",TARGA:"cod",CODICE:"cod",COMMESSA:"cod",
+  EMAIL:"con",TELEFONO:"con",ID_TECNICO:"con",SITO:"con",SALUTE:"san",CODICE_FISCALE:"cod",PARTITA_IVA:"cod",IBAN:"cod",TARGA:"cod",CODICE:"cod",COMMESSA:"cod",
   DOCUMENTO:"cod",CONTO:"cod",CARTA:"cod",SEGRETO:"cod",CATASTO:"cod"};
 function fam(s){var t=String(s).replace(/^\[/,"").replace(/_\d+\]?$/,"");return FAM[t]||"alt"}
 var VOCI=[["PERSONA","Persone","nomi e cognomi"],["AZIENDA","Aziende","ragioni sociali, nomi di enti"],["CLIENTE","Clienti e fornitori","dall'anagrafica o da colonne «Cliente», «Fornitore»"],
-  ["LUOGO","Luoghi","città, comuni, località"],["INDIRIZZO","Indirizzi","via, numero civico, CAP"],["EMAIL","Email",""],["TELEFONO","Telefoni",""],
+  ["LUOGO","Luoghi","città, comuni, località"],["INDIRIZZO","Indirizzi","via, numero civico, CAP"],["EMAIL","Email",""],["SITO","Siti web","il dominio di un cliente lo identifica quanto il nome"],["TELEFONO","Telefoni",""],
   ["CODICE_FISCALE","Codici fiscali","con controllo del carattere finale"],["PARTITA_IVA","Partite IVA","con controllo della cifra finale"],["IBAN","IBAN","con controllo mod 97"],
   ["TARGA","Targhe",""],["DATA_NASCITA","Date di nascita",""],["ETA","Età","«52 anni»"],
   ["SALUTE","Dati sanitari","malattie, farmaci, cartelle cliniche: dati particolari per il GDPR"],["DOCUMENTO","Documenti","carta d'identità, patente, licenze"],

@@ -165,7 +165,8 @@ def _pdf(nome: str, dati: bytes) -> Documento:
     doc = Documento(nome, "pdf", "")
     pagine, scansioni = [], []
     for i in range(len(pdf)):
-        t = pdf[i].get_textpage().get_text_range().replace("\r\n", "\n").replace("\r", "\n").strip()
+        # \ufffe è il trattino di una parola spezzata a fine riga («wp-admin» → «wp\ufffeadmin»)
+        t = pdf[i].get_textpage().get_text_range().replace("\r\n", "\n").replace("\r", "\n").replace("\ufffe", "-").strip()
         if len(t) < 20:
             scansioni.append(i)
         pagine.append(t)

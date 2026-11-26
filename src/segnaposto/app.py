@@ -28,6 +28,7 @@ from pathlib import PurePath
 from . import __version__
 from .documenti import FORMATI_USCITA, esporta, leggi
 from .motore import Segnaposto, ripristina
+from .oscura import _compatta, oscura
 from .tabella import Tabella
 
 INATTIVITA_MAX = 3600  # secondi
@@ -47,6 +48,7 @@ class Stato:
         self.inviati: set[str] = set()  # segnaposto mandati al modello: servono per trovare i mancanti
         self.forzati: dict[str, str] = {}  # valori da nascondere comunque (colonne riconosciute, aggiunte a mano)
         self.ignora: set[str] = set()      # falsi allarmi indicati da chi rilegge
+        self.documento: tuple[str, bytes, str] | None = None  # PDF o immagine originale, per l'oscuramento
 
     def carica_modello(self) -> None:
         try:
@@ -124,12 +126,28 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                 nome = re.sub(r"[^\w\- .]", "_", nome)[:80] + ("-" + str(dati["suffisso"]) if dati.get("suffisso") else "") + "." + formato
                 return self._json(200, {"nome": nome, "dati": base64.b64encode(corpo).decode("ascii")})
             if percorso == "/api/leggi":
-                doc = leggi(str(dati.get("nome", "")), base64.b64decode(str(dati.get("dati", ""))))
+                nome, grezzo = str(dati.get("nome", "")), base64.b64decode(str(dati.get("dati", "")))
+                doc = leggi(nome, grezzo)
                 with stato.lock:
                     stato.ultimo_uso = time.time()
                     stato.forzati.update(doc.forzati)
+                    stato.documento = (nome, grezzo, doc.testo) if doc.formato in ("pdf", "immagine") else None
                 return self._json(200, {"testo": doc.testo, "formato": doc.formato, "colonne": doc.colonne,
-                                        "avvisi": doc.avvisi, "tabellare": doc.formato == "tabella"})
+                                        "avvisi": doc.avvisi, "tabellare": doc.formato == "tabella",
+                                        "oscurabile": stato.documento is not None, "ocr": doc.ocr_pagine})
+            if percorso == "/api/oscura":
+                with stato.lock:
+                    if stato.documento is None:
+                        raise ValueError("Il documento oscurato si fa da un PDF o da un'immagine: aprine uno.")
+                    nome, grezzo, testo_doc = stato.documento
+                    nel_doc = _compatta(testo_doc)
+                    valori = {v: s for s, v in stato.tabella.valori.items() if _compatta(v) in nel_doc}
+                if not valori:
+                    raise ValueError("Prima pseudonimizza il documento: non ci sono dati da coprire.")
+                o = oscura(nome, grezzo, valori)
+                return self._json(200, {"nome": re.sub(r"[^\w\- .]", "_", PurePath(nome).stem)[:80] + "-oscurato.pdf",
+                                        "dati": base64.b64encode(o.pdf).decode("ascii"), "pagine": o.pagine,
+                                        "coperti": o.coperti, "non_trovati": [valori[v] for v in o.non_trovati]})
             with stato.lock:
                 stato.ultimo_uso = time.time()
                 if percorso == "/api/correggi":
@@ -188,7 +206,7 @@ class Ponte:
         return percorso
 
     def apri(self) -> dict:
-        tipi = ("Documenti (*.txt;*.md;*.docx;*.pdf;*.eml;*.xlsx;*.csv)", "Tutti i file (*.*)")
+        tipi = ("Documenti (*.txt;*.md;*.docx;*.pdf;*.eml;*.msg;*.xlsx;*.csv;*.png;*.jpg;*.jpeg;*.tif;*.tiff)", "Tutti i file (*.*)")
         scelta = self.finestra.create_file_dialog(_dialogo("OPEN"), file_types=tipi)
         if not scelta:
             return {}
@@ -262,6 +280,16 @@ def prova_pacchetto() -> None:
     assert leggi("a.xlsx", _scrivi_xlsx("Nome\tEmail\nMario Rossi\tm@r.it")).forzati["Mario Rossi"] == "PERSONA"
     import pypdfium2  # noqa: F401  (la libreria binaria pdfium)
     pypdfium2.PdfDocument.new()
+    from PIL import Image, ImageDraw, ImageFont
+
+    from .oscura import oscura as _oscura
+    im = Image.new("RGB", (900, 160), "white")
+    ImageDraw.Draw(im).text((30, 50), "Referente: Lucia Ferretti, tel. 347 123 4567", font=ImageFont.load_default(size=32), fill="black")
+    buf = __import__("io").BytesIO(); im.save(buf, "PNG")
+    letto = leggi("prova.png", buf.getvalue())
+    assert "Ferrett" in letto.testo, letto.testo
+    o = _oscura("prova.png", buf.getvalue(), {"347 123 4567": "[TELEFONO_1]"})
+    assert o.coperti == 1 and o.pdf[:4] == b"%PDF", o
     import webview  # noqa: F401
     print(f"segnaposto {__version__}: pacchetto completo", flush=True)
 

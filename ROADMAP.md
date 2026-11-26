@@ -10,23 +10,18 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
   app locale, pacchetti per Mac e Windows, servizio HTTP locale.
 - **v0.3**: finestra nativa. Documenti in ingresso: Word, PDF con testo, Excel, CSV, email .eml con allegati. Colonne
   riconosciute dall'intestazione, indirizzi, correzioni a mano (clic e selezione), salvataggio nel formato d'origine.
+- **v0.4**: OCR di PDF scansionati, foto e screenshot. Abbiamo valutato [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR):
+  i suoi modelli PP-OCRv6 multilingua leggono benissimo l'italiano, accenti compresi, ma il framework PaddlePaddle pesa
+  centinaia di MB. Usiamo quindi gli stessi modelli con ONNX Runtime tramite [RapidOCR](https://github.com/RapidAI/RapidOCR).
+  Il classificatore dell'orientamento delle righe è spento perché girava per errore righe dritte. PDF oscurato fatto di sole
+  immagini, con il segnaposto sopra ogni dato (niente PyMuPDF: AGPL). Email .msg di Outlook lette con olefile (BSD).
+  Saluti e titoli («Gentile Ing.», «Spett.le») restano fuori dai nomi.
 
 ## Prossimi passi
 
-### v0.4: scansioni, foto e PDF oscurati
-- **OCR** per PDF scansionati e foto di documenti. Valutazione:
-  - [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) ha i modelli migliori tra quelli aperti (PP-OCRv5, Apache 2.0) e
-    legge bene l'alfabeto latino. Però il framework PaddlePaddle pesa centinaia di MB e complica i pacchetti per Mac e Windows.
-  - La strada scelta: **gli stessi modelli PP-OCR** eseguiti con ONNX Runtime tramite [RapidOCR](https://github.com/RapidAI/RapidOCR)
-    (Apache 2.0). Qualità di PaddleOCR, poche decine di MB, stesso risultato su Mac e Windows.
-  - Da misurare su documenti italiani veri (fatture, carte d'identità, moduli scritti a mano in stampatello) contro
-    Apple Vision, che su Mac è già nel sistema e non pesa nulla.
-- **PDF oscurato**: ogni pagina diventa immagine e i dati vengono coperti da rettangoli neri. Nel file finale non resta
-  testo nascosto sotto i rettangoli, che è l'errore classico degli oscuramenti fatti male. Niente PyMuPDF: la sua licenza
-  AGPL non è compatibile con MIT.
-- Email **.msg** di Outlook.
-
 ### v0.5: ovunque, dagli appunti
+- Da misurare prima: OCR su documenti italiani veri (fatture, carte d'identità, moduli compilati a mano) e confronto con
+  Apple Vision su Mac.
 - Icona nella barra dei menu (Mac) e nell'area di notifica (Windows), con l'app sempre pronta.
 - **Scorciatoia globale**: copi un testo in qualunque app (Outlook, gestionale, WhatsApp Web), premi la scorciatoia e negli
   appunti trovi la versione pseudonimizzata. Copi la risposta della chat, premi l'altra scorciatoia e torna con i nomi veri.

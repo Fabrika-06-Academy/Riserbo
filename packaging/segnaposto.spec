@@ -2,10 +2,11 @@
 import sys
 from PyInstaller.utils.hooks import collect_all, collect_data_files, copy_metadata
 
-VERSIONE = "0.3.0"
+VERSIONE = "0.4.0"
 datas, binaries, hidden = [], [], []
 pacchetti = ["spacy", "it_core_news_sm", "presidio_analyzer", "thinc", "phonenumbers", "spacy_legacy", "spacy_loggers",
-             "docx", "pypdfium2", "pypdfium2_raw", "openpyxl", "webview"]
+             "docx", "pypdfium2", "pypdfium2_raw", "openpyxl", "olefile", "webview",
+             "rapidocr", "onnxruntime", "cv2", "shapely", "pyclipper", "omegaconf", "antlr4"]
 if sys.platform == "win32":
     pacchetti += ["clr_loader", "pythonnet"]
 for pkg in pacchetti:
@@ -15,14 +16,14 @@ for pkg in pacchetti:
     except Exception:
         pass
 datas += collect_data_files("tldextract") + collect_data_files("segnaposto")
-for pkg in ("spacy", "it_core_news_sm", "presidio_analyzer", "thinc", "segnaposto", "pywebview"):
+for pkg in ("spacy", "it_core_news_sm", "presidio_analyzer", "thinc", "segnaposto", "pywebview", "rapidocr", "onnxruntime"):
     try:
         datas += copy_metadata(pkg)
     except Exception:
         pass
 
 a = Analysis(["avvia.py"], pathex=["../src"], binaries=binaries, datas=datas, hiddenimports=hidden,
-             excludes=["tkinter", "matplotlib", "IPython", "pytest", "PyQt5", "PyQt6", "PySide2", "PySide6", "gi"], noarchive=False)
+             excludes=["torch", "paddle", "openvino", "tensorrt", "MNN", "tkinter", "matplotlib", "IPython", "pytest", "PyQt5", "PyQt6", "PySide2", "PySide6", "gi"], noarchive=False)
 pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="segnaposto", console=(sys.platform.startswith("linux")), upx=False,
           icon="icona.png")

@@ -71,3 +71,8 @@ def test_forma_giuridica():
     r = sp.pseudonimizza("La Sig.ra Pellizzari di Bianchi Srl e i F.lli Dal Molin S.p.A. hanno scritto.")
     for v in ("Bianchi Srl", "Dal Molin S.p.A.", "Pellizzari"):
         assert v not in r.testo, r.testo
+
+
+def test_cortesie_e_titoli_restano(sp):
+    r = sp.pseudonimizza("Spett.le Bianchi Srl\nGentile Ing. Marco Dal Santo,\nCordiali saluti, Paolo Zanella")
+    assert r.testo.startswith("Spett.le [") and "Gentile Ing. [PERSONA_" in r.testo and "Cordiali saluti, [PERSONA_" in r.testo

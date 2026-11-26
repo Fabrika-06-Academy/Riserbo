@@ -77,3 +77,21 @@ def test_formato_non_leggibile_spiega(app):
     with pytest.raises(urllib.error.HTTPError) as e:
         post(app, "/api/leggi", {"nome": "vecchio.doc", "dati": base64.b64encode(b"x").decode()})
     assert e.value.code == 422 and "docx" in json.loads(e.value.read())["errore"]
+
+
+def test_pdf_oscurato_dall_app(app):
+    import base64
+    import sys
+    sys.path.insert(0, __import__("os").path.dirname(__file__))
+    from test_documenti import _pdf
+    post(app, "/api/nuova", {})
+    with pytest.raises(urllib.error.HTTPError) as e:
+        post(app, "/api/oscura", {})
+    assert e.value.code == 422
+    d = post(app, "/api/leggi", {"nome": "c.pdf", "dati": base64.b64encode(_pdf(["Contratto con Mario Rossi,", "CF RSSMRA80A01L840J."])).decode()})
+    assert d["oscurabile"]
+    post(app, "/api/pseudonimizza", {"testo": "Altro testo: Giovanna Brun."})  # un'altra persona nella pratica
+    post(app, "/api/pseudonimizza", {"testo": d["testo"]})
+    o = post(app, "/api/oscura", {})
+    assert o["nome"] == "c-oscurato.pdf" and o["coperti"] >= 2
+    assert o["non_trovati"] == []  # Giovanna Brun è nella pratica ma non nel PDF: non va cercata lì

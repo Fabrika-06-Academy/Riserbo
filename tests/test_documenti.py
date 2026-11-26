@@ -104,15 +104,17 @@ def _pdf(righe):
 def test_pdf_con_testo():
     doc = leggi("c.pdf", _pdf(["Contratto con Mario Rossi,", "codice fiscale RSSMRA80A01L840J."]))
     assert "RSSMRA80A01L840J" in doc.testo and doc.formato == "pdf"
-    with pytest.raises(ValueError, match="scansione"):
-        leggi("s.pdf", _pdf([]))
+    with pytest.raises(ValueError, match="testo leggibile"):
+        leggi("s.pdf", _pdf([]))  # pagina bianca: né testo né niente da leggere con l'OCR
 
 
 def test_formati_non_leggibili():
     with pytest.raises(ValueError, match="docx"):
         leggi("vecchio.doc", b"x")
-    with pytest.raises(ValueError, match="OCR"):
+    with pytest.raises(ValueError, match="non si apre"):
         leggi("foto.jpg", b"x")
+    with pytest.raises(ValueError, match="JPG"):
+        leggi("foto.heic", b"x")
 
 
 def test_correzioni_a_mano(sp):
@@ -133,3 +135,53 @@ def test_tabella_non_riassegna_numeri():
     t.segnaposto("PERSONA", "A"); t.segnaposto("PERSONA", "B")
     assert t.rimuovi("A") == "[PERSONA_1]"
     assert t.segnaposto("PERSONA", "C") == "[PERSONA_3]"
+
+
+# ---------------------------------------------------------------- OCR e oscuramento
+
+RIGHE = ["Spett.le Bianchi Srl", "Gentile Ing. Marco Dal Santo,", "la merce consegnata il 3 novembre è arrivata danneggiata.",
+         "Il referente è Lucia Ferretti, tel. 347 123 4567,", "IBAN per il rimborso: IT60 X054 2811 1010 0000 0123 456."]
+
+
+def _immagine(righe=RIGHE, ruota=0.0):
+    from PIL import Image, ImageDraw, ImageFont
+    font = ImageFont.load_default(size=30)
+    im = Image.new("RGB", (1240, 120 + 68 * len(righe)), "white")
+    d = ImageDraw.Draw(im)
+    for i, r in enumerate(righe):
+        d.text((60, 50 + i * 68), r, font=font, fill=(20, 20, 20))
+    return im.rotate(ruota, expand=True, fillcolor="white") if ruota else im
+
+
+def _byte(im, formato):
+    b = io.BytesIO(); im.save(b, formato); return b.getvalue()
+
+
+def test_ocr_foto(sp):
+    doc = leggi("reclamo.jpg", _byte(_immagine(ruota=1.5), "JPEG"))
+    assert doc.formato == "immagine" and doc.ocr_pagine == 1
+    for v in ("Marco Dal Santo", "Lucia Ferrett", "347 123 4567", "IT60 X054"):  # l'OCR può leggere «Ferrettí»
+        assert v in doc.testo, doc.testo
+    r = sp.pseudonimizza(doc.testo)
+    assert "Ferrett" not in r.testo and "[IBAN_1]" in r.testo
+
+
+def test_pdf_scansionato_e_misto():
+    scansione = _byte(_immagine(), "PDF")
+    doc = leggi("scansione.pdf", scansione)
+    assert doc.ocr_pagine == 1 and "Lucia Ferrett" in doc.testo and any("OCR" in a for a in doc.avvisi)
+
+
+def test_pdf_oscurato_da_testo_e_da_scansione(sp):
+    import pypdfium2 as pdfium
+    from segnaposto.oscura import oscura
+    for nome, dati in (("contratto.pdf", _pdf(["Contratto con Mario Rossi,", "codice fiscale RSSMRA80A01L840J."])),
+                       ("scansione.pdf", _byte(_immagine(), "PDF")), ("foto.png", _byte(_immagine(), "PNG"))):
+        doc = leggi(nome, dati)
+        t = Tabella()
+        sp.pseudonimizza(doc.testo, t)
+        valori = {v: s for s, v in t.valori.items()}
+        o = oscura(nome, dati, valori)
+        assert o.pagine == 1 and o.coperti >= len(valori) and o.non_trovati == [], (nome, o.non_trovati)
+        pdf = pdfium.PdfDocument(o.pdf)
+        assert pdf[0].get_textpage().get_text_range().strip() == ""  # solo immagini: niente testo da copiare

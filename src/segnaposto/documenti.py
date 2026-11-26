@@ -1,6 +1,7 @@
 """Leggere i documenti di tutti i giorni e riscriverli dopo la pseudonimizzazione.
 
-Ingresso: .txt .md, .docx, .pdf (con testo), .eml (con gli allegati leggibili), .xlsx, .csv.
+Ingresso: .txt .md, .docx, .pdf (anche scansionati, con l'OCR), immagini (.png .jpg .tif), .eml e .msg (con gli
+          allegati leggibili), .xlsx, .csv.
 Uscita:   .txt, .md, .docx, .xlsx, .csv.
 
 Le tabelle (Excel, CSV, tabelle di Word) diventano righe con le celle separate da tabulazione: il motore lavora
@@ -21,7 +22,8 @@ from html.parser import HTMLParser
 from pathlib import PurePath
 
 FOGLIO = "### Foglio: "  # riga che separa i fogli di un Excel nel testo
-LEGGIBILI = (".txt", ".md", ".text", ".log", ".docx", ".pdf", ".eml", ".xlsx", ".xlsm", ".csv", ".tsv")
+IMMAGINI = (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp")
+LEGGIBILI = (".txt", ".md", ".text", ".log", ".docx", ".pdf", ".eml", ".msg", ".xlsx", ".xlsm", ".csv", ".tsv") + IMMAGINI
 FORMATI_USCITA = ("txt", "md", "docx", "xlsx", "csv")
 MAX_BYTE = 25 * 1024 * 1024
 
@@ -49,11 +51,12 @@ _COLONNE = {v: k for k, vs in COLONNE.items() for v in vs}
 @dataclass
 class Documento:
     nome: str
-    formato: str                    # testo, docx, pdf, email, tabella
+    formato: str                    # testo, docx, pdf, immagine, email, tabella
     testo: str
     forzati: dict[str, str] = field(default_factory=dict)  # valori da nascondere comunque (colonne riconosciute)
     colonne: list[str] = field(default_factory=list)       # intestazioni riconosciute, per dirlo a chi usa l'app
     avvisi: list[str] = field(default_factory=list)
+    ocr_pagine: int = 0             # pagine o immagini lette con l'OCR: vanno rilette con più attenzione
 
 
 def leggi(nome: str, dati: bytes, profondita: int = 0) -> Documento:
@@ -76,11 +79,13 @@ def leggi(nome: str, dati: bytes, profondita: int = 0) -> Documento:
     if est == ".doc":
         raise ValueError("I .doc del vecchio Word non si leggono: aprilo e salvalo come .docx.")
     if est == ".msg":
-        raise ValueError("Le email .msg di Outlook non si leggono ancora: trascina l'email sul desktop come .eml, oppure copia il testo.")
+        return _msg(nome, dati, profondita)
     if est == ".xls":
         raise ValueError("I .xls del vecchio Excel non si leggono: salvalo come .xlsx.")
-    if est in (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".heic"):
-        raise ValueError("Le immagini richiedono il riconoscimento del testo (OCR), in arrivo nella prossima versione.")
+    if est in IMMAGINI:
+        return _immagine(nome, dati)
+    if est in (".heic", ".heif"):
+        raise ValueError("Le foto HEIC dell'iPhone non si leggono: esportale come JPG (su Mac: Anteprima → Esporta).")
     raise ValueError(f"Formato {est} non supportato. Si leggono: {', '.join(LEGGIBILI)}.")
 
 
@@ -151,22 +156,52 @@ def _docx(nome: str, dati: bytes) -> Documento:
 def _pdf(nome: str, dati: bytes) -> Documento:
     import pypdfium2 as pdfium
 
+    from . import ocr
+
     try:
         pdf = pdfium.PdfDocument(dati)
     except pdfium.PdfiumError as e:
         raise ValueError("Il PDF non si apre: è protetto da password o danneggiato.") from e
-    pagine, vuote = [], 0
+    doc = Documento(nome, "pdf", "")
+    pagine, scansioni = [], []
     for i in range(len(pdf)):
-        t = pdf[i].get_textpage().get_text_range().replace("\r\n", "\n").replace("\r", "\n")
-        if len(t.strip()) < 20:
-            vuote += 1
-        pagine.append(t.strip())
-    doc = Documento(nome, "pdf", "\n\n".join(p for p in pagine if p))
-    if vuote == len(pagine):
-        raise ValueError("Questo PDF è una scansione (immagini, niente testo): serve il riconoscimento del testo (OCR), in arrivo nella prossima versione.")
-    if vuote:
-        doc.avvisi.append(f"{vuote} pagine su {len(pagine)} sembrano scansioni: il loro testo non è stato letto.")
+        t = pdf[i].get_textpage().get_text_range().replace("\r\n", "\n").replace("\r", "\n").strip()
+        if len(t) < 20:
+            scansioni.append(i)
+        pagine.append(t)
+    if scansioni:
+        if not ocr.disponibile():
+            if len(scansioni) == len(pagine):
+                raise ValueError("Questo PDF è una scansione (immagini, niente testo): serve il riconoscimento del testo (OCR), "
+                                 "che non è installato. Installa segnaposto con l'opzione [ocr].")
+            doc.avvisi.append(f"{len(scansioni)} pagine su {len(pagine)} sembrano scansioni e non sono state lette (OCR non installato).")
+        else:
+            for i in scansioni:
+                pagine[i] = ocr.testo_da_righe(ocr.leggi_immagine(ocr.rendi_pagina(pdf[i])))
+            doc.ocr_pagine = len(scansioni)
+            doc.avvisi.append(("Tutte le pagine sono state lette" if len(scansioni) == len(pagine) else
+                               f"{len(scansioni)} pagine su {len(pagine)} sono state lette") +
+                              " con il riconoscimento del testo (OCR): confronta il risultato con l'originale.")
+    doc.testo = "\n\n".join(p for p in pagine if p)
+    if not doc.testo.strip():
+        raise ValueError("Nel PDF non c'è testo leggibile.")
     return doc
+
+
+def _immagine(nome: str, dati: bytes) -> Documento:
+    from . import ocr
+
+    if not ocr.disponibile():
+        raise ValueError("Per leggere le immagini serve il riconoscimento del testo (OCR), che non è installato.")
+    try:
+        img = ocr.apri_immagine(dati)
+    except Exception as e:
+        raise ValueError("L'immagine non si apre: formato non riconosciuto o file danneggiato.") from e
+    testo = ocr.testo_da_righe(ocr.leggi_immagine(img))
+    if not testo:
+        raise ValueError("Nell'immagine non è stato trovato testo.")
+    return Documento(nome, "immagine", testo, ocr_pagine=1,
+                     avvisi=["Testo letto con il riconoscimento del testo (OCR): confronta il risultato con l'immagine."])
 
 
 class _Html(HTMLParser):
@@ -230,7 +265,68 @@ def _eml(nome: str, dati: bytes, profondita: int) -> Documento:
         parti.append(f"--- Allegato: {fn} ---\n{sotto.testo}")
         doc.forzati.update(sotto.forzati)
         doc.colonne += sotto.colonne
+        doc.ocr_pagine += sotto.ocr_pagine
         doc.avvisi += [f"{fn}: {x}" for x in sotto.avvisi]
+    doc.testo = "\n\n".join(p for p in parti if p)
+    return doc
+
+
+def _msg(nome: str, dati: bytes, profondita: int) -> Documento:
+    """Email di Outlook (.msg): un file OLE. Si leggono intestazioni, corpo (testo o HTML) e allegati."""
+    import olefile
+
+    try:
+        ole = olefile.OleFileIO(io.BytesIO(dati))
+    except OSError as e:
+        raise ValueError("Il file .msg non si apre: non sembra un'email di Outlook.") from e
+
+    def campo(radice: str, codice: str) -> str:
+        for suff, cod in (("001F", "utf-16-le"), ("001E", "cp1252")):
+            percorso = f"{radice}__substg1.0_{codice}{suff}"
+            if ole.exists(percorso):
+                return ole.openstream(percorso).read().decode(cod, "replace").rstrip("\x00")
+        return ""
+
+    def binario(radice: str, codice: str) -> bytes:
+        percorso = f"{radice}__substg1.0_{codice}0102"
+        return ole.openstream(percorso).read() if ole.exists(percorso) else b""
+
+    righe = []
+    mitt, mail = campo("", "0C1A"), campo("", "0C1F") or campo("", "5D01")
+    if mitt or mail:
+        righe.append(f"Da: {mitt} <{mail}>" if mitt and mail and mail not in mitt else f"Da: {mitt or mail}")
+    for cod, etichetta in (("0E04", "A"), ("0E03", "Cc"), ("0037", "Oggetto")):
+        v = campo("", cod)
+        if v:
+            righe.append(f"{etichetta}: {v}")
+    doc = Documento(nome, "email", "")
+    corpo = campo("", "1000")
+    if not corpo.strip():
+        html = binario("", "1013")
+        if html:
+            corpo = html_in_testo(_decodifica(html))
+        else:
+            doc.avvisi.append("Il corpo di questa email è solo in formato RTF e non è stato letto: copia il testo dall'email.")
+    parti = ["\n".join(righe), corpo.strip()]
+    allegati = sorted({e[0] for e in ole.listdir() if e and e[0].startswith("__attach_version1.0_")})
+    for a in allegati:
+        radice = a + "/"
+        fn = campo(radice, "3707") or campo(radice, "3704") or campo(radice, "3001") or "allegato"
+        contenuto = binario(radice, "3701")
+        if profondita >= 2 or not fn.lower().endswith(LEGGIBILI) or not contenuto:
+            doc.avvisi.append(f"Allegato non letto: {fn}")
+            continue
+        try:
+            sotto = leggi(fn, contenuto, profondita + 1)
+        except Exception as e:
+            doc.avvisi.append(f"Allegato {fn}: {e}")
+            continue
+        parti.append(f"--- Allegato: {fn} ---\n{sotto.testo}")
+        doc.forzati.update(sotto.forzati)
+        doc.colonne += sotto.colonne
+        doc.ocr_pagine += sotto.ocr_pagine
+        doc.avvisi += [f"{fn}: {x}" for x in sotto.avvisi]
+    ole.close()
     doc.testo = "\n\n".join(p for p in parti if p)
     return doc
 

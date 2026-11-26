@@ -83,11 +83,11 @@ footer a{color:inherit}
 <main>
   <div class="passi">
     <section class="passo" id="p1">
-      <div class="rilascia">Rilascia qui il documento<small>Word, PDF, Excel, CSV, email .eml, testo</small></div>
+      <div class="rilascia">Rilascia qui il documento<small>Word, PDF (anche scansionati), foto, Excel, CSV, email .eml e .msg, testo</small></div>
       <h2><span class="n">1</span>Il testo da proteggere<span class="dx"><button class="sec" id="apri">Apri un file…</button></span></h2>
-      <input type="file" id="scegli" hidden accept=".txt,.md,.docx,.pdf,.eml,.xlsx,.xlsm,.csv,.tsv">
+      <input type="file" id="scegli" hidden accept=".txt,.md,.docx,.pdf,.eml,.msg,.xlsx,.xlsm,.csv,.tsv,.png,.jpg,.jpeg,.tif,.tiff,.bmp,.webp">
       <div class="file" id="file" hidden></div>
-      <textarea id="in" placeholder="Incolla qui un'email, un reclamo, un'offerta…&#10;&#10;Oppure trascina qui un documento: Word, PDF, Excel, CSV, email salvata (.eml)."></textarea>
+      <textarea id="in" placeholder="Incolla qui un'email, un reclamo, un'offerta…&#10;&#10;Oppure trascina qui un documento: Word, PDF (anche scansionati), foto di un documento, Excel, CSV, email di Outlook o Mail. Puoi anche incollare uno screenshot."></textarea>
       <div class="azioni"><button class="btn" id="vai" disabled>Pseudonimizza →</button><span class="kbd">⌘/Ctrl + Invio</span><span class="stato" id="st1"></span></div>
     </section>
     <section class="passo">
@@ -96,7 +96,8 @@ footer a{color:inherit}
       <div class="uscita" id="out" data-vuoto="Qui comparirà il testo con i segnaposto."></div>
       <div class="azioni"><button class="btn" id="copia1" disabled>Copia</button>
         <select id="fmt1" title="Formato del file"><option value="txt">.txt</option><option value="docx">.docx</option><option value="xlsx">.xlsx</option><option value="csv">.csv</option><option value="md">.md</option></select>
-        <button class="sec" id="salva1" disabled>Salva…</button><span class="stato" id="cp1"></span></div>
+        <button class="sec" id="salva1" disabled>Salva…</button><button class="sec" id="oscura" hidden title="Le pagine originali con i dati coperti: un PDF di sole immagini, senza testo nascosto">PDF oscurato…</button><span class="stato" id="cp1"></span></div>
+      <div class="esito" id="esito1" hidden></div>
     </section>
   </div>
   <section class="passo" style="flex:none">
@@ -147,7 +148,7 @@ function tabella(t){S.tab=t;var k=Object.keys(t);$("ntab").textContent=k.length;
   $("righe").innerHTML=k.map(function(s){return "<tr><td><mark data-s=\""+esc(s)+"\">"+esc(s)+"</mark></td><td>"+esc(t[s])+"</td><td><button class=\"sec\" data-mostra=\""+esc(t[s])+"\">Non è un dato</button></td></tr>"}).join("")}
 function pseudonimizza(){var t=$("in").value;if(!t.trim()||!S.pronto)return Promise.resolve();S.lavoro=true;aggiornaVai();$("st1").textContent="Analizzo…";
   return api("/api/pseudonimizza",{testo:t}).then(function(d){S.out=d.testo;var o=$("out");o.innerHTML=evidenzia(d.testo);o.classList.toggle("tab",!!(S.doc&&S.doc.tabellare));
-    $("copia1").disabled=$("salva1").disabled=false;
+    $("copia1").disabled=$("salva1").disabled=false;$("oscura").disabled=!(S.doc&&S.doc.oscurabile);
     $("st1").textContent=d.trovati.length+" dati sostituiti.";
     $("conte").innerHTML=Object.keys(d.conta).sort().map(function(k){return "<span>"+esc(k.toLowerCase().replace(/_/g," "))+" "+d.conta[k]+"</span>"}).join("");
     tabella(d.tabella)}).catch(function(e){$("st1").textContent=e.message}).finally(function(){S.lavoro=false;aggiornaVai()})}
@@ -156,14 +157,16 @@ document.addEventListener("keydown",function(e){if((e.metaKey||e.ctrlKey)&&e.key
 
 /* ---- documenti: apri o trascina ---- */
 function formatoPredefinito(nome,tabellare){var e=(nome.split(".").pop()||"").toLowerCase();if(tabellare)return e==="csv"?"csv":"xlsx";if(e==="docx")return "docx";if(e==="md")return "md";return "txt"}
-function caricaDati(nome,b64){$("st1").textContent="Leggo "+nome+"…";
-  return api("/api/leggi",{nome:nome,dati:b64}).then(function(d){S.doc={nome:nome,tabellare:d.tabellare};$("in").value=d.testo;
+function caricaDati(nome,b64){$("st1").textContent="Leggo "+nome+"…"+(/\.(pdf|png|jpe?g|tiff?|bmp|webp)$/i.test(nome)?" Se è una scansione leggo il testo dall'immagine: qualche secondo a pagina.":"");$("esito1").hidden=true;
+  return api("/api/leggi",{nome:nome,dati:b64}).then(function(d){S.doc={nome:nome,tabellare:d.tabellare,oscurabile:d.oscurabile};$("oscura").hidden=!d.oscurabile;$("oscura").disabled=true;$("in").value=d.testo;
     var f=formatoPredefinito(nome,d.tabellare);$("fmt1").value=f;$("fmt2").value=f;
     var info=[];if(d.colonne.length)info.push("Colonne nascoste per intero: "+d.colonne.map(esc).join(", "));d.avvisi.forEach(function(a){info.push(esc(a))});
     $("file").innerHTML="<div>📄 <b>"+esc(nome)+"</b> · "+d.testo.length.toLocaleString("it")+" caratteri"+(info.length?"<ul><li>"+info.join("</li><li>")+"</li></ul>":"")+"</div><button class=\"x\" title=\"Togli il documento\">×</button>";
-    $("file").hidden=false;$("file").querySelector(".x").onclick=function(){S.doc=null;$("file").hidden=true;$("in").value="";aggiornaVai()};
+    $("file").hidden=false;$("file").querySelector(".x").onclick=function(){S.doc=null;$("file").hidden=true;$("oscura").hidden=true;$("esito1").hidden=true;$("in").value="";aggiornaVai()};
     $("st1").textContent="";aggiornaVai();if(S.pronto)return pseudonimizza()}).catch(function(e){$("st1").textContent=e.message})}
 function leggiFile(f){if(!f)return;var r=new FileReader();r.onload=function(){caricaDati(f.name,String(r.result).split(",")[1]||"")};r.readAsDataURL(f)}
+document.addEventListener("paste",function(e){var it=(e.clipboardData||{}).items||[];for(var i=0;i<it.length;i++){if(it[i].kind==="file"&&/^image\//.test(it[i].type)){e.preventDefault();var f=it[i].getAsFile();var est=(it[i].type.split("/")[1]||"png").replace("jpeg","jpg");
+  var r=new FileReader();r.onload=function(){caricaDati("screenshot."+est,String(r.result).split(",")[1]||"")};r.readAsDataURL(f);return}}});
 $("apri").onclick=function(){if(nativo()&&window.pywebview.api.apri){window.pywebview.api.apri().then(function(d){if(d&&d.nome)caricaDati(d.nome,d.dati)})}else $("scegli").click()};
 $("scegli").onchange=function(){leggiFile(this.files[0]);this.value=""};
 var p1=$("p1"),dentro=0;
@@ -204,18 +207,25 @@ function copia(t,el){function fatto(){el.textContent="Copiato.";setTimeout(funct
   function ripiego(){if(copiaVecchia(t))fatto();else el.textContent="Copia non riuscita: seleziona il testo e usa ⌘C / Ctrl+C."}
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(fatto,ripiego);else ripiego()}
 $("copia1").onclick=function(){copia(S.out,$("cp1"))};$("copia2").onclick=function(){copia(S.vero,$("cp2"))};
+function scaricaFile(d,el,msg){
+  if(nativo()&&window.pywebview.api.salva){return window.pywebview.api.salva(d.nome,d.dati).then(function(p){el.textContent=p?(msg||"Salvato."):""})}
+  var bin=atob(d.dati),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+  var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([u]));a.download=d.nome;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1000);el.textContent=msg||"Scaricato.";return Promise.resolve()}
+$("oscura").onclick=function(){var b=this;b.disabled=true;$("cp1").textContent="Preparo il PDF oscurato…";
+  api("/api/oscura").then(function(d){var e=$("esito1");e.hidden=false;
+    if(d.non_trovati.length){e.className="esito warn";e.textContent=d.coperti+" dati coperti su "+d.pagine+(d.pagine>1?" pagine":" pagina")+". Non trovati sulle pagine: "+d.non_trovati.join(", ")+". Apri il PDF e controlla quei punti prima di usarlo."}
+    else{e.className="esito ok";e.textContent=d.coperti+" dati coperti su "+d.pagine+(d.pagine>1?" pagine":" pagina")+". Il PDF contiene solo immagini: sotto i rettangoli non resta testo."}
+    return scaricaFile(d,$("cp1"))}).catch(function(e){$("cp1").textContent=e.message}).finally(function(){b.disabled=false})};
 function salva(testo,formato,suffisso,el){var nome=S.doc?S.doc.nome:"testo";
   api("/api/esporta",{testo:testo,formato:formato,nome:nome,suffisso:suffisso}).then(function(d){
-    if(nativo()&&window.pywebview.api.salva){return window.pywebview.api.salva(d.nome,d.dati).then(function(p){el.textContent=p?"Salvato.":""})}
-    var bin=atob(d.dati),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
-    var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([u]));a.download=d.nome;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1000);el.textContent="Scaricato."
+    return scaricaFile(d,el)
   }).catch(function(e){el.textContent=e.message})}
 $("salva1").onclick=function(){salva(S.out,$("fmt1").value,"pseudonimizzato",$("cp1"))};
 $("salva2").onclick=function(){salva(S.vero,$("fmt2").value,"risposta",$("cp2"))};
 
 /* ---- pratica ---- */
 $("nuova").onclick=function(){api("/api/nuova").then(function(){["in","risp"].forEach(function(i){$(i).value=""});["out","vero","conte"].forEach(function(i){$(i).innerHTML=""});
-  S.doc=null;$("file").hidden=true;$("esito").hidden=true;$("copia1").disabled=$("copia2").disabled=$("salva1").disabled=$("salva2").disabled=true;S.out=S.vero="";$("st1").textContent="";tabella({});aggiornaVai()})};
+  S.doc=null;$("file").hidden=true;$("esito").hidden=true;$("esito1").hidden=true;$("oscura").hidden=true;$("copia1").disabled=$("copia2").disabled=$("salva1").disabled=$("salva2").disabled=true;S.out=S.vero="";$("st1").textContent="";tabella({});aggiornaVai()})};
 $("chiudi").onclick=function(){api("/api/chiudi").finally(function(){document.body.innerHTML="<main><h2>segnaposto è chiuso.</h2><p>La tabella della pratica è stata cancellata. Puoi chiudere questa finestra.</p></main>"})};
 })();
 </script>

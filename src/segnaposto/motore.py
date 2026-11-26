@@ -115,6 +115,8 @@ class Segnaposto:
             else:
                 pezzi = [(g.start, g.end)]
             for a, b in pezzi:
+                if g.entity_type in ner:
+                    a = _salta_cortesie(testo, a, b)
                 while a < b and testo[a] in " ,.:;": a += 1
                 while b > a and testo[b - 1] in " ,:;": b -= 1
                 if b - a < 2 or (g.entity_type in ner and testo[a:b].casefold().rstrip(".") in PAROLE_COMUNI):
@@ -160,6 +162,24 @@ class Segnaposto:
             pos = t["fine"]
         parti.append(testo[pos:])
         return Risultato("".join(parti), tabella, trovati)
+
+
+# Parole all'inizio di un nome che non fanno parte del nome: «Gentile Ing. Marco Dal Santo», «Spett.le Bianchi Srl».
+TITOLI = {"sig", "sig.ra", "sig.na", "sigg", "signor", "signora", "signorina", "dott", "dott.ssa", "dr", "ing", "geom", "avv",
+          "rag", "arch", "prof", "prof.ssa", "spett", "spett.le", "spettabile", "egr", "egr.", "gent", "gent.mo", "gent.ma",
+          "on", "mons", "per", "ind"}
+
+
+def _salta_cortesie(testo: str, a: int, b: int) -> int:
+    while True:
+        m = re.match(r"\s*([\w.']+)\s+", testo[a:b])
+        if not m:
+            return a
+        parola = m.group(1).casefold()
+        if parola.rstrip(".,") in PAROLE_COMUNI or parola in PAROLE_COMUNI or parola.rstrip(".") in TITOLI or parola in TITOLI:
+            a += m.end()
+        else:
+            return a
 
 
 def _chiave(valore: str) -> str:

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>segnaposto</title>
+<style>
+:root{--ink:#121116;--bg:#fff;--muted:#666;--line:#ddd;--giallo:#FFC700;--ok:#1a7f37;--ko:#c0392b;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--ink:#eee;--bg:#1b1a20;--muted:#aaa;--line:#3a3a44}}
+body{margin:0;width:330px;font:14px/1.45 -apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+header{display:flex;align-items:center;gap:8px;padding:12px 14px;background:#121116;color:#fff}
+header img{width:22px;height:22px}header b{font-size:15px}header b i{font-style:normal;color:var(--giallo)}
+main{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.stato{padding:8px 10px;border-radius:8px;background:rgba(127,127,127,.12)}
+.stato.ok{border-left:4px solid var(--ok)}.stato.ko{border-left:4px solid var(--ko)}
+label.voce{display:flex;gap:8px;align-items:flex-start;cursor:pointer}label.voce input{margin-top:3px;accent-color:#c99c00}
+small{color:var(--muted);display:block}
+input[type=text]{width:100%;box-sizing:border-box;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:transparent;color:inherit;font:inherit}
+button{font:inherit;padding:6px 11px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit;cursor:pointer}
+button.pri{background:var(--giallo);border-color:var(--giallo);color:#121116;font-weight:600}
+.riga{display:flex;gap:8px}
+details summary{cursor:pointer;color:var(--muted)}
+</style>
+</head>
+<body>
+<header><img src="icone/icona-32.png" alt=""><b>segna<i>posto</i></b></header>
+<main>
+  <div class="stato" id="stato">Controllo il collegamento…</div>
+  <div id="collega" hidden>
+    <small>Nell'app segnaposto: <b>Automazioni → Estensione del browser → Collega l'estensione</b>, poi copia il codice e incollalo qui.</small>
+    <div class="riga" style="margin-top:6px"><input type="text" id="codice" placeholder="Codice di collegamento" autocomplete="off"><button class="pri" id="salva">Collega</button></div>
+  </div>
+  <label class="voce"><input type="checkbox" id="guardia"><span><b>Proteggi prima dell'invio</b><small>Premendo Invio i dati diventano segnaposto nel riquadro: controlli e premi di nuovo Invio.</small></span></label>
+  <label class="voce"><input type="checkbox" id="mostra"><span><b>Mostra i nomi veri nelle risposte</b><small>Solo sul tuo schermo, non vengono inviati. Gli script del sito potrebbero tecnicamente leggerli: se preferisci spegnilo e usa ⌃⌥R / Ctrl+Alt+R.</small></span></label>
+  <div class="riga"><button id="nuova">Nuova pratica</button><button id="scollega" hidden>Scollega</button></div>
+  <details><summary>Altre impostazioni</summary><div style="margin-top:6px"><small>Porta dell'app (predefinita 8789)</small><input type="text" id="porta" inputmode="numeric"></div></details>
+</main>
+<script src="popup.js"></script>
+</body>
+</html>

@@ -59,6 +59,11 @@ jobs:
           ditto -c -k --keepParent packaging/dist/segnaposto.app "${{ matrix.nome }}"
           mkdir -p dmg && cp -R packaging/dist/segnaposto.app dmg/ && ln -s /Applications dmg/Applicazioni
           hdiutil create -volname "segnaposto" -srcfolder dmg -ov -format UDZO segnaposto-mac-apple-silicon.dmg
+      - name: Estensione del browser (zip)
+        if: runner.os == 'macOS'
+        run: |
+          python -c "import json; m=json.load(open('estensione/manifest.json')); assert m['version']=='${GITHUB_REF_NAME#v}', m['version']" || [ "${GITHUB_REF_TYPE}" != "tag" ]
+          cd estensione && zip -r ../segnaposto-estensione.zip . -x ".*"
       - name: Pacchetto Windows
         if: runner.os == 'Windows'
         run: Compress-Archive -Path packaging/dist/segnaposto -DestinationPath "${{ matrix.nome }}"
@@ -69,3 +74,4 @@ jobs:
           files: |
             ${{ matrix.nome }}
             segnaposto-mac-apple-silicon.dmg
+            segnaposto-estensione.zip

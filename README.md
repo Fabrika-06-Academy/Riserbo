@@ -172,6 +172,28 @@ Copre Chat Completions, Responses, Messages (anche `count_tokens`), Embeddings e
 - il **registro** (nel pannello) tiene ora, fornitore, modello e quanti dati di che tipo: mai i valori;
 - la tabella dei segnaposto resta in memoria e si azzera dopo un'ora senza richieste.
 
+## Estensione per il browser: ChatGPT, Claude, Gemini
+
+Quando premi Invio, l'estensione chiede all'app aperta di controllare il messaggio: se ci sono dati personali, nel riquadro
+compare la versione con i segnaposto (vedi esattamente cosa parte) e premi Invio una seconda volta. Nelle risposte, e nei
+tuoi messaggi già inviati, i segnaposto diventano i nomi veri solo sul tuo schermo; il riquadro dove scrivi non viene mai
+toccato. Usa la stessa pratica della finestra e delle scorciatoie.
+
+Funziona su chatgpt.com, claude.ai, gemini.google.com, Copilot, Le Chat di Mistral, Perplexity e DeepSeek, con Chrome,
+Edge e Brave. Installazione, finché non è sul Chrome Web Store:
+
+1. Nell'app: **Automazioni → Estensione del browser → Collega l'estensione** e copia il codice.
+2. Scarica `segnaposto-estensione.zip` dall'[ultima versione](https://github.com/Fabrika-06-Academy/segnaposto/releases/latest)
+   e decomprimilo.
+3. In Chrome apri `chrome://extensions`, attiva **Modalità sviluppatore**, premi **Carica estensione non pacchettizzata** e
+   scegli la cartella.
+4. Clicca l'icona di segnaposto nella barra del browser e incolla il codice.
+
+Cosa sapere: l'estensione parla solo con l'app su `127.0.0.1:8789`, con il codice di collegamento; le pagine web non possono
+usare quel canale. Se l'app è chiusa il messaggio non parte e compare un avviso: premendo di nuovo Invio parte **senza**
+protezione. I nomi veri mostrati nelle risposte non vengono inviati, ma tecnicamente gli script del sito potrebbero leggerli
+dalla pagina: chi preferisce spegne «Mostra i nomi veri» e usa ⌃⌥R. Gli allegati (file, immagini) non passano da segnaposto.
+
 ## Claude Desktop e gli agenti MCP
 
 segnaposto è anche un **server MCP**: Claude Desktop legge i tuoi documenti *attraverso* segnaposto e vede solo i segnaposto,

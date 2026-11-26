@@ -266,6 +266,13 @@ footer a{color:inherit}
     <div style="display:flex;gap:8px;flex-wrap:wrap"><input type="text" id="mcpNuova" placeholder="Percorso di una cartella" style="flex:1;min-width:180px"><button class="sec" id="mcpAggiungi">Aggiungi</button></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="mcpCollega">Collega a Claude Desktop</button><button class="sec" id="mcpScollega" hidden>Scollega</button></div>
     <p class="esito" id="mcpEsito" hidden></p>
+    <div class="sezione">Estensione del browser</div>
+    <p style="margin:0">Su ChatGPT, Claude e Gemini: quando premi Invio, l'estensione sostituisce i dati con i segnaposto <b>nel riquadro</b>, così vedi cosa parte; nelle risposte mostra i nomi veri, solo sul tuo schermo. Usa la stessa pratica di questa finestra.</p>
+    <label class="interruttore"><input type="checkbox" id="brAcceso"><span><b>Collega l'estensione</b><small class="stato" style="display:block">Apre un canale solo su questo computer (porta 8789), protetto da un codice.</small></span></label>
+    <div id="brBox" hidden><small class="stato">Codice di collegamento da incollare nell'estensione</small><div class="indirizzo"><code id="brCodice"></code><button class="sec" data-copia="brCodice" data-esito="brCopiato">Copia</button><button class="sec" id="brRigenera" title="Il vecchio codice smette di funzionare">Nuovo codice</button></div><p class="stato" id="brCopiato" style="margin:0"></p></div>
+    <p class="esito warn" id="brErrore" hidden></p>
+    <p class="stato" style="margin:0">Installazione, finché non è sul Chrome Web Store: scarica <a href="https://github.com/Fabrika-06-Academy/segnaposto/releases/latest/download/segnaposto-estensione.zip">segnaposto-estensione.zip</a> e decomprimilo; in Chrome (o Edge, Brave) apri <code>chrome://extensions</code>, attiva «Modalità sviluppatore», premi «Carica estensione non pacchettizzata» e scegli la cartella. Poi clicca l'icona di segnaposto nella barra del browser e incolla il codice.</p>
+    <p class="stato" style="margin:0">I nomi veri nelle risposte compaiono solo nella pagina sul tuo schermo e non vengono inviati; tecnicamente gli script del sito potrebbero leggerli. Se preferisci, nell'estensione spegni «Mostra i nomi veri» e usa ⌃⌥R.</p>
   </div>
 </aside></div>
 <div class="velo" id="parere" hidden><aside class="pannello">
@@ -353,7 +360,7 @@ function disegnaAuto(d){$("autoAcceso").checked=d.attivo;$("autoPallino").hidden
     var ok=r.stato<400;return "<tr><td>"+esc(r.ora.slice(11))+"</td><td>"+esc(r.fornitore)+(r.modello?" · "+esc(r.modello):"")+(r.flusso?" <small class=\"stato\">streaming</small>":"")+"</td><td>"+esc(dati)+"</td><td>"+(ok?"ok":"<b>"+({400:"rifiutata",401:"chiave non valida",403:"non permessa",404:"non trovata",429:"troppe richieste",502:"fornitore irraggiungibile",503:"modello in caricamento"}[r.stato]||"errore "+r.stato)+"</b>")+"</td></tr>"}).join("")
     :"<tr><td colspan=\"4\" class=\"stato\">"+(d.attivo?"Ancora nessuna richiesta.":"Il cancello è spento.")+"</td></tr>"}
 function cancello(azione,porta){return api("/api/cancello",{azione:azione,porta:porta}).then(disegnaAuto).catch(function(e){$("autoErrore").hidden=false;$("autoErrore").textContent=e.message})}
-$("apriAuto").onclick=function(){$("automazioni").hidden=false;cancello("stato");mcp("stato")};
+$("apriAuto").onclick=function(){$("automazioni").hidden=false;cancello("stato");mcp("stato");ponte("stato")};
 var MCP={cartelle:[]};
 function disegnaMcp(d){var e=$("mcpEsito");if(d){MCP.cartelle=MCP.cartelle.length&&!d.collegato?MCP.cartelle:(d.collegato?d.cartelle:d.proposte);
     $("mcpScollega").hidden=!d.collegato;$("mcpCollega").textContent=d.collegato?"Aggiorna il collegamento":"Collega a Claude Desktop";
@@ -370,7 +377,11 @@ $("mcpAggiungi").onclick=function(){var v=$("mcpNuova").value.trim();
 $("mcpCollega").onclick=function(){mcp("collega")};$("mcpScollega").onclick=function(){mcp("scollega")};
 $("autoAcceso").onchange=function(){cancello(this.checked?"accendi":"spegni")};
 $("autoCambia").onclick=function(){cancello("accendi",parseInt($("autoPorta").value,10))};
-document.querySelectorAll("[data-copia]").forEach(function(b){b.onclick=function(){copia($(b.getAttribute("data-copia")).textContent,$("autoCopiato"))}});
+document.querySelectorAll("[data-copia]").forEach(function(b){b.onclick=function(){copia($(b.getAttribute("data-copia")).textContent,$(b.getAttribute("data-esito")||"autoCopiato"))}});
+function disegnaBr(d){$("brAcceso").checked=d.attivo;$("brBox").hidden=!d.attivo;$("brCodice").textContent=d.codice||"";
+  $("brErrore").hidden=!d.errore;$("brErrore").textContent=d.errore||""}
+function ponte(azione){return api("/api/browser",{azione:azione}).then(disegnaBr).catch(function(x){$("brErrore").hidden=false;$("brErrore").textContent=x.message})}
+$("brAcceso").onchange=function(){ponte(this.checked?"accendi":"spegni")};$("brRigenera").onclick=function(){ponte("rigenera")};
 cancello("stato");
 setInterval(function(){if(!$("automazioni").hidden||!$("autoPallino").hidden)cancello("stato")},2000);
 

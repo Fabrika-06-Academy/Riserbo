@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "segnaposto",
+  "version": "0.10.0",
+  "description": "Protegge i dati personali prima di mandarli a ChatGPT, Claude e Gemini e rimette i nomi veri nelle risposte, sul tuo schermo. Lavora con l'app segnaposto.",
+  "homepage_url": "https://github.com/Fabrika-06-Academy/segnaposto",
+  "permissions": ["storage"],
+  "host_permissions": ["http://127.0.0.1/*"],
+  "background": {"service_worker": "sfondo.js"},
+  "content_scripts": [{
+    "matches": [
+      "https://chatgpt.com/*", "https://chat.openai.com/*", "https://claude.ai/*", "https://gemini.google.com/*",
+      "https://copilot.microsoft.com/*", "https://chat.mistral.ai/*", "https://www.perplexity.ai/*", "https://chat.deepseek.com/*"
+    ],
+    "js": ["contenuto.js"],
+    "run_at": "document_idle"
+  }],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "segnaposto",
+    "default_icon": {"16": "icone/icona-16.png", "32": "icone/icona-32.png", "48": "icone/icona-48.png"}
+  },
+  "icons": {"16": "icone/icona-16.png", "32": "icone/icona-32.png", "48": "icone/icona-48.png", "128": "icone/icona-128.png"}
+}

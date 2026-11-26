@@ -106,6 +106,8 @@ class Stato:
         self.cancello = None                   # il proxy per le automazioni (cancello.py), se acceso
         self.cancello_httpd = None
         self.cancello_errore = ""
+        self.ponte_httpd = None                # il canale per l'estensione del browser (ponte_browser.py)
+        self.ponte_errore = ""
         self.nuova_pratica()
 
     def nuova_pratica(self) -> None:
@@ -180,6 +182,36 @@ def stato_cancello(stato: Stato) -> dict:
     c = stato.cancello
     return {"attivo": c is not None, "porta": porta, "indirizzi": indirizzi(porta), "errore": stato.cancello_errore,
             "registro": list(c.registro)[:40] if c else [], "protetti": sum(sum(v["dati"].values()) for v in c.registro) if c else 0}
+
+
+def accendi_ponte(stato: Stato, rigenera: bool = False) -> None:
+    """Il canale per l'estensione del browser: porta fissa, codice di collegamento ricordato tra un avvio e l'altro."""
+    from .ponte_browser import PORTA_PREDEFINITA, avvia_ponte, nuovo_codice
+    spegni_ponte(stato)
+    imp = leggi_impostazioni()
+    codice = imp.get("codice_browser") if not rigenera else None
+    if not codice:
+        codice = nuovo_codice()
+        salva_impostazioni(codice_browser=codice)
+    porta = int(imp.get("porta_browser") or PORTA_PREDEFINITA)
+    try:
+        stato.ponte_httpd = avvia_ponte(stato, codice, porta)
+        stato.ponte_errore = ""
+    except OSError:
+        stato.ponte_errore = f"La porta {porta} è già usata da un altro programma (o da un'altra copia di segnaposto)."
+
+
+def spegni_ponte(stato: Stato) -> None:
+    if stato.ponte_httpd is not None:
+        h, stato.ponte_httpd = stato.ponte_httpd, None
+        threading.Thread(target=h.shutdown, daemon=True).start()
+
+
+def stato_ponte(stato: Stato) -> dict:
+    from .ponte_browser import PORTA_PREDEFINITA
+    imp = leggi_impostazioni()
+    return {"attivo": stato.ponte_httpd is not None, "codice": imp.get("codice_browser", "") if stato.ponte_httpd else "",
+            "porta": int(imp.get("porta_browser") or PORTA_PREDEFINITA), "errore": stato.ponte_errore}
 
 
 def proteggi_appunti(stato: Stato, avvisa=None) -> str:
@@ -306,6 +338,15 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                     salva_impostazioni(cancello=stato.cancello is not None,
                                        **({"porta_cancello": int(dati["porta"])} if dati.get("porta") else {}))
                 return self._json(200, stato_cancello(stato))
+            if percorso == "/api/browser":
+                azione = dati.get("azione")
+                if azione in ("accendi", "rigenera"):
+                    accendi_ponte(stato, rigenera=azione == "rigenera")
+                    salva_impostazioni(browser=stato.ponte_httpd is not None)
+                elif azione == "spegni":
+                    spegni_ponte(stato)
+                    salva_impostazioni(browser=False)
+                return self._json(200, stato_ponte(stato))
             if percorso == "/api/mcp":
                 from .server_mcp import cartelle_predefinite, collega_claude_desktop, scollega_claude_desktop, stato_claude_desktop
                 azione = dati.get("azione")
@@ -494,6 +535,8 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
         threading.Thread(target=stato.carica_modello, daemon=True).start()
     if leggi_impostazioni().get("cancello"):
         accendi_cancello(stato)
+    if leggi_impostazioni().get("browser"):
+        accendi_ponte(stato)
 
     def sorveglia() -> None:
         while True:

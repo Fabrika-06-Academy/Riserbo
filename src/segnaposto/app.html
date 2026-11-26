@@ -11,13 +11,13 @@
   --txt:#16151a;--muted:#6b6a73;--ok:#1d7a46;--warn:#9a4600;
   --sh:0 1px 2px rgba(20,18,12,.05),0 4px 18px rgba(20,18,12,.05);
   --c-per:#ffe58a;--t-per:#5a4300;--c-az:#d4e5ff;--t-az:#0b3d91;--c-luo:#d3f0e0;--t-luo:#0d5c36;
-  --c-con:#e9e0ff;--t-con:#4a2a96;--c-cod:#ffe0cc;--t-cod:#7a3300;--c-alt:#ebe8e2;--t-alt:#3a3940;
+  --c-con:#e9e0ff;--t-con:#4a2a96;--c-cod:#ffe0cc;--t-cod:#7a3300;--c-alt:#ebe8e2;--t-alt:#3a3940;--c-san:#ffd6e0;--t-san:#8a1538;
   color-scheme:light}
 @media (prefers-color-scheme:dark){:root{
   --bg:#111114;--card:#1a1a1f;--field:#15151a;--line:#2a2a31;--line2:#383841;--txt:#ececf1;--muted:#a3a3ad;
   --y-soft:#3a3214;--ok:#5fd08f;--warn:#ffb46b;--sh:none;
   --c-per:#5c4a0c;--t-per:#ffe8a3;--c-az:#16335c;--t-az:#cfe0ff;--c-luo:#123f2a;--t-luo:#c8f1d9;
-  --c-con:#2f2156;--t-con:#e2d8ff;--c-cod:#4e2a12;--t-cod:#ffd9bf;--c-alt:#2c2c33;--t-alt:#dedde3;
+  --c-con:#2f2156;--t-con:#e2d8ff;--c-cod:#4e2a12;--t-cod:#ffd9bf;--c-alt:#2c2c33;--t-alt:#dedde3;--c-san:#5a1a2b;--t-san:#ffd0dc;
   color-scheme:dark}}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -85,7 +85,7 @@ textarea:focus{outline:2px solid var(--y);outline-offset:-1px;border-color:trans
 .attesa p{margin:0;max-width:340px;font-size:.92rem}
 mark{border-radius:6px;padding:1px 6px;font-weight:700;font-size:.86em;cursor:pointer;white-space:nowrap;background:var(--c-alt);color:var(--t-alt)}
 mark.per{background:var(--c-per);color:var(--t-per)}mark.az{background:var(--c-az);color:var(--t-az)}mark.luo{background:var(--c-luo);color:var(--t-luo)}
-mark.con{background:var(--c-con);color:var(--t-con)}mark.cod{background:var(--c-cod);color:var(--t-cod)}
+mark.con{background:var(--c-con);color:var(--t-con)}mark.cod{background:var(--c-cod);color:var(--t-cod)}mark.san{background:var(--c-san);color:var(--t-san)}
 mark[data-s]:hover{outline:2px solid currentColor;outline-offset:1px}
 mark.vero{cursor:default;font-weight:600;font-size:1em;white-space:normal}
 .pagine{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:14px;align-items:center;background:#8b8a90;border-radius:12px;padding:14px}
@@ -231,15 +231,20 @@ function nativo(){return !!(window.pywebview&&window.pywebview.api)}
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
 var S={tab:{},out:"",vero:"",doc:null,pronto:false,lavoro:false,pdf:null,vista:"proteggi",rvista:"evid"};
 
-var FAM={PERSONA:"per",DIPENDENTE:"per",AZIENDA:"az",CLIENTE:"az",FORNITORE:"az",LUOGO:"luo",INDIRIZZO:"luo",EMAIL:"con",TELEFONO:"con",
-  CODICE_FISCALE:"cod",PARTITA_IVA:"cod",IBAN:"cod",TARGA:"cod",DATA_NASCITA:"cod",CODICE:"cod",COMMESSA:"cod"};
+var FAM={PERSONA:"per",DIPENDENTE:"per",ETA:"per",DATA_NASCITA:"per",STATO_CIVILE:"per",AZIENDA:"az",CLIENTE:"az",FORNITORE:"az",LUOGO:"luo",INDIRIZZO:"luo",
+  EMAIL:"con",TELEFONO:"con",ID_TECNICO:"con",SALUTE:"san",CODICE_FISCALE:"cod",PARTITA_IVA:"cod",IBAN:"cod",TARGA:"cod",CODICE:"cod",COMMESSA:"cod",
+  DOCUMENTO:"cod",CONTO:"cod",CARTA:"cod",SEGRETO:"cod",CATASTO:"cod"};
 function fam(s){var t=String(s).replace(/^\[/,"").replace(/_\d+\]?$/,"");return FAM[t]||"alt"}
 var VOCI=[["PERSONA","Persone","nomi e cognomi"],["AZIENDA","Aziende","ragioni sociali, nomi di enti"],["CLIENTE","Clienti e fornitori","dall'anagrafica o da colonne «Cliente», «Fornitore»"],
   ["LUOGO","Luoghi","città, comuni, località"],["INDIRIZZO","Indirizzi","via, numero civico, CAP"],["EMAIL","Email",""],["TELEFONO","Telefoni",""],
   ["CODICE_FISCALE","Codici fiscali","con controllo del carattere finale"],["PARTITA_IVA","Partite IVA","con controllo della cifra finale"],["IBAN","IBAN","con controllo mod 97"],
-  ["TARGA","Targhe",""],["DATA_NASCITA","Date di nascita","solo da colonne di Excel intitolate così"]];
+  ["TARGA","Targhe",""],["DATA_NASCITA","Date di nascita",""],["ETA","Età","«52 anni»"],
+  ["SALUTE","Dati sanitari","malattie, farmaci, cartelle cliniche: dati particolari per il GDPR"],["DOCUMENTO","Documenti","carta d'identità, patente, licenze"],
+  ["CONTO","Conti","numeri di conto, BIC, assegni"],["CARTA","Carte di pagamento",""],["SEGRETO","Password, PIN, CVV",""],
+  ["ID_TECNICO","Indirizzi IP e codici dei dispositivi","IP, MAC, IMEI"],["CATASTO","Dati catastali","foglio, mappale, subalterno"],
+  ["STATO_CIVILE","Stato civile","celibe, coniugata, regime patrimoniale"],["PROFESSIONE","Professioni","spenta di solito: serve al modello per capire il contesto"]];
 var ALIAS={CLIENTE:["CLIENTE","FORNITORE"]};
-var escluse=(ls("sp-escluse")||"").split(",").filter(Boolean);
+var salvate=ls("sp-escluse");var escluse=(salvate===null?"PROFESSIONE":salvate).split(",").filter(Boolean);
 function escludi(){var o=[];escluse.forEach(function(k){(ALIAS[k]||[k]).forEach(function(x){o.push(x)})});return o}
 function disegnaVoci(){$("voci").innerHTML="<p class=\"stato\" style=\"margin:0 0 4px\">Togli la spunta a quello che il modello deve poter leggere: per esempio le città, se servono per rispondere su consegne o sedi.</p>"+
   VOCI.map(function(v){var on=escluse.indexOf(v[0])<0;return "<label class=\"voce\"><input type=\"checkbox\" data-k=\""+v[0]+"\""+(on?" checked":"")+"><span><b>"+v[1]+"</b>"+(v[2]?"<small>"+esc(v[2])+"</small>":"")+"</span><mark class=\""+fam(v[0])+"\" style=\"margin-left:auto;align-self:center;cursor:default\">["+v[0]+"_1]</mark></label>"}).join("");
@@ -310,7 +315,7 @@ function chiudiPop(){if(pop){pop.remove();pop=null}}
 function apriPop(x,y,html){chiudiPop();pop=document.createElement("div");pop.className="pop";pop.innerHTML=html;document.body.appendChild(pop);
   var w=pop.offsetWidth,h=pop.offsetHeight;pop.style.left=Math.max(8,Math.min(x,innerWidth-w-8))+"px";pop.style.top=(y+h+10>innerHeight?y-h-30:y+8)+"px";return pop}
 function correggi(d){chiudiPop();return api("/api/correggi",d).then(pseudonimizza).catch(function(e){$("st1").textContent=e.message})}
-var TIPI=["DATO","PERSONA","AZIENDA","CLIENTE","LUOGO","INDIRIZZO","CODICE"];
+var TIPI=["DATO","PERSONA","AZIENDA","CLIENTE","LUOGO","INDIRIZZO","CODICE","SALUTE","DOCUMENTO"];
 document.addEventListener("click",function(e){var t=e.target;if(!t.closest)return;
   var b=t.closest("[data-mostra]");if(b){correggi({azione:"mostra",valore:b.getAttribute("data-mostra")});return}
   var m=t.closest("mark[data-s]");

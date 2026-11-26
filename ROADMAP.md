@@ -10,6 +10,9 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
   app locale, pacchetti per Mac e Windows, servizio HTTP locale.
 - **v0.3**: finestra nativa. Documenti in ingresso: Word, PDF con testo, Excel, CSV, email .eml con allegati. Colonne
   riconosciute dall'intestazione, indirizzi, correzioni a mano (clic e selezione), salvataggio nel formato d'origine.
+- **v0.6**: nuovo riconoscitore di entità: BERT italiano con oltre 50 categorie (DeepMount00/Italian_NER_XXL_v2, Apache 2.0)
+  in ONNX int8, senza PyTorch. Sul set di prova le fughe scendono da 6 a 1-2 su 88 e i falsi allarmi da 9 a 0. Via il
+  modello spaCy, che aveva licenza non commerciale. Nuove categorie: età, dati sanitari, documenti, conti, password, IP, catasto.
 - **v0.5**: interfaccia rifatta: schede Proteggi / Rimetti i nomi, segnaposto colorati per tipo, anteprima del PDF oscurato,
   scelta di cosa nascondere, valori rimessi evidenziati nella risposta.
 - **v0.4**: OCR di PDF scansionati, foto e screenshot. Abbiamo valutato [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR):
@@ -21,13 +24,7 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
 
 ## Prossimi passi
 
-### Subito: un riconoscitore migliore, con licenza libera
-- Il modello spaCy `it_core_news_sm` sbaglia troppo (piccoli comuni, cognomi comuni, «Contratto» preso per persona) ed è
-  **CC BY-NC-SA 3.0**: va sostituito. Candidati con licenza Apache 2.0, da misurare su testi italiani veri:
-  `osiria/bert-italian-cased-ner` (F1 92,8 dichiarato), `DeepMount00/Italian_NER_XXL_v2` (oltre 50 categorie),
-  `urchade/gliner_multi_pii-v1` (zero-shot, ONNX già pronto). Tutti eseguibili con ONNX Runtime, senza PyTorch.
-
-### v0.5: ovunque, dagli appunti
+### v0.7: ovunque, dagli appunti
 - Da misurare prima: OCR su documenti italiani veri (fatture, carte d'identità, moduli compilati a mano) e confronto con
   Apple Vision su Mac.
 - Icona nella barra dei menu (Mac) e nell'area di notifica (Windows), con l'app sempre pronta.
@@ -35,13 +32,13 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
   appunti trovi la versione pseudonimizzata. Copi la risposta della chat, premi l'altra scorciatoia e torna con i nomi veri.
 - Menu *Servizi* di macOS e *Invia a* di Windows per i file.
 
-### v0.6: il cancello per i modelli
+### v0.8: il cancello per i modelli
 - Un **proxy locale compatibile con le API di OpenAI e Anthropic**. n8n, Make, script Python, Open WebUI e gli editor di
   codice puntano a `http://127.0.0.1` invece che al fornitore. segnaposto pseudonimizza ogni richiesta in uscita, rimette i
   valori nella risposta (anche in streaming) e tiene un **registro di cosa è uscito**, utile per il registro dei trattamenti.
 - Per le automazioni è il passo decisivo: la protezione non dipende più da chi si ricorda di usarla.
 
-### v0.7: agenti e browser
+### v0.9: agenti e browser
 - **Server MCP**: Claude Desktop e gli altri agenti chiamano `pseudonimizza` e `ripristina` come strumenti, e leggono i file
   locali solo attraverso segnaposto.
 - **Estensione per il browser** su ChatGPT, Claude e Gemini: pseudonimizza prima dell'invio e mostra i nomi veri nella

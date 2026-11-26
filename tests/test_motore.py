@@ -78,3 +78,20 @@ def test_cortesie_e_titoli_restano(sp):
     assert r.testo.startswith("Spett.le [") and "Gentile Ing. [PERSONA_" in r.testo and "Cordiali saluti, [PERSONA_" in r.testo
     r = sp.pseudonimizza("Gentile Ing. Marco Dal Santo, le scrivo per Bianchi Srl.")
     assert r.testo.startswith("Gentile Ing. [PERSONA_") and "Dal Santo" not in r.testo
+
+
+def test_riconoscitore_italiano_categorie_nuove(sp):
+    r = sp.pseudonimizza("Il dipendente Luca Zanin, 52 anni, è in malattia per un'ernia del disco.")
+    assert "Zanin" not in r.testo and "52 anni" not in r.testo and "ernia" not in r.testo
+    r = sp.pseudonimizza("Carta d'identità n. CA12345BC rilasciata dal Comune di Thiene.")
+    assert r.testo.startswith("Carta d'identità n. [DOCUMENTO_") and "CA12345BC" not in r.testo
+
+
+def test_niente_falsi_allarmi_sulle_parole_comuni(sp):
+    t = "Contratto. Fattura. Riunione del 3 marzo alle 15:30 presso la sede: ordine del giorno e bilancio 2025."
+    assert sp.pseudonimizza(t).testo == t
+
+
+def test_etichetta_fuori_dal_dato(sp):
+    r = sp.pseudonimizza("Scrive Mario Rossi, IBAN IT60X0542811101000000123456")
+    assert r.tabella.valori["[IBAN_1]"] == "IT60X0542811101000000123456"

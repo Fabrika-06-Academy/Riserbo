@@ -9,3 +9,5 @@ build/
 tabelle/
 packaging/build/
 packaging/dist/
+
+src/segnaposto/modello/

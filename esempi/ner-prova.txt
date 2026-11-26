@@ -1,0 +1,43 @@
+# Set di prova per il riconoscitore di entità: una riga per testo, entità marcate come [[TIPO|testo]].
+# TIPO: PER (persona), ORG (azienda o ente), LOC (luogo). Testi inventati, nomi e casi tipici delle PMI italiane.
+# Servono a confrontare i modelli: la metrica che conta è quante entità restano scoperte (fughe).
+Buongiorno, sono [[PER|Giulia Ferro]] dell'ufficio acquisti di [[ORG|Costruzioni Dalla Pozza]]. Vi scrivo per l'ordine 4471.
+Contratto di fornitura tra [[ORG|Meccanica Zanon]] e [[ORG|Officine Bortolan]], con sede a [[LOC|Thiene]].
+Fattura n. 112 del 3 marzo intestata a [[PER|Marco Costa]], via Roma 4, [[LOC|Schio]].
+Gentile Sig.ra [[PER|Leone]], le confermiamo l'appuntamento di giovedì presso la nostra sede di [[LOC|Arzignano]].
+Ciao [[PER|luca]], domani passa il geometra [[PER|Gallo]] a vedere il capannone di [[LOC|Sarcedo]].
+Spett.le [[ORG|Ferramenta Conte]], in allegato il preventivo richiesto dal sig. [[PER|Bruno Conte]].
+Il cliente [[PER|ROSSI MARIO]] lamenta un ritardo nella consegna a [[LOC|Bassano del Grappa]].
+Ordine confermato. Consegna a [[LOC|Montecchio Maggiore]] entro venerdì, referente [[PER|Elisa Fontana]].
+Ho sentito [[PER|Paolo]] di [[ORG|Studio Dalla Valle]]: il bilancio arriva lunedì.
+Reclamo della [[ORG|Trattoria da Bepi]] di [[LOC|Malo]]: il forno nuovo non scalda.
+La dott.ssa [[PER|Anna Maria De Rossi]] dell'[[ORG|ULSS 7 Pedemontana]] chiede il certificato di conformità.
+Per la commessa del [[ORG|Comune di Zanè]] serve la firma di [[PER|Federico Bianchin]].
+Riunione con [[PER|Stefano Marin]] e [[PER|Chiara Rigon]] di [[ORG|Banca Popolare]] a [[LOC|Vicenza]].
+Il tecnico [[PER|Michele Fabbri]] ha installato il quadro elettrico da [[ORG|Elettroforniture Sbalchiero]].
+[[PER|Rosa]] ha chiamato: la signora [[PER|Rosa Bianco]] di [[LOC|Cittadella]] vuole spostare il ritiro.
+Allegato il DDT firmato da [[PER|Gianni Toniolo]], magazziniere di [[ORG|Logistica Nord Est]].
+Gentili [[ORG|Fratelli Pellizzari]], la merce è partita da [[LOC|Castelfranco Veneto]] stamattina.
+Mi ha scritto [[PER|Laura Sartori]]: chiede se possiamo fare l'impianto anche a [[LOC|Noventa Vicentina]].
+Il dipendente [[PER|Andrea Sole]] è in ferie fino al 20, sostituito da [[PER|Matteo Gasparini]].
+Pratica sinistro: il furgone guidato da [[PER|Davide Marino]] è stato urtato a [[LOC|Padova]].
+Vorrei parlare con [[PER|Valentina]] per la fattura di [[ORG|Acciaierie Venete]].
+Offerta per [[ORG|Pasticceria Dal Zotto]] di [[LOC|Asiago]]: due celle frigo e un abbattitore.
+Il notaio [[PER|Lorenzo Fortuna]] ha fissato il rogito per il capannone di [[LOC|Dueville]].
+Aggiornamento dal cantiere di [[LOC|Valdagno]]: [[PER|Sergio Cappellari]] dice che manca il cemento.
+[[PER|Francesca Martini]] ha lasciato [[ORG|Zordan Arredamenti]], il nuovo referente è [[PER|Nicola Basso]].
+Contratto firmato. Grazie a [[PER|Giorgio Benetti]] e a tutto il team di [[ORG|Brenta Impianti]].
+Fattura scaduta di [[ORG|Autofficina Grigolato]], sollecitare il signor [[PER|Grigolato]] entro fine mese.
+Domanda di [[PER|Simone Lovato]] da [[LOC|Rovigo]]: il bonus vale anche per i pannelli solari?
+La scuola [[ORG|Istituto Rossi]] di [[LOC|Vicenza]] chiede tre preventivi per la palestra.
+Buonasera [[PER|Marta]], le invio le misure. Saluti, [[PER|Ivano Zaupa]].
+L'ufficio di [[LOC|Torri di Quartesolo]] resta chiuso, scrivete a [[PER|Patrizia Dal Lago]].
+Ritiro presso [[ORG|Supermercato Famila]] di [[LOC|Breganze]], chiedere di [[PER|Mirko]].
+[[PER|Tommaso Grandi]] segnala che il bancale di [[ORG|Cartiera Favini]] è arrivato rotto.
+Il presidente [[PER|Renato Sella]] di [[ORG|Confartigianato Vicenza]] apre il convegno.
+Siamo d'accordo con [[PER|Elena Moro]]: il campionario va spedito a [[LOC|Treviso]] e a [[LOC|Verona]].
+Ordine telefonico di [[PER|Bepi]] della [[ORG|Latteria di Villaverla]].
+La pratica di [[PER|Giovanni Fiore]] è ferma in [[ORG|Agenzia delle Entrate]] di [[LOC|Bassano]].
+Nota: [[PER|Ilaria Pozza]] preferisce essere contattata dopo le 18.
+Gentile cliente, il tecnico [[PER|Fabio Leone]] passerà martedì in via Divisione Folgore 3 a [[LOC|Thiene]].
+Abbiamo spedito il campione a [[ORG|Tessitura Marzotto]] all'attenzione di [[PER|Silvia Dalla Costa]].

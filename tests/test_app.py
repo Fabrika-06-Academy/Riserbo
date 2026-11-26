@@ -1,3 +1,4 @@
+import re
 import json
 import threading
 import urllib.request
@@ -67,7 +68,7 @@ def test_documento_correzioni_ed_esportazione(app):
     r2 = post(app, "/api/pseudonimizza", {"testo": "Consegna al deposito Sud."})
     post(app, "/api/correggi", {"azione": "nascondi", "valore": "deposito Sud", "tipo": "dato"})
     r2 = post(app, "/api/pseudonimizza", {"testo": "Consegna al deposito Sud."})
-    assert r2["testo"] == "Consegna al [DATO_1]."
+    assert re.fullmatch(r"Consegna al \[DATO_\d+\]\.", r2["testo"])
     e = post(app, "/api/esporta", {"testo": r["testo"], "formato": "xlsx", "nome": "contatti.csv", "suffisso": "pseudonimizzato"})
     assert e["nome"] == "contatti-pseudonimizzato.xlsx" and base64.b64decode(e["dati"])[:2] == b"PK"
 

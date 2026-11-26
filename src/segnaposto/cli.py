@@ -45,6 +45,8 @@ def main(argv: list[str] | None = None) -> int:
     sa.add_argument("--no-browser", action="store_true", help="non aprire nulla (stampa solo l'indirizzo)")
     sa.add_argument("--browser", action="store_true", help="usa il browser anche se la finestra nativa è disponibile")
 
+    sub.add_parser("scarica-modello", help="scarica il riconoscitore di entità (circa 110 MB, una volta sola)")
+
     s = sub.add_parser("servi", help="servizio HTTP locale (POST /pseudonimizza)")
     s.add_argument("--host", default="127.0.0.1", help="predefinito 127.0.0.1: non esporlo su internet")
     s.add_argument("--porta", type=int, default=8765)
@@ -52,6 +54,10 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--max-caratteri", type=int, default=20000)
 
     a = ap.parse_args(argv)
+    if a.comando == "scarica-modello":
+        from .ner import scarica_modello
+        print(f"Riconoscitore di entità pronto in {scarica_modello()}")
+        return 0
     from .motore import Segnaposto, ripristina
     from .riconoscitori import carica_anagrafica
     from .tabella import Tabella

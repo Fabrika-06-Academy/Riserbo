@@ -26,7 +26,7 @@ artificiale per le aziende. Il metodo è spiegato nel corso
 | 1. Regole | codice fiscale (anche con omocodia), partita IVA, IBAN, email, telefoni, targhe, indirizzi con civico | forma fissa e **controllo delle cifre di verifica**, così un numero a caso non viene scambiato per un IBAN |
 | 1. Anagrafica e codici tuoi | i nomi dei tuoi clienti e fornitori, i codici di commesse e ordini | un CSV esportato dal gestionale, espressioni regolari tue |
 | 1. Colonne riconosciute | in Excel e CSV, intere colonne «Nome», «Ragione sociale», «Email», «Codice fiscale», «Indirizzo»… | l'intestazione dice cosa c'è sotto: il valore viene nascosto anche dove compare nel resto del documento |
-| 2. Riconoscitore di entità | persone, aziende, luoghi | modello spaCy italiano tramite [Presidio](https://github.com/data-privacy-stack/presidio) |
+| 2. Riconoscitore di entità | persone, aziende, luoghi, e poi età, date di nascita, dati sanitari, documenti, conti, password, IP, dati catastali | un BERT italiano con oltre 50 categorie ([DeepMount00/Italian_NER_XXL_v2](https://huggingface.co/DeepMount00/Italian_NER_XXL_v2), Apache 2.0) eseguito in locale con ONNX Runtime, dentro [Presidio](https://github.com/data-privacy-stack/presidio) |
 | 3. Controllo finale (facoltativo) | quello che è sfuggito: «il figlio del titolare», un soprannome | una funzione tua, per esempio un modello piccolo in casa |
 
 Lo stesso valore riceve sempre lo stesso segnaposto nella stessa pratica, così il modello capisce che si parla della stessa persona.
@@ -66,7 +66,7 @@ pip install "segnaposto @ git+https://github.com/Fabrika-06-Academy/segnaposto"
 # con documenti, OCR e finestra dell'app:
 # pip install "segnaposto[app] @ git+https://github.com/Fabrika-06-Academy/segnaposto"
 # oppure, da una copia del repository: pip install -e ".[app]"
-pip install https://github.com/explosion/spacy-models/releases/download/it_core_news_sm-3.8.0/it_core_news_sm-3.8.0-py3-none-any.whl
+segnaposto scarica-modello   # il riconoscitore di entità, circa 110 MB, una volta sola (altrimenti lo scarica al primo uso)
 ```
 
 Tutto gira sul tuo computer o sul tuo server. Nessun dato viene mandato fuori.
@@ -145,7 +145,7 @@ Una soglia ragionevole: zero fughe sui dati a forma fissa, sotto l'uno per cento
 
 ## Limiti noti
 
-- Il riconoscitore di entità `it_core_news_sm` è piccolo e veloce, ma sbaglia sui cognomi che sono anche parole comuni (Ferro, Costa) e sui nomi in minuscolo. Per testi difficili usa `it_core_news_lg` o aggiungi lo strato 3.
+- Il riconoscitore di entità sbaglia ancora su qualche nome scritto tutto in minuscolo dopo un articolo («la sara») e su aziende senza forma giuridica poco note. Sul set di prova `esempi/ner-prova.txt` (88 entità in testi di PMI) lascia scoperte 1-2 entità e non dà falsi allarmi; il vecchio modello spaCy ne lasciava 6, con 9 falsi allarmi. Le correzioni a mano dell'app coprono il resto.
 - Gli indirizzi vengono sostituiti quando hanno il numero civico; una città da sola dipende dal riconoscitore di entità, che sui piccoli comuni sbaglia spesso. Date di nascita e importi restano di proposito (servono al modello), salvo nelle colonne di un Excel intitolate così.
 - Scansioni e foto si leggono con l'OCR ([PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) PP-OCRv6 tramite
   [RapidOCR](https://github.com/RapidAI/RapidOCR), in locale): ottimo sui documenti stampati, meno sulla scrittura a mano.
@@ -157,10 +157,11 @@ Una soglia ragionevole: zero fughe sui dati a forma fissa, sotto l'uno per cento
 
 MIT. © 2026 Andrea Prando, [Fabrika 06](https://fabrika06.com).
 
-**Attenzione alla licenza del modello italiano.** Il riconoscitore di entità usato oggi, `it_core_news_sm` di spaCy, è
-distribuito con licenza **CC BY-NC-SA 3.0** (non commerciale), perché è addestrato sul corpus UD Italian ISDT. Il codice di
-segnaposto è MIT, ma per un uso commerciale verifica tu quella licenza. Lo stiamo sostituendo con un modello con licenza
-Apache 2.0: vedi [ROADMAP.md](ROADMAP.md).
+**Modello del riconoscitore di entità.** [DeepMount00/Italian_NER_XXL_v2](https://huggingface.co/DeepMount00/Italian_NER_XXL_v2),
+licenza Apache 2.0, convertito in ONNX int8 dal workflow `modello` e pubblicato nella release
+[modello-ner-1](https://github.com/Fabrika-06-Academy/segnaposto/releases/tag/modello-ner-1) con le impronte SHA-256 dei file.
+Fino alla versione 0.5 segnaposto usava il modello spaCy `it_core_news_sm`, che ha licenza CC BY-NC-SA 3.0 (non
+commerciale): dalla 0.6 non è più usato né distribuito.
 
 ---
 

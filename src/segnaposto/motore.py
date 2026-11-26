@@ -2,7 +2,7 @@
 
 Strato 1: regole con controllo delle cifre (codice fiscale, partita IVA, IBAN, targhe, email, telefoni, codici tuoi)
           e anagrafica dal gestionale.
-Strato 2: riconoscitore di entità (spaCy italiano) per persone, aziende e luoghi.
+Strato 2: riconoscitore di entità italiano (BERT, oltre 50 categorie) per persone, aziende, luoghi e altri dati.
 Strato 3 (facoltativo): un controllo finale con un modello in casa, tramite `controllo_finale`.
 """
 
@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Iterable
 
 from presidio_analyzer import AnalyzerEngine, EntityRecognizer, RecognizerRegistry
-from presidio_analyzer.nlp_engine import NlpEngineProvider
+from presidio_analyzer.nlp_engine import SlimSpacyNlpEngine
 from presidio_analyzer.predefined_recognizers import (
     EmailRecognizer,
     ItFiscalCodeRecognizer,
@@ -21,6 +21,7 @@ from presidio_analyzer.predefined_recognizers import (
     PhoneRecognizer,
 )
 
+from .ner import RiconoscitoreItaliano
 from .riconoscitori import (FormaGiuridicaRecognizer, IbanItRecognizer, IndirizzoRecognizer, TargaItRecognizer,
                             TitoloPersonaRecognizer)
 from .tabella import Tabella
@@ -30,7 +31,9 @@ NOMI = {
     "PERSON": "PERSONA", "ORGANIZATION": "AZIENDA", "LOCATION": "LUOGO",
     "IT_FISCAL_CODE": "CODICE_FISCALE", "IT_VAT_CODE": "PARTITA_IVA", "IBAN": "IBAN",
     "EMAIL_ADDRESS": "EMAIL", "PHONE_NUMBER": "TELEFONO", "TARGA": "TARGA", "INDIRIZZO": "INDIRIZZO",
-}
+}  # gli altri tipi (DATA_NASCITA, ETA, SALUTE, DOCUMENTO, CONTO...) hanno già il nome italiano
+# Tipi che il riconoscitore trova ma che di solito non si nascondono: servono al modello in cloud per lavorare.
+ESCLUSI_PREDEFINITI = frozenset({"PROFESSIONE"})
 # Precedenza quando due riconoscitori trovano lo stesso pezzo: vince il più specifico.
 PRIORITA = {"IT_FISCAL_CODE": 9, "IT_VAT_CODE": 9, "IBAN": 9, "EMAIL_ADDRESS": 8, "PHONE_NUMBER": 7, "TARGA": 6,
             "CLIENTE": 8, "FORNITORE": 8, "DIPENDENTE": 8, "INDIRIZZO": 7, "PERSON": 3, "ORGANIZATION": 4, "LOCATION": 2}
@@ -56,6 +59,25 @@ class Ripristino:
     inventati: list[str]  # segnaposto che non sono nella tabella: il modello ne ha creati di suoi
 
 
+class _MotoreLeggero(SlimSpacyNlpEngine):
+    """Solo divisione in parole (spaCy senza modello addestrato): le entità le trova il riconoscitore italiano.
+
+    Il «lemma» è la parola in minuscolo: basta per le parole di contesto dei riconoscitori («iban», «targa», «conto»).
+    """
+
+    def __init__(self) -> None:
+        super().__init__(models=[{"lang_code": "it", "model_name": "blank"}], auto_download=False)
+
+    def load(self) -> None:
+        import spacy
+        self.nlp = {"it": spacy.blank("it")}
+
+    def _doc_to_nlp_artifact(self, doc, language):
+        art = super()._doc_to_nlp_artifact(doc, language)
+        art.lemmas = [t.lower_ for t in doc]
+        return art
+
+
 class Segnaposto:
     """Uso tipico:
 
@@ -67,30 +89,18 @@ class Segnaposto:
 
     def __init__(
         self,
-        modello_spacy: str = "it_core_news_sm",
         riconoscitori: Iterable[EntityRecognizer] = (),
+        riconoscitore_entita: EntityRecognizer | None = None,
         soglia: float = 0.35,
         entita_ner: Iterable[str] = ("PERSON", "ORGANIZATION", "LOCATION"),
         controllo_finale: Callable[[str], list[str]] | None = None,
     ) -> None:
-        nlp = NlpEngineProvider(nlp_configuration={
-            "nlp_engine_name": "spacy",
-            "models": [{"lang_code": "it", "model_name": modello_spacy}],
-            "ner_model_configuration": {
-                "model_to_presidio_entity_mapping": {"PER": "PERSON", "ORG": "ORGANIZATION", "LOC": "LOCATION"},
-                "labels_to_ignore": ["MISC"],
-            },
-        }).create_engine()
+        nlp = _MotoreLeggero()
         reg = RecognizerRegistry(supported_languages=["it"])
-        reg.load_predefined_recognizers(languages=["it"], nlp_engine=nlp)
-        # Teniamo solo quello che serve: meno falsi allarmi su numeri e date.
-        for r in list(reg.recognizers):
-            if r.name not in ("SpacyRecognizer",):
-                reg.remove_recognizer(r.name)
         for r in (ItFiscalCodeRecognizer(), ItVatCodeRecognizer(), EmailRecognizer(supported_language="it"),
-                  PhoneRecognizer(supported_language="it", supported_regions=("IT",)), IbanItRecognizer(), TargaItRecognizer(), TitoloPersonaRecognizer(), FormaGiuridicaRecognizer(),
-                  IndirizzoRecognizer(),
-                  *riconoscitori):
+                  PhoneRecognizer(supported_language="it", supported_regions=("IT",)), IbanItRecognizer(), TargaItRecognizer(),
+                  TitoloPersonaRecognizer(), FormaGiuridicaRecognizer(), IndirizzoRecognizer(),
+                  riconoscitore_entita or RiconoscitoreItaliano(), *riconoscitori):
             reg.add_recognizer(r)
         self.analyzer = AnalyzerEngine(registry=reg, nlp_engine=nlp, supported_languages=["it"])
         self.soglia = soglia
@@ -98,17 +108,23 @@ class Segnaposto:
         self.controllo_finale = controllo_finale
 
     def trova(self, testo: str, forzati: dict[str, str] | None = None, ignora: Iterable[str] = (),
-              escludi: Iterable[str] = ()) -> list[dict]:
+              escludi: Iterable[str] | None = None) -> list[dict]:
         """Trova i dati da sostituire.
 
         `forzati`: valore -> tipo, da sostituire sempre (colonne «Nome» di un Excel, correzioni a mano, anagrafica).
         `ignora`: valori che chi rilegge ha indicato come non personali (falsi allarmi).
-        `escludi`: tipi di segnaposto da lasciare in chiaro (es. {"LUOGO"} se le città servono al modello).
+        `escludi`: tipi di segnaposto da lasciare in chiaro (es. {"LUOGO"} se le città servono al modello);
+                   None = ESCLUSI_PREDEFINITI.
         """
         ner = ("PERSON", "ORGANIZATION", "LOCATION")
         no = {_chiave(v) for v in ignora}
         candidati = []  # (tipo, inizio, fine, punteggio, priorità)
         for g in self.analyzer.analyze(text=testo, language="it", score_threshold=self.soglia):
+            dal_modello = (g.recognition_metadata or {}).get("recognizer_name") == "RiconoscitoreItaliano"
+            if dal_modello:
+                g = _rifinisci(testo, g)
+                if g is None:
+                    continue
             if g.entity_type in ner:
                 if g.entity_type not in self.entita_ner:
                     continue
@@ -123,7 +139,8 @@ class Segnaposto:
                 while b > a and testo[b - 1] in " ,:;": b -= 1
                 if b - a < 2 or (g.entity_type in ner and testo[a:b].casefold().rstrip(".") in PAROLE_COMUNI):
                     continue
-                candidati.append((g.entity_type, a, b, g.score, PRIORITA.get(g.entity_type, 5)))
+                prio = 1 if dal_modello and g.entity_type in FORMA_FISSA else PRIORITA.get(g.entity_type, 5)
+                candidati.append((g.entity_type, a, b, g.score, prio))
         for valore, tipo in (forzati or {}).items():
             v = valore.strip()
             if len(v) < 2:
@@ -138,7 +155,7 @@ class Segnaposto:
             if all(c[2] <= s[1] or c[1] >= s[2] for s in scelti):
                 scelti.append(c)
         scelti.sort(key=lambda c: c[1])
-        fuori = set(escludi)
+        fuori = ESCLUSI_PREDEFINITI if escludi is None else set(escludi)
         scelti = [c for c in scelti if NOMI.get(c[0], c[0]) not in fuori]
         trovati = [{"tipo": NOMI.get(c[0], c[0]), "valore": testo[c[1]:c[2]],
                     "inizio": c[1], "fine": c[2], "punteggio": round(c[3], 2)} for c in scelti]
@@ -156,7 +173,7 @@ class Segnaposto:
         return trovati
 
     def pseudonimizza(self, testo: str, tabella: Tabella | None = None, forzati: dict[str, str] | None = None,
-                      ignora: Iterable[str] = (), escludi: Iterable[str] = ()) -> Risultato:
+                      ignora: Iterable[str] = (), escludi: Iterable[str] | None = None) -> Risultato:
         tabella = tabella or Tabella()
         trovati = self.trova(testo, forzati, ignora, escludi)
         parti, pos = [], 0
@@ -172,6 +189,35 @@ class Segnaposto:
 TITOLI = {"sig", "sig.ra", "sig.na", "sigg", "signor", "signora", "signorina", "dott", "dott.ssa", "dr", "ing", "geom", "avv",
           "rag", "arch", "prof", "prof.ssa", "spett", "spett.le", "spettabile", "egr", "egr.", "gent", "gent.mo", "gent.ma",
           "on", "mons", "per", "ind"}
+
+
+# Dati a forma fissa: le regole con il controllo delle cifre sono più affidabili del modello, che vince solo dove
+# le regole non trovano nulla (per esempio un codice fiscale letto male dall'OCR).
+FORMA_FISSA = {"IBAN", "IT_FISCAL_CODE", "IT_VAT_CODE", "PHONE_NUMBER", "EMAIL_ADDRESS", "TARGA"}
+_ETICHETTA = re.compile(r"^(?:iban|c\.?\s?f\.?|cod(?:ice|\.)?\s?fiscale|p\.?\s?iva|partita\s+iva|tel(?:efono)?\.?|"
+                        r"cell(?:ulare)?\.?|e-?mail|pec|targa(?:ta|to)?)\b[\s:.]*", re.IGNORECASE)
+
+
+def _rifinisci(testo: str, g):
+    """Corregge le risposte del modello sui casi che sbaglia: l'etichetta dentro il dato, i numeri presi per indirizzi."""
+    a, b = g.start, g.end
+    if g.entity_type in FORMA_FISSA:
+        m = _ETICHETTA.match(testo[a:b])
+        if m:
+            a += m.end()
+    valore = testo[a:b]
+    if not re.search(r"[A-Za-zÀ-ÿ]", valore):  # solo cifre e segni: va bene per un CAP o un numero, non per un nome
+        if g.entity_type in ("PERSON", "ORGANIZATION", "LOCATION"):
+            return None
+        if g.entity_type == "INDIRIZZO" and not re.fullmatch(r"\d{5}", valore.strip()):
+            return None
+    if g.entity_type in ("DOCUMENTO", "CONTO", "CARTA", "ID_TECNICO") and not re.search(r"\d", valore):
+        return None  # «Carta d'» identità: un numero di documento ha almeno una cifra
+    if b - a < 2:
+        return None
+    if (a, b) != (g.start, g.end):
+        g.start, g.end = a, b
+    return g
 
 
 def _salta_cortesie(testo: str, a: int, b: int) -> int:

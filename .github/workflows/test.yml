@@ -17,6 +17,5 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: pip install -e ".[test]" pytest-github-actions-annotate-failures
-      - run: pip install https://github.com/explosion/spacy-models/releases/download/it_core_news_sm-3.8.0/it_core_news_sm-3.8.0-py3-none-any.whl
       - run: pytest -q
       - run: segnaposto valuta esempi/set-di-prova.jsonl --anagrafica esempi/anagrafica.csv

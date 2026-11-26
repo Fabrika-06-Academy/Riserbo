@@ -285,6 +285,9 @@ def prova_pacchetto() -> None:
     """Controllo del pacchetto costruito (in CI): tutto quello che serve c'è dentro? Esce con errore se manca qualcosa."""
     from .documenti import _scrivi_docx, _scrivi_xlsx
 
+    from .ner import cartella_cache, trova_modello
+    dove = trova_modello()
+    assert dove is not None and dove != cartella_cache(), f"il riconoscitore di entità non è dentro il pacchetto: {dove}"
     sp = Segnaposto()
     r = sp.pseudonimizza("Scrive Mario Rossi, via Roma 12, CF RSSMRA80A01L840J.")
     assert "Mario Rossi" not in r.testo and "[CODICE_FISCALE_1]" in r.testo, r.testo

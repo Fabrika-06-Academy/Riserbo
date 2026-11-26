@@ -2,9 +2,9 @@
 import sys
 from PyInstaller.utils.hooks import collect_all, collect_data_files, copy_metadata
 
-VERSIONE = "0.5.0"
+VERSIONE = "0.6.0"
 datas, binaries, hidden = [], [], []
-pacchetti = ["spacy", "it_core_news_sm", "presidio_analyzer", "thinc", "phonenumbers", "spacy_legacy", "spacy_loggers",
+pacchetti = ["spacy", "presidio_analyzer", "tokenizers", "thinc", "phonenumbers", "spacy_legacy", "spacy_loggers",
              "docx", "pypdfium2", "pypdfium2_raw", "openpyxl", "olefile", "webview",
              "rapidocr", "onnxruntime", "cv2", "shapely", "pyclipper", "omegaconf", "antlr4"]
 if sys.platform == "win32":
@@ -16,7 +16,7 @@ for pkg in pacchetti:
     except Exception:
         pass
 datas += collect_data_files("tldextract") + collect_data_files("segnaposto")
-for pkg in ("spacy", "it_core_news_sm", "presidio_analyzer", "thinc", "segnaposto", "pywebview", "rapidocr", "onnxruntime"):
+for pkg in ("spacy", "presidio_analyzer", "tokenizers", "thinc", "segnaposto", "pywebview", "rapidocr", "onnxruntime"):
     try:
         datas += copy_metadata(pkg)
     except Exception:

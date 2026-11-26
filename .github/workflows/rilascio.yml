@@ -23,8 +23,12 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e ".[test,app]" pyinstaller pillow pytest-github-actions-annotate-failures
-      - run: pip install https://github.com/explosion/spacy-models/releases/download/it_core_news_sm-3.8.0/it_core_news_sm-3.8.0-py3-none-any.whl
       - run: pytest -q
+      - name: Riconoscitore di entità dentro l'app (niente download al primo avvio)
+        shell: bash
+        run: |
+          python -c "from segnaposto.ner import scarica_modello; import shutil; shutil.copytree(scarica_modello(), 'src/segnaposto/modello', dirs_exist_ok=True)"
+          ls -la src/segnaposto/modello
       - run: pyinstaller --noconfirm --clean segnaposto.spec
         working-directory: packaging
       - name: Prova del pacchetto (modello, documenti, finestra)

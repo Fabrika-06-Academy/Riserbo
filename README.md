@@ -61,7 +61,11 @@ Il codice è tutto qui: se preferisci, puoi installarlo con Python come descritt
 
 ```bash
 python -m venv .venv && . .venv/bin/activate
-pip install segnaposto   # oppure, dal repository: pip install -e .
+# Non è (ancora) su PyPI: si installa direttamente da GitHub
+pip install "segnaposto @ git+https://github.com/Fabrika-06-Academy/segnaposto"
+# con documenti, OCR e finestra dell'app:
+# pip install "segnaposto[app] @ git+https://github.com/Fabrika-06-Academy/segnaposto"
+# oppure, da una copia del repository: pip install -e ".[app]"
 pip install https://github.com/explosion/spacy-models/releases/download/it_core_news_sm-3.8.0/it_core_news_sm-3.8.0-py3-none-any.whl
 ```
 
@@ -113,7 +117,7 @@ sp = Segnaposto(controllo_finale=controllo)
 ## L'app dal terminale
 
 ```bash
-pip install -e ".[app]"   # documenti e finestra nativa (pywebview)
+pip install "segnaposto[app] @ git+https://github.com/Fabrika-06-Academy/segnaposto"   # documenti, OCR e finestra nativa
 segnaposto app            # finestra nativa; senza pywebview, o con --browser, si apre nel browser (127.0.0.1, chiave casuale)
 ```
 

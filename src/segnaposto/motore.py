@@ -172,8 +172,8 @@ TITOLI = {"sig", "sig.ra", "sig.na", "sigg", "signor", "signora", "signorina", "
 
 def _salta_cortesie(testo: str, a: int, b: int) -> int:
     while True:
-        m = re.match(r"\s*([\w.']+)\s+", testo[a:b])
-        if not m:
+        m = re.match(r"\s*([\w.']+)(?:\s+|\s*$)", testo[a:b])
+        if not m or not m.end():
             return a
         parola = m.group(1).casefold()
         if parola.rstrip(".,") in PAROLE_COMUNI or parola in PAROLE_COMUNI or parola.rstrip(".") in TITOLI or parola in TITOLI:

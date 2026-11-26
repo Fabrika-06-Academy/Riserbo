@@ -1,0 +1,28 @@
+# Esporta il riconoscitore di entità in ONNX int8 e lo pubblica come release (tag modello-ner-N).
+# L'app e i test lo scaricano da lì: niente PyTorch sui computer di chi lo usa.
+name: modello
+on:
+  push:
+    tags: ["modello-*"]
+permissions:
+  contents: write
+jobs:
+  esporta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install --index-url https://download.pytorch.org/whl/cpu torch
+      - run: pip install transformers onnx onnxruntime
+      - run: python packaging/esporta_modello.py modello-ner
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: "Modello: riconoscitore di entità italiano (${{ github.ref_name }})"
+          body: |
+            Il riconoscitore di entità usato da segnaposto, convertito in ONNX int8.
+            Originale: https://huggingface.co/DeepMount00/Italian_NER_XXL_v2 (licenza Apache 2.0).
+            Non è una versione dell'app: l'app lo scarica o lo include da qui.
+          prerelease: true
+          files: modello-ner/*

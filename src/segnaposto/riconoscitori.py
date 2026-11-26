@@ -130,3 +130,21 @@ class IndirizzoRecognizer(PatternRecognizer):
             patterns=[Pattern("indirizzo", regex, 0.6)],
             global_regex_flags=re.MULTILINE,
         )
+
+
+class SitoRecognizer(PatternRecognizer):
+    """Domini e indirizzi web («didatticafacile.it», «www.bianchi-srl.com/contatti»): il sito di un cliente lo identifica.
+
+    Una regola, non il modello: deve funzionare sempre, perché dal dominio si ricava anche il nome del cliente.
+    """
+
+    TLD = r"(?:it|com|net|org|eu|info|biz|io|co|shop|store|online|site|tech|app|dev|cloud|me|us|uk|de|fr|es|ch|at|sm|va)"
+
+    def __init__(self) -> None:
+        super().__init__(
+            supported_entity="SITO",
+            supported_language="it",
+            patterns=[Pattern("sito", r"(?<![\w@.-])(?:https?://)?(?:www\.)?[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+                                      r"(?:\.[a-z0-9-]+)*\." + self.TLD + r"(?![\w-])(?:/[^\s)\]>,;]*[^\s)\]>,;.:!?])?", 0.6)],
+            global_regex_flags=re.IGNORECASE,
+        )

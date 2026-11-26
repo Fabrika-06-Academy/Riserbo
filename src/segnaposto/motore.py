@@ -23,7 +23,7 @@ from presidio_analyzer.predefined_recognizers import (
 
 from .ner import RiconoscitoreItaliano
 from .riconoscitori import (FormaGiuridicaRecognizer, IbanItRecognizer, IndirizzoRecognizer, TargaItRecognizer,
-                            TitoloPersonaRecognizer)
+                            SitoRecognizer, TitoloPersonaRecognizer)
 from .tabella import Tabella
 
 # Nome dell'entità Presidio -> nome del segnaposto (in italiano, leggibile da chi rilegge).
@@ -36,7 +36,7 @@ NOMI = {
 ESCLUSI_PREDEFINITI = frozenset({"PROFESSIONE"})
 # Precedenza quando due riconoscitori trovano lo stesso pezzo: vince il più specifico.
 PRIORITA = {"IT_FISCAL_CODE": 9, "IT_VAT_CODE": 9, "IBAN": 9, "EMAIL_ADDRESS": 8, "PHONE_NUMBER": 7, "TARGA": 6,
-            "CLIENTE": 8, "FORNITORE": 8, "DIPENDENTE": 8, "INDIRIZZO": 7, "PERSON": 3, "ORGANIZATION": 4, "LOCATION": 2}
+            "CLIENTE": 8, "FORNITORE": 8, "DIPENDENTE": 8, "INDIRIZZO": 7, "SITO": 6, "PERSON": 3, "ORGANIZATION": 4, "LOCATION": 2}
 SEGNAPOSTO = re.compile(r"\[[A-Z_]+_\d+\]")
 # Parole che il modello piccolo scambia per nomi o luoghi, soprattutto a inizio frase nelle email.
 PAROLE_COMUNI = {
@@ -99,7 +99,7 @@ class Segnaposto:
         reg = RecognizerRegistry(supported_languages=["it"])
         for r in (ItFiscalCodeRecognizer(), ItVatCodeRecognizer(), EmailRecognizer(supported_language="it"),
                   PhoneRecognizer(supported_language="it", supported_regions=("IT",)), IbanItRecognizer(), TargaItRecognizer(),
-                  TitoloPersonaRecognizer(), FormaGiuridicaRecognizer(), IndirizzoRecognizer(),
+                  TitoloPersonaRecognizer(), FormaGiuridicaRecognizer(), IndirizzoRecognizer(), SitoRecognizer(),
                   riconoscitore_entita or RiconoscitoreItaliano(), *riconoscitori):
             reg.add_recognizer(r)
         self.analyzer = AnalyzerEngine(registry=reg, nlp_engine=nlp, supported_languages=["it"])
@@ -233,7 +233,7 @@ def _rifinisci(testo: str, g):
             return None
         if g.entity_type == "INDIRIZZO" and not re.fullmatch(r"\d{5}", valore.strip()):
             return None
-    if g.entity_type in ("DOCUMENTO", "CONTO", "CARTA", "ID_TECNICO") and not re.search(r"\d", valore):
+    if g.entity_type in ("DOCUMENTO", "CONTO", "CARTA", "ID_TECNICO", "CATASTO") and not re.search(r"\d", valore):
         return None  # «Carta d'» identità: un numero di documento ha almeno una cifra
     if b - a < 2:
         return None

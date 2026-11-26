@@ -133,6 +133,7 @@ footer a{color:inherit}
     <span class="pillola carica" id="pill">Carico il modello…</span>
     <button class="hbtn" id="apriImpost" title="Scegli quali dati nascondere"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Cosa nascondere</button>
     <button class="hbtn" id="apriTab" title="La tabella che collega segnaposto e valori veri"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>Tabella <span class="badge" id="ntab">0</span></button>
+    <button class="hbtn" id="apriAppunti" title="Proteggi il testo copiato da qualunque programma"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h4"/></svg>Appunti</button>
     <button class="hbtn" id="apriParere" title="Dicci cosa funziona e cosa no">Parere</button>
     <button class="hbtn" id="nuova" title="Cancella tabella e testi e ricomincia">Nuova pratica</button>
     <button class="hbtn" id="chiudi" hidden>Chiudi</button>
@@ -225,6 +226,21 @@ footer a{color:inherit}
   <div class="ctesta"><h3>Cosa nascondere</h3><div class="dx"><button class="sec" data-chiudi>Fatto</button></div></div>
   <div class="corpo" id="voci"></div>
 </aside></div>
+<div class="velo" id="appunti" hidden><aside class="pannello">
+  <div class="ctesta"><h3>Da qualunque programma</h3><div class="dx"><button class="sec" data-chiudi>Chiudi</button></div></div>
+  <div class="corpo">
+    <p style="margin:0">Lascia segnaposto aperto (anche ridotto a icona) e lavora dove vuoi: Outlook, il gestionale, WhatsApp Web.</p>
+    <div class="sezione">Andata</div>
+    <p style="margin:0">1. Seleziona e copia il testo.<br>2. Premi <span class="kbd" data-tasto="proteggi">⌃⌥P</span>: negli appunti c'è la versione con i segnaposto.<br>3. Incolla nella chat.</p>
+    <div class="sezione">Ritorno</div>
+    <p style="margin:0">1. Copia la risposta della chat.<br>2. Premi <span class="kbd" data-tasto="ripristina">⌃⌥R</span>: negli appunti tornano i nomi veri.<br>3. Incolla dove ti serve.</p>
+    <p class="esito" id="appStato" hidden></p>
+    <div class="sezione">Oppure con i pulsanti</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="appProteggi">Proteggi gli appunti</button><button class="sec" id="appRipristina">Rimetti i nomi negli appunti</button></div>
+    <p class="stato" id="appEsito" style="margin:0"></p>
+    <p class="stato" style="margin:0">Usa la stessa pratica e le stesse scelte di «Cosa nascondere» della finestra. La tabella si aggiorna da sola.</p>
+  </div>
+</aside></div>
 <div class="velo" id="parere" hidden><aside class="pannello">
   <div class="ctesta"><h3>Il tuo parere</h3><div class="dx"><button class="sec" data-chiudi>Chiudi</button></div></div>
   <div class="corpo">
@@ -274,18 +290,30 @@ function disegnaVoci(){$("voci").innerHTML="<p class=\"stato\" style=\"margin:0 
   VOCI.map(function(v){var on=escluse.indexOf(v[0])<0;return "<label class=\"voce\"><input type=\"checkbox\" data-k=\""+v[0]+"\""+(on?" checked":"")+"><span><b>"+v[1]+"</b>"+(v[2]?"<small>"+esc(v[2])+"</small>":"")+"</span><mark class=\""+fam(v[0])+"\" style=\"margin-left:auto;align-self:center;cursor:default\">["+v[0]+"_1]</mark></label>"}).join("");
   $("voci").innerHTML+="<div class=\"sezione\">Sempre in chiaro</div><label class=\"campo\"><span class=\"stato\">Nomi da non nascondere mai, uno per riga: i tuoi prodotti, i tuoi fornitori di servizi, la tua azienda se serve. I marchi più noti (PayPal, Google, WordPress…) restano già in chiaro.</span><textarea id=\"vociChiaro\" placeholder=\"Fabrika 06\nBuddyBoss\">"+esc(ls("sp-in-chiaro")||"")+"</textarea></label>"+
     "<div class=\"sezione\">Aggiornamenti</div><label class=\"interruttore\"><input type=\"checkbox\" id=\"vociAgg\""+(ls("sp-agg")==="no"?"":" checked")+"><span><b>Controlla se c'è una versione nuova</b><small class=\"stato\" style=\"display:block\">All'avvio l'app chiede a GitHub solo il numero dell'ultima versione. Non manda nulla dei tuoi testi.</small></span></label>";
-  $("voci").querySelectorAll("input[data-k]").forEach(function(c){c.onchange=function(){var k=c.getAttribute("data-k");escluse=escluse.filter(function(x){return x!==k});if(!c.checked)escluse.push(k);ls("sp-escluse",escluse.join(","));if(S.out)pseudonimizza()}});
-  $("vociChiaro").onchange=function(){ls("sp-in-chiaro",this.value);if(S.out)pseudonimizza()};
+  $("voci").querySelectorAll("input[data-k]").forEach(function(c){c.onchange=function(){var k=c.getAttribute("data-k");escluse=escluse.filter(function(x){return x!==k});if(!c.checked)escluse.push(k);ls("sp-escluse",escluse.join(","));inviaPreferenze();if(S.out)pseudonimizza()}});
+  $("vociChiaro").onchange=function(){ls("sp-in-chiaro",this.value);inviaPreferenze();if(S.out)pseudonimizza()};
   $("vociAgg").onchange=function(){ls("sp-agg",this.checked?"si":"no")}}
 
 function controlla(){api("/api/stato").then(function(d){var p=$("pill");
   if(d.errore){p.className="pillola errore";p.textContent=d.errore;return}
-  if(d.pronto){p.className="pillola pronto";p.textContent="100% su questo computer";S.pronto=true;S.versione=d.versione;aggiorna();controllaAggiornamento();return}
+  if(d.pronto){p.className="pillola pronto";p.textContent="100% su questo computer";S.pronto=true;S.versione=d.versione;S.pratica=d.pratica;aggiorna();controllaAggiornamento();inviaPreferenze();setInterval(sorveglia,1500);return}
   setTimeout(controlla,600)}).catch(function(){setTimeout(controlla,1000)})}
 controlla();
 window.addEventListener("pywebviewready",function(){$("chiudi").hidden=true});
 setTimeout(function(){if(!nativo())$("chiudi").hidden=false},1500);
 
+var MACOS=/Mac/i.test(navigator.platform||navigator.userAgent);
+document.querySelectorAll("[data-tasto]").forEach(function(k){k.textContent=k.getAttribute("data-tasto")==="proteggi"?(MACOS?"⌃⌥P":"Ctrl+Alt+P"):(MACOS?"⌃⌥R":"Ctrl+Alt+R")});
+function inviaPreferenze(){api("/api/preferenze",{escludi:escludi(),in_chiaro:inChiaro()}).catch(function(){})}
+function sorveglia(){api("/api/stato").then(function(d){
+  if(d.scorciatoie){var e=$("appStato");e.hidden=false;
+    if(d.scorciatoie.attive.length===2){e.className="esito ok";e.textContent="Scorciatoie attive: "+(MACOS?"⌃⌥P e ⌃⌥R":"Ctrl+Alt+P e Ctrl+Alt+R")+"."}
+    else{e.className="esito warn";e.textContent="Scorciatoie non disponibili"+(d.scorciatoie.errore?" ("+d.scorciatoie.errore+")":"")+": usa i pulsanti qui sotto."}}
+  if(d.appunti&&d.appunti!==S.appunti){S.appunti=d.appunti;$("appEsito").textContent=d.appunti}
+  if(d.pratica!==S.pratica){S.pratica=d.pratica;api("/api/tabella").then(function(t){tabella(t.tabella)})}}).catch(function(){})}
+function usaAppunti(azione){$("appEsito").textContent="…";api("/api/appunti",{azione:azione}).then(function(d){S.appunti=d.messaggio;$("appEsito").textContent=d.messaggio}).catch(function(e){$("appEsito").textContent=e.message})}
+$("appProteggi").onclick=function(){usaAppunti("proteggi")};$("appRipristina").onclick=function(){usaAppunti("ripristina")};
+$("apriAppunti").onclick=function(){$("appunti").hidden=false};
 function controllaAggiornamento(){if(ls("sp-agg")==="no")return;api("/api/aggiornamento").then(function(d){if(!d.nuova)return;var b=$("agg");
   b.textContent="Nuova versione "+d.versione+" · Scarica";b.title=d.note||"";b.hidden=false;b.onclick=function(){api("/api/apri",{url:d.url})}}).catch(function(){})}
 function apriLink(e){var a=e.target.closest&&e.target.closest("a[href]");if(!a)return;var u=a.getAttribute("href");
@@ -319,7 +347,7 @@ function nomeTipo(k){var v=VOCI.filter(function(x){return x[0]===k})[0];return v
 function tabella(t){S.tab=t;var k=Object.keys(t);$("ntab").textContent=k.length;
   $("righe").innerHTML=k.length?k.map(function(s){return "<tr><td><mark class=\""+fam(s)+"\" style=\"cursor:default\">"+esc(s)+"</mark></td><td>"+esc(t[s])+"</td><td><button class=\"sec\" data-mostra=\""+esc(t[s])+"\" title=\"Era un falso allarme\">In chiaro</button></td></tr>"}).join(""):"<tr><td colspan=3 class=\"stato\">Ancora vuota.</td></tr>"}
 function pseudonimizza(){var t=$("in").value;if(!t.trim()||!S.pronto)return Promise.resolve();S.lavoro=true;aggiorna();$("st1").textContent="Analizzo…";
-  return api("/api/pseudonimizza",{testo:t,escludi:escludi(),in_chiaro:inChiaro()}).then(function(d){S.out=d.testo;S.pdf=null;$("pagine").innerHTML="";$("oscura").textContent="PDF oscurato";$("oscura").onclick=oscura;
+  return api("/api/pseudonimizza",{testo:t,escludi:escludi(),in_chiaro:inChiaro()}).then(function(d){S.pratica=null;S.out=d.testo;S.pdf=null;$("pagine").innerHTML="";$("oscura").textContent="PDF oscurato";$("oscura").onclick=oscura;
     var tab=!!(S.doc&&S.doc.tabellare);$("out").innerHTML=evidenzia(d.testo);$("out").classList.toggle("tab",tab);$("outTesto").textContent=d.testo;$("outTesto").classList.toggle("tab",tab);
     $("copia1").disabled=$("salva1").disabled=$("fmt1").disabled=false;$("oscura").disabled=false;
     var n=d.trovati.length;$("st1").textContent=n?n+(n===1?" dato sostituito":" dati sostituiti")+". Rileggi a destra.":"Nessun dato trovato: rileggi comunque.";
@@ -402,7 +430,7 @@ function salva(testo,formato,suffisso,el){api("/api/esporta",{testo:testo,format
 $("salva1").onclick=function(){salva(S.out,$("fmt1").value,"pseudonimizzato",$("cp1"))};
 $("salva2").onclick=function(){salva(S.vero,$("fmt2").value,"risposta",$("cp2"))};
 
-function chiudiPannelli(){$("impost").hidden=true;$("tabella").hidden=true;$("parere").hidden=true}
+function chiudiPannelli(){$("impost").hidden=true;$("tabella").hidden=true;$("parere").hidden=true;$("appunti").hidden=true}
 $("apriImpost").onclick=function(){disegnaVoci();$("impost").hidden=false};
 $("apriTab").onclick=function(){$("tabella").hidden=false};
 document.querySelectorAll(".velo").forEach(function(v){v.addEventListener("click",function(e){if(e.target===v||e.target.hasAttribute("data-chiudi"))chiudiPannelli()})});

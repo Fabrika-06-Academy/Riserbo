@@ -92,6 +92,11 @@ class Stato:
         self.errore_avvio = ""
         self.ultimo_uso = time.time()
         self.lock = threading.Lock()
+        self.escludi: set[str] | None = None   # preferenze della pagina («Cosa nascondere»), usate anche dalle scorciatoie
+        self.in_chiaro: set[str] = set()
+        self.versione_pratica = 0              # cresce a ogni cambiamento: la pagina si aggiorna se cambia
+        self.ultimo_appunti = ""               # cosa è successo con l'ultima scorciatoia
+        self.scorciatoie = None
         self.nuova_pratica()
 
     def nuova_pratica(self) -> None:
@@ -99,6 +104,7 @@ class Stato:
         self.inviati: set[str] = set()  # segnaposto mandati al modello: servono per trovare i mancanti
         self.forzati: dict[str, str] = {}  # valori da nascondere comunque (colonne riconosciute, aggiunte a mano)
         self.ignora: set[str] = set()      # falsi allarmi indicati da chi rilegge
+        self.versione_pratica = getattr(self, "versione_pratica", 0) + 1
         self.documento: tuple[str, bytes, str] | None = None  # PDF o immagine originale, per l'oscuramento
 
     def carica_modello(self) -> None:
@@ -108,6 +114,58 @@ class Stato:
             self.sp = sp
         except Exception as e:  # pragma: no cover - si vede nella finestra
             self.errore_avvio = f"Il modello italiano non si è caricato: {e}"
+
+
+def proteggi_appunti(stato: Stato, avvisa=None) -> str:
+    """Scorciatoia ⌃⌥P / Ctrl+Alt+P: il testo copiato torna negli appunti con i segnaposto."""
+    from .scorciatoie import leggi_appunti, notifica, scrivi_appunti
+    avvisa = avvisa or notifica
+    try:
+        testo = leggi_appunti()
+        if not testo.strip():
+            msg = "Gli appunti sono vuoti: prima copia il testo da proteggere."
+        elif stato.sp is None:
+            msg = "Sto ancora caricando il modello italiano: riprova tra qualche secondo."
+        else:
+            with stato.lock:
+                stato.ultimo_uso = time.time()
+                r = stato.sp.pseudonimizza(testo, stato.tabella, forzati=stato.forzati, ignora=stato.ignora | stato.in_chiaro,
+                                           escludi=stato.escludi)
+                stato.inviati = {s for s in stato.tabella.valori if s in r.testo}
+                stato.versione_pratica += 1
+            scrivi_appunti(r.testo)
+            n = len(r.trovati)
+            msg = (f"{n} dati sostituiti" if n != 1 else "1 dato sostituito") + ": incolla nella chat." if n else \
+                "Nessun dato trovato: rileggi comunque prima di incollare."
+    except Exception as e:
+        msg = f"Non riesco a usare gli appunti: {e}"
+    stato.ultimo_appunti = msg
+    avvisa("segnaposto · proteggi", msg)
+    return msg
+
+
+def ripristina_appunti(stato: Stato, avvisa=None) -> str:
+    """Scorciatoia ⌃⌥R / Ctrl+Alt+R: la risposta copiata torna negli appunti con i nomi veri."""
+    from .scorciatoie import leggi_appunti, notifica, scrivi_appunti
+    avvisa = avvisa or notifica
+    try:
+        testo = leggi_appunti()
+        with stato.lock:
+            stato.ultimo_uso = time.time()
+            e = ripristina(testo, stato.tabella, attesi=stato.inviati)
+        rimessi = len(SEGNAPOSTO.findall(testo)) - len([x for x in SEGNAPOSTO.findall(testo) if x in e.inventati])
+        if not SEGNAPOSTO.search(testo):
+            msg = "Negli appunti non ci sono segnaposto: copia prima la risposta della chat."
+        else:
+            scrivi_appunti(e.testo)
+            msg = (f"{rimessi} valori rimessi" if rimessi != 1 else "1 valore rimesso") + ": incolla dove ti serve."
+            if e.inventati:
+                msg += f" Attenzione: {', '.join(e.inventati)} non esistono in questa pratica."
+    except Exception as ex:
+        msg = f"Non riesco a usare gli appunti: {ex}"
+    stato.ultimo_appunti = msg
+    avvisa("segnaposto · rimetti i nomi", msg)
+    return msg
 
 
 def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
@@ -165,7 +223,20 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
         def _instrada(self, dati: dict) -> None:
             percorso, testo = self.path, str(dati.get("testo", ""))
             if percorso == "/api/stato":
-                return self._json(200, {"pronto": stato.sp is not None, "errore": stato.errore_avvio, "versione": __version__})
+                sc = stato.scorciatoie
+                return self._json(200, {"pronto": stato.sp is not None, "errore": stato.errore_avvio, "versione": __version__,
+                                        "pratica": stato.versione_pratica, "appunti": stato.ultimo_appunti,
+                                        "scorciatoie": {"attive": sc.attive, "errore": sc.errore} if sc else None})
+            if percorso == "/api/tabella":
+                return self._json(200, {"tabella": stato.tabella.valori, "pratica": stato.versione_pratica})
+            if percorso == "/api/preferenze":
+                esc = dati.get("escludi")
+                stato.escludi = {str(x) for x in esc if isinstance(x, str)} if isinstance(esc, list) else None
+                stato.in_chiaro = {str(x).strip() for x in dati.get("in_chiaro", []) if isinstance(x, str) and str(x).strip()}
+                return self._json(200, {"ok": True})
+            if percorso == "/api/appunti":
+                azione = proteggi_appunti if dati.get("azione") == "proteggi" else ripristina_appunti
+                return self._json(200, {"messaggio": azione(stato, avvisa=lambda *_: None)})
             if percorso == "/api/aggiornamento":
                 try:
                     return self._json(200, controlla_aggiornamento())
@@ -249,9 +320,11 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                         return self._json(503, {"errore": stato.errore_avvio or "Sto ancora caricando il modello italiano, un attimo…"})
                     escludi = {str(x) for x in dati.get("escludi", []) if isinstance(x, str)}
                     sempre = {str(x).strip() for x in dati.get("in_chiaro", []) if isinstance(x, str) and str(x).strip()}
+                    stato.escludi, stato.in_chiaro = escludi, sempre
                     r = stato.sp.pseudonimizza(testo, stato.tabella, forzati=stato.forzati, ignora=stato.ignora | sempre, escludi=escludi)
                     # I segnaposto attesi nella risposta sono quelli dell'ultimo testo mandato, non di tutta la pratica.
                     stato.inviati = {s for s in stato.tabella.valori if s in r.testo}
+                    stato.versione_pratica += 1
                     conta: dict[str, int] = {}
                     for t in r.trovati:
                         conta[t["tipo"]] = conta.get(t["tipo"], 0) + 1
@@ -333,7 +406,33 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
         win = webview.create_window("segnaposto", url, js_api=ponte, width=1280, height=860, min_size=(820, 600),
                                     text_select=True)
         ponte.finestra = win
-        webview.start(private_mode=True)  # niente cache né cookie su disco
+
+        def piccola_notifica(titolo: str, testo: str) -> None:
+            """Windows: un riquadro in basso a destra che non prende il fuoco e sparisce da solo."""
+            html = ("<body style='margin:0;font:14px Segoe UI,sans-serif;background:#121116;color:#fff;padding:12px 16px'>"
+                    f"<b style='color:#FFC700'>{titolo}</b><br>{testo.replace('<', '&lt;')}</body>")
+            try:
+                try:
+                    schermo = webview.screens[0]
+                    x, y = schermo.width - 380, schermo.height - 170
+                except Exception:
+                    x = y = None
+                w = webview.create_window("", html=html, width=360, height=96, frameless=True, on_top=True, focus=False,
+                                          resizable=False, x=x, y=y)
+                threading.Timer(3.0, w.destroy).start()
+            except Exception:
+                pass
+
+        from .scorciatoie import Scorciatoie
+        sc = Scorciatoie({"proteggi": lambda: proteggi_appunti(stato, avvisa_fn),
+                          "ripristina": lambda: ripristina_appunti(stato, avvisa_fn)})
+        stato.scorciatoie = sc
+
+        def avvisa_fn(titolo: str, testo: str) -> None:
+            from .scorciatoie import notifica
+            notifica(titolo, testo, piccola_notifica)
+
+        webview.start(func=sc.registra, private_mode=True)  # niente cache né cookie su disco
         httpd.shutdown()
         return
 
@@ -372,6 +471,22 @@ def prova_pacchetto() -> None:
     o = _oscura("prova.png", buf.getvalue(), {"347 123 4567": "[TELEFONO_1]"})
     assert o.coperti == 1 and o.pdf[:4] == b"%PDF", o
     import webview  # noqa: F401
+    import sys as _sys
+    if _sys.platform == "darwin" or os.name == "nt":
+        from .scorciatoie import Scorciatoie, leggi_appunti, scrivi_appunti
+        try:
+            prima = leggi_appunti()
+        except Exception:
+            prima = ""
+        scrivi_appunti("prova segnaposto àè €")
+        assert leggi_appunti() == "prova segnaposto àè €", "appunti non funzionanti"
+        scrivi_appunti(prima)
+        sc = Scorciatoie({"proteggi": lambda: None, "ripristina": lambda: None})
+        try:
+            sc.registra_mac() if _sys.platform == "darwin" else sc.registra_win()
+        except Exception as e:
+            sc.errore = str(e)
+        print(f"scorciatoie registrate: {sc.attive} {sc.errore}", flush=True)
     print(f"segnaposto {__version__}: pacchetto completo", flush=True)
 
 

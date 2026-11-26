@@ -10,6 +10,8 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
   app locale, pacchetti per Mac e Windows, servizio HTTP locale.
 - **v0.3**: finestra nativa. Documenti in ingresso: Word, PDF con testo, Excel, CSV, email .eml con allegati. Colonne
   riconosciute dall'intestazione, indirizzi, correzioni a mano (clic e selezione), salvataggio nel formato d'origine.
+- **v0.7**: da qualunque programma: ⌃⌥P / Ctrl+Alt+P protegge il testo copiato, ⌃⌥R / Ctrl+Alt+R rimette i nomi, con
+  notifica di conferma; pannello «Appunti» con gli stessi comandi come pulsanti. Nessun permesso di Accessibilità su Mac.
 - **v0.6.5**: avviso di nuova versione con scaricamento in un clic, pannello Parere (arriva all'Academy), elenco «sempre in
   chiaro» e marchi noti non nascosti, spazi mancanti nei PDF ricostruiti dalle posizioni dei caratteri.
 - **v0.6**: nuovo riconoscitore di entità: BERT italiano con oltre 50 categorie (DeepMount00/Italian_NER_XXL_v2, Apache 2.0)
@@ -26,13 +28,10 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
 
 ## Prossimi passi
 
-### v0.7: ovunque, dagli appunti
-- Da misurare prima: OCR su documenti italiani veri (fatture, carte d'identità, moduli compilati a mano) e confronto con
-  Apple Vision su Mac.
-- Icona nella barra dei menu (Mac) e nell'area di notifica (Windows), con l'app sempre pronta.
-- **Scorciatoia globale**: copi un testo in qualunque app (Outlook, gestionale, WhatsApp Web), premi la scorciatoia e negli
-  appunti trovi la versione pseudonimizzata. Copi la risposta della chat, premi l'altra scorciatoia e torna con i nomi veri.
+### Dopo la v0.7
+- Icona nella barra dei menu (Mac) e nell'area di notifica (Windows), per tenere l'app pronta senza finestra.
 - Menu *Servizi* di macOS e *Invia a* di Windows per i file.
+- Scorciatoie configurabili.
 
 ### v0.8: il cancello per i modelli
 - Un **proxy locale compatibile con le API di OpenAI e Anthropic**. n8n, Make, script Python, Open WebUI e gli editor di

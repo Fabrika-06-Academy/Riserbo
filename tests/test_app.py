@@ -113,3 +113,19 @@ def test_aggiornamento_e_link(app, monkeypatch):
         post(app, "/api/apri", {"url": "https://sito-qualsiasi.example/"})
     assert e.value.code == 422
     assert modulo._versione("v0.10.0") > modulo._versione("0.9.12")
+
+
+def test_scorciatoie_sugli_appunti(app, monkeypatch):
+    import segnaposto.scorciatoie as sc
+    appunti = {"t": "Scrivo a Giulia Ferro di Costruzioni Dalla Pozza, tel. 347 123 4567."}
+    monkeypatch.setattr(sc, "leggi_appunti", lambda: appunti["t"])
+    monkeypatch.setattr(sc, "scrivi_appunti", lambda t: appunti.__setitem__("t", t))
+    post(app, "/api/nuova", {})
+    m = post(app, "/api/appunti", {"azione": "proteggi"})["messaggio"]
+    assert "sostituiti" in m and "Ferro" not in appunti["t"] and "[PERSONA_1]" in appunti["t"]
+    assert post(app, "/api/tabella", {})["tabella"]["[PERSONA_1]"] == "Giulia Ferro"
+    appunti["t"] = "Cara [PERSONA_1], confermiamo. Saluti a [PERSONA_7]."
+    m = post(app, "/api/appunti", {"azione": "ripristina"})["messaggio"]
+    assert appunti["t"].startswith("Cara Giulia Ferro,") and "[PERSONA_7]" in m
+    appunti["t"] = ""
+    assert "vuoti" in post(app, "/api/appunti", {"azione": "proteggi"})["messaggio"]

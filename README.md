@@ -50,6 +50,12 @@ Applicazioni; su Windows decomprimi lo zip e apri `segnaposto.exe`. Si apre in u
    chat ne ha persi o inventati. Anche la risposta si può salvare come file.
 5. **Nuova pratica** cancella la tabella; chiudendo l'app si cancella comunque.
 
+**Da qualunque programma, con gli appunti.** Lascia l'app aperta e lavora dove vuoi (Outlook, il gestionale, WhatsApp Web):
+copi il testo, premi **⌃⌥P** su Mac (**Ctrl+Alt+P** su Windows) e negli appunti trovi la versione con i segnaposto, da
+incollare nella chat. Copi la risposta, premi **⌃⌥R** (**Ctrl+Alt+R**) e tornano i nomi veri. Una notifica conferma
+quanti dati sono stati sostituiti. Su Mac le scorciatoie non richiedono il permesso di Accessibilità. Se un altro
+programma le usa già, nel pannello «Appunti» ci sono gli stessi comandi come pulsanti.
+
 **Cosa esce dal computer, e solo se lo vuoi.** I testi e i documenti mai. All'avvio l'app chiede a GitHub il numero
 dell'ultima versione, per proporti l'aggiornamento (si spegne in «Cosa nascondere → Aggiornamenti»). Il pannello
 **Parere** manda all'Academy solo quello che scrivi lì, con versione e sistema operativo, quando premi «Invia».

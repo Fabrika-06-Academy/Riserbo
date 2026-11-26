@@ -103,6 +103,9 @@ class Stato:
         self.scorciatoie = None
         self.vassoio = None
         self.mostra_finestra = None
+        self.cancello = None                   # il proxy per le automazioni (cancello.py), se acceso
+        self.cancello_httpd = None
+        self.cancello_errore = ""
         self.nuova_pratica()
 
     def nuova_pratica(self) -> None:
@@ -120,6 +123,63 @@ class Stato:
             self.sp = sp
         except Exception as e:  # pragma: no cover - si vede nella finestra
             self.errore_avvio = f"Il modello italiano non si è caricato: {e}"
+
+
+def _file_impostazioni():
+    from pathlib import Path
+    if sys.platform == "darwin":
+        base = Path.home() / "Library" / "Application Support"
+    elif os.name == "nt":
+        base = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
+    else:
+        base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    return base / "segnaposto" / "impostazioni.json"
+
+
+def leggi_impostazioni() -> dict:
+    try:
+        return json.loads(_file_impostazioni().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def salva_impostazioni(**valori) -> None:
+    try:
+        f = _file_impostazioni()
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps({**leggi_impostazioni(), **valori}, indent=2), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def accendi_cancello(stato: Stato, porta: int | None = None) -> None:
+    """Il proxy per le automazioni dentro l'app: stesso motore, stesse scelte di «Cosa nascondere», tabella sua."""
+    from .cancello import PORTA_PREDEFINITA, Cancello, avvia_cancello
+    spegni_cancello(stato)
+    porta = int(porta or leggi_impostazioni().get("porta_cancello") or PORTA_PREDEFINITA)
+    c = Cancello(lambda: stato.sp, lock=stato.lock, escludi=lambda: stato.escludi, in_chiaro=lambda: stato.in_chiaro)
+    try:
+        stato.cancello_httpd = avvia_cancello(c, porta=porta)
+    except OSError:
+        stato.cancello_errore = f"La porta {porta} è già usata da un altro programma (o da un'altra copia di segnaposto)."
+        return
+    stato.cancello, stato.cancello_errore = c, ""
+
+
+def spegni_cancello(stato: Stato) -> None:
+    if stato.cancello_httpd is not None:
+        h, stato.cancello_httpd, stato.cancello = stato.cancello_httpd, None, None
+        threading.Thread(target=h.shutdown, daemon=True).start()
+    stato.cancello_errore = ""
+
+
+def stato_cancello(stato: Stato) -> dict:
+    from .cancello import PORTA_PREDEFINITA, indirizzi
+    porta = stato.cancello_httpd.server_address[1] if stato.cancello_httpd else \
+        int(leggi_impostazioni().get("porta_cancello") or PORTA_PREDEFINITA)
+    c = stato.cancello
+    return {"attivo": c is not None, "porta": porta, "indirizzi": indirizzi(porta), "errore": stato.cancello_errore,
+            "registro": list(c.registro)[:40] if c else [], "protetti": sum(sum(v["dati"].values()) for v in c.registro) if c else 0}
 
 
 def proteggi_appunti(stato: Stato, avvisa=None) -> str:
@@ -234,6 +294,18 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                                         "pratica": stato.versione_pratica, "appunti": stato.ultimo_appunti,
                                         "scorciatoie": {"attive": sc.attive, "errore": sc.errore} if sc else None,
                                         "vassoio": bool(stato.vassoio and stato.vassoio.attivo)})
+            if percorso == "/api/cancello":
+                azione = dati.get("azione")
+                if dati.get("porta") and not 1024 <= int(dati["porta"]) <= 65535:
+                    raise ValueError("La porta va scelta tra 1024 e 65535.")
+                if azione in ("accendi", "spegni"):
+                    if azione == "accendi":
+                        accendi_cancello(stato, dati.get("porta"))
+                    else:
+                        spegni_cancello(stato)
+                    salva_impostazioni(cancello=stato.cancello is not None,
+                                       **({"porta_cancello": int(dati["porta"])} if dati.get("porta") else {}))
+                return self._json(200, stato_cancello(stato))
             if percorso == "/api/mostra":  # un secondo avvio dell'app chiede a questa di farsi vedere
                 if stato.mostra_finestra:
                     threading.Thread(target=stato.mostra_finestra, daemon=True).start()
@@ -399,10 +471,14 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
     url = f"http://127.0.0.1:{porta_ref[0]}/?t={chiave}"
     if sp is None:
         threading.Thread(target=stato.carica_modello, daemon=True).start()
+    if leggi_impostazioni().get("cancello"):
+        accendi_cancello(stato)
 
     def sorveglia() -> None:
         while True:
             time.sleep(30)
+            if stato.cancello is not None:  # le automazioni contano come uso
+                stato.ultimo_uso = max(stato.ultimo_uso, stato.cancello.ultimo_uso)
             if time.time() - stato.ultimo_uso > INATTIVITA_MAX:
                 if not in_finestra[0]:  # nel browser: nessuno chiude il server al posto tuo
                     ferma()
@@ -466,6 +542,12 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
                 stato.nuova_pratica()
             avvisa_fn("segnaposto", "Nuova pratica: la tabella precedente è stata cancellata.")
 
+        def cancello_da_menu(acceso: bool) -> None:
+            accendi_cancello(stato) if acceso else spegni_cancello(stato)
+            salva_impostazioni(cancello=stato.cancello is not None)
+            if acceso and stato.cancello is None:
+                avvisa_fn("segnaposto · cancello", stato.cancello_errore)
+
         def esci() -> None:
             vassoio.togli()
             ferma()
@@ -473,7 +555,8 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
         voci: list = [Voce("Apri segnaposto", apri_finestra), None,
                       Voce("Proteggi gli appunti", lambda: proteggi_appunti(stato, avvisa_fn), tasto="proteggi"),
                       Voce("Rimetti i nomi negli appunti", lambda: ripristina_appunti(stato, avvisa_fn), tasto="ripristina"),
-                      Voce("Nuova pratica", nuova), None]
+                      Voce("Nuova pratica", nuova), None,
+                      Voce("Cancello per le automazioni", spunta=lambda: stato.cancello is not None, cambia=cancello_da_menu), None]
         if avvio_possibile():
             voci += [Voce("Apri all'accensione", spunta=avvio_automatico, cambia=imposta_avvio), None]
         voci.append(Voce("Esci da segnaposto", esci))
@@ -564,6 +647,15 @@ def prova_pacchetto() -> None:
     assert "Ferrett" in letto.testo, letto.testo
     o = _oscura("prova.png", buf.getvalue(), {"347 123 4567": "[TELEFONO_1]"})
     assert o.coperti == 1 and o.pdf[:4] == b"%PDF", o
+    from .cancello import Cancello, Richiesta, avvia_cancello
+    canc, ric = Cancello(sp), Richiesta()
+    uscita = canc.proteggi_corpo("/v1/messages", {"messages": [{"role": "user", "content": "Scrive Mario Rossi."}]}, ric)
+    assert "Mario Rossi" not in json.dumps(uscita) and ric.mappa and \
+        canc.rimetti(f"Ciao {next(iter(ric.mappa))}", ric) == "Ciao Mario Rossi", uscita
+    h = avvia_cancello(canc, porta=0)
+    assert json.loads(urllib.request.urlopen(f"http://127.0.0.1:{h.server_address[1]}/salute", timeout=5).read())["ok"]
+    h.shutdown()
+    nota("::notice::cancello: ok")
     from .rete import apri as _apri  # HTTPS con i certificati inclusi: senza, niente avviso di aggiornamento né pareri
     try:
         _apri(urllib.request.Request(REPO_API, headers={"User-Agent": f"segnaposto/{__version__}"}), 20).read()

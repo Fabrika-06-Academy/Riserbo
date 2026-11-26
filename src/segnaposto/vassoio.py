@@ -90,6 +90,7 @@ def imposta_avvio(attivo: bool) -> None:
 # ---------------------------------------------------------------- Mac
 
 _GESTORI: dict[int, Callable] = {}
+_SPUNTE: dict[int, Callable[[], bool]] = {}
 _CLASSE = None
 
 
@@ -104,6 +105,15 @@ def _classe_bersaglio():
                 f = _GESTORI.get(int(mittente.tag()))
                 if f:
                     f(mittente)
+
+            def menuNeedsUpdate_(self, menu):  # le spunte seguono lo stato vero (può cambiare dalla finestra)
+                for it in menu.itemArray():
+                    f = _SPUNTE.get(int(it.tag()))
+                    if f:
+                        try:
+                            it.setState_(1 if f() else 0)
+                        except Exception:
+                            pass
 
         _CLASSE = SegnapostoBersaglioVassoio
     return _CLASSE
@@ -148,8 +158,10 @@ class Vassoio:
                 it.setKeyEquivalentModifierMask_((1 << 18) | (1 << 19))  # Control | Option
             if voce.spunta:
                 it.setState_(1 if voce.spunta() else 0)
+                _SPUNTE[1000 + i] = voce.spunta
             menu.addItem_(it)
             _GESTORI[1000 + i] = self._gestore_mac(voce)
+        menu.setDelegate_(bersaglio)
         item = NSStatusBar.systemStatusBar().statusItemWithLength_(NSVariableStatusItemLength)
         img = NSImage.alloc().initWithContentsOfFile_(str(QUI / "vassoio-mac.png"))
         img.setSize_((18, 18))
@@ -204,6 +216,19 @@ class Vassoio:
                         it.Checked = bool(voce.spunta())
                     it.Click += self._gestore_win(voce, it)
                     menu.Items.Add(it)
+                spunte = []
+                for voce, it in zip([v for v in self.voci if v is not None], [x for x in menu.Items if isinstance(x, ToolStripMenuItem)]):
+                    if voce.spunta:
+                        spunte.append((voce, it))
+
+                def aggiorna_spunte(_s, _e) -> None:
+                    for voce, it in spunte:
+                        try:
+                            it.Checked = bool(voce.spunta())
+                        except Exception:
+                            pass
+
+                menu.Opening += aggiorna_spunte
                 ni.ContextMenuStrip = menu
 
                 def clic(_s, e) -> None:
@@ -213,7 +238,7 @@ class Vassoio:
                 ni.MouseClick += clic
                 ni.Visible = True
                 self._ni = ni
-                self._rif += [menu, clic]
+                self._rif += [menu, clic, aggiorna_spunte]
                 self.attivo = True
             except Exception as e:
                 self.errore = str(e)

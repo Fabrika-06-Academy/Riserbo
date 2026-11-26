@@ -5,6 +5,7 @@
     segnaposto valuta set-di-prova.jsonl
     segnaposto servi --porta 8765
     segnaposto app
+    segnaposto cancello --porta 8788      (proxy compatibile con OpenAI e Anthropic)
 """
 
 from __future__ import annotations
@@ -53,6 +54,16 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--anagrafica")
     s.add_argument("--max-caratteri", type=int, default=20000)
 
+    c = sub.add_parser("cancello", help="proxy locale compatibile con OpenAI e Anthropic: pseudonimizza all'andata, "
+                                        "rimette i nomi al ritorno")
+    c.add_argument("--host", default="127.0.0.1", help="predefinito 127.0.0.1; un altro indirizzo richiede --chiave")
+    c.add_argument("--porta", type=int, default=8788)
+    c.add_argument("--chiave", default="", help="segreto nel percorso (…/k/CHIAVE/openai/v1): obbligatorio fuori da 127.0.0.1")
+    c.add_argument("--openai", help="indirizzo di un servizio compatibile con OpenAI (OpenRouter, Mistral, Ollama…)")
+    c.add_argument("--anthropic", help="indirizzo alternativo per Anthropic")
+    c.add_argument("--consenti-allegati", action="store_true", help="lascia passare immagini e file (NON pseudonimizzati)")
+    c.add_argument("--anagrafica")
+
     a = ap.parse_args(argv)
     if a.comando == "scarica-modello":
         from .ner import scarica_modello
@@ -85,6 +96,25 @@ def main(argv: list[str] | None = None) -> int:
     if a.comando == "servi":
         from .servizio import servi
         servi(a.host, a.porta, sp, a.max_caratteri)
+        return 0
+
+    if a.comando == "cancello":
+        from .cancello import Cancello, avvia_cancello, indirizzi
+        if a.host not in ("127.0.0.1", "localhost") and len(a.chiave) < 16:
+            print("Fuori da 127.0.0.1 serve --chiave con almeno 16 caratteri: chiunque nella rete potrebbe usarlo.", file=sys.stderr)
+            return 2
+        fornitori = {k: v for k, v in (("openai", a.openai), ("anthropic", a.anthropic)) if v}
+        canc = Cancello(sp, fornitori=fornitori, consenti_allegati=a.consenti_allegati)
+        httpd = avvia_cancello(canc, a.host, a.porta, a.chiave)
+        url = indirizzi(a.porta, a.host if a.host != "0.0.0.0" else "INDIRIZZO-DI-QUESTO-SERVER", a.chiave)
+        print(f"Cancello di segnaposto attivo.\n  OpenAI e compatibili  base URL: {url['openai']}\n"
+              f"  Anthropic             base URL: {url['anthropic']}\n"
+              f"Fornitori: {canc.fornitori['openai']} · {canc.fornitori['anthropic']}\nCtrl+C per fermarlo.", flush=True)
+        try:
+            while True:
+                time.sleep(3600)
+        except KeyboardInterrupt:
+            httpd.shutdown()
         return 0
 
     if a.comando == "valuta":

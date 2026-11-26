@@ -151,3 +151,21 @@ def test_seconda_istanza_sveglia_la_prima(monkeypatch, tmp_path):
     finally:
         httpd.shutdown()
     assert vassoio.risveglia_istanza() is False
+
+
+def test_cancello_dall_app(app, monkeypatch, tmp_path):
+    import socket
+
+    from segnaposto import app as modulo
+    monkeypatch.setattr(modulo, "_file_impostazioni", lambda: tmp_path / "impostazioni.json")
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        libera = s.getsockname()[1]
+    d = post(app, "/api/cancello", {"azione": "accendi", "porta": libera})
+    assert d["attivo"] and d["indirizzi"]["openai"] == f"http://127.0.0.1:{libera}/openai/v1"
+    assert json.loads(urllib.request.urlopen(f"http://127.0.0.1:{libera}/salute").read())["ok"]
+    assert json.loads((tmp_path / "impostazioni.json").read_text()) == {"cancello": True, "porta_cancello": libera}
+    d = post(app, "/api/cancello", {"azione": "spegni"})
+    assert not d["attivo"] and json.loads((tmp_path / "impostazioni.json").read_text())["cancello"] is False
+    with pytest.raises(urllib.error.HTTPError):
+        post(app, "/api/cancello", {"azione": "accendi", "porta": 80})

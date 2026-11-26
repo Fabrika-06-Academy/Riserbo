@@ -138,6 +138,40 @@ pip install "segnaposto[app] @ git+https://github.com/Fabrika-06-Academy/segnapo
 segnaposto app            # finestra nativa; senza pywebview, o con --browser, si apre nel browser (127.0.0.1, chiave casuale)
 ```
 
+## Il cancello: per n8n, Make e i programmi che usano ChatGPT o Claude
+
+Un proxy locale compatibile con le API di OpenAI e Anthropic. Il programma parla con segnaposto invece che con il fornitore:
+ogni richiesta esce pseudonimizzata, la risposta torna con i nomi veri, anche in streaming. La protezione non dipende più da
+chi si ricorda di usarla.
+
+Nell'app: pannello **Automazioni → Attiva il cancello** (o dal menu dell'icona). Da terminale, anche su un server:
+
+```bash
+segnaposto cancello                     # 127.0.0.1:8788
+segnaposto cancello --openai https://openrouter.ai/api     # un servizio compatibile con OpenAI
+```
+
+| Programma | Base URL |
+|---|---|
+| OpenAI e compatibili (OpenRouter, Mistral, Ollama…) | `http://127.0.0.1:8788/openai/v1` |
+| Anthropic (Claude) | `http://127.0.0.1:8788/anthropic` |
+
+In n8n è il campo **Base URL** della credenziale OpenAI o Anthropic. In Python:
+
+```python
+from openai import OpenAI
+client = OpenAI(base_url="http://127.0.0.1:8788/openai/v1")   # la chiave API resta la tua, passa com'è
+```
+
+Copre Chat Completions, Responses, Messages (anche `count_tokens`), Embeddings e gli argomenti degli strumenti. Regole:
+
+- si rimettono solo i segnaposto nati dalla stessa richiesta: un segnaposto scritto apposta non tira fuori dati di altre conversazioni;
+- immagini e file allegati sono **rifiutati** (non sappiamo ancora pseudonimizzarli), salvo `--consenti-allegati`;
+- le richieste che arrivano da pagine web sono rifiutate; fuori da 127.0.0.1 serve `--chiave` (finisce nel percorso:
+  `…/k/CHIAVE/openai/v1`);
+- il **registro** (nel pannello) tiene ora, fornitore, modello e quanti dati di che tipo: mai i valori;
+- la tabella dei segnaposto resta in memoria e si azzera dopo un'ora senza richieste.
+
 ## Come servizio locale
 
 Per usarlo da un'automazione (n8n, Make in locale), da un gestionale o da un sito:

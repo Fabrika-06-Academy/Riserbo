@@ -33,12 +33,12 @@ header{background:var(--ink);color:#fff;padding:10px 18px;display:flex;align-ite
 .schede button .n{width:20px;height:20px;border-radius:50%;background:#34343d;color:#d9d9e0;display:inline-flex;align-items:center;justify-content:center;font-size:.72rem}
 .schede button.attiva{background:#fff;color:var(--ink)}.schede button.attiva .n{background:var(--y);color:var(--ink)}
 .schede button:not(.attiva):hover{color:#fff}
-.dx{margin-left:auto;display:flex;gap:8px;align-items:center}
+.dx{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .pillola{display:inline-flex;align-items:center;gap:7px;font-size:.8rem;border:1px solid #34343d;border-radius:99px;padding:5px 11px;color:#d6d6dd;white-space:nowrap}
 .pillola::before{content:"";width:8px;height:8px;border-radius:50%;background:#8d8d98}
 .pillola.pronto::before{background:#5fd08f}.pillola.carica::before{background:var(--y);animation:pulsa 1s infinite alternate}.pillola.errore::before{background:#ff6b6b}
 @keyframes pulsa{to{opacity:.3}}
-.hbtn{background:transparent;border:1px solid #3a3a44;color:#e4e4ea;border-radius:9px;padding:6px 11px;cursor:pointer;font-size:.86rem;display:inline-flex;align-items:center;gap:6px}
+.hbtn{background:transparent;border:1px solid #3a3a44;color:#e4e4ea;border-radius:9px;padding:6px 11px;cursor:pointer;font-size:.86rem;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .hbtn:hover{border-color:var(--y);color:var(--y)}
 .hbtn .badge{background:var(--y);color:var(--ink);border-radius:99px;font-size:.72rem;font-weight:700;padding:0 7px}
 .aggiorna{background:var(--y);color:var(--ink);border:0;border-radius:99px;padding:6px 13px;font-weight:700;font-size:.84rem;cursor:pointer}
@@ -66,6 +66,7 @@ main{flex:1;min-height:0;padding:16px 18px;display:flex;flex-direction:column}
 .link:hover{color:var(--txt);background:var(--field)}
 select{font:inherit;font-size:.88rem;border:1px solid var(--line2);border-radius:9px;padding:8px;background:var(--card);color:inherit}
 select:disabled{opacity:.45}
+.indirizzo{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.indirizzo code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.82rem;background:var(--soft,rgba(127,127,127,.12));padding:4px 8px;border-radius:6px;word-break:break-all;flex:1;min-width:0}
 .kbd{font-size:.74rem;color:var(--muted);border:1px solid var(--line2);border-radius:6px;padding:1px 6px}
 .stato{font-size:.85rem;color:var(--muted)}
 svg.i{width:16px;height:16px;flex:none}
@@ -134,6 +135,7 @@ footer a{color:inherit}
     <button class="hbtn" id="apriImpost" title="Scegli quali dati nascondere"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Cosa nascondere</button>
     <button class="hbtn" id="apriTab" title="La tabella che collega segnaposto e valori veri"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>Tabella <span class="badge" id="ntab">0</span></button>
     <button class="hbtn" id="apriAppunti" title="Proteggi il testo copiato da qualunque programma"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h4"/></svg>Appunti</button>
+    <button class="hbtn" id="apriAuto" title="n8n, Make e i programmi che usano ChatGPT o Claude passano da segnaposto"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h5M15 12h5M9 8v8M15 8v8"/></svg>Automazioni <span class="badge" id="autoPallino" hidden>on</span></button>
     <button class="hbtn" id="apriParere" title="Dicci cosa funziona e cosa no">Parere</button>
     <button class="hbtn" id="nuova" title="Cancella tabella e testi e ricomincia">Nuova pratica</button>
     <button class="hbtn" id="chiudi" hidden>Chiudi</button>
@@ -242,6 +244,24 @@ footer a{color:inherit}
     <p class="stato" style="margin:0">Usa la stessa pratica e le stesse scelte di «Cosa nascondere» della finestra. La tabella si aggiorna da sola.</p>
   </div>
 </aside></div>
+<div class="velo" id="automazioni" hidden><aside class="pannello">
+  <div class="ctesta"><h3>Per le automazioni</h3><div class="dx"><button class="sec" data-chiudi>Chiudi</button></div></div>
+  <div class="corpo">
+    <p style="margin:0">n8n, Make, gli script e i programmi che usano ChatGPT o Claude possono passare da segnaposto: al fornitore arrivano solo i segnaposto, le risposte tornano con i nomi veri, anche in streaming. La chiave API resta quella del fornitore.</p>
+    <label class="interruttore"><input type="checkbox" id="autoAcceso"><span><b>Attiva il cancello</b><small class="stato" style="display:block">Ascolta solo su questo computer. Resta attivo a finestra chiusa e si riaccende con l'app.</small></span></label>
+    <p class="esito warn" id="autoErrore" hidden></p>
+    <div class="sezione">Base URL da usare al posto del fornitore</div>
+    <div><small class="stato">OpenAI e compatibili (OpenRouter, Mistral, Ollama…)</small><div class="indirizzo"><code id="autoOpenai"></code><button class="sec" data-copia="autoOpenai">Copia</button></div></div>
+    <div><small class="stato">Anthropic (Claude)</small><div class="indirizzo"><code id="autoAnth"></code><button class="sec" data-copia="autoAnth">Copia</button></div></div>
+    <p class="stato" id="autoCopiato" style="margin:0"></p>
+    <p class="stato" style="margin:0">In n8n: nella credenziale OpenAI o Anthropic, campo <b>Base URL</b>. Nel codice: <code>OpenAI(base_url=…)</code> o <code>Anthropic(base_url=…)</code>. Immagini e file allegati vengono rifiutati: non sappiamo ancora proteggerli.</p>
+    <div class="sezione">Porta</div>
+    <div style="display:flex;gap:8px;align-items:center"><input type="number" id="autoPorta" min="1024" max="65535" style="width:110px"><button class="sec" id="autoCambia">Usa questa porta</button></div>
+    <div class="sezione">Registro: cosa è uscito <span class="stato" id="autoTot"></span></div>
+    <div style="overflow:auto;max-height:280px"><table><thead><tr><th>Ora</th><th>Fornitore · modello</th><th>Dati protetti</th><th>Esito</th></tr></thead><tbody id="autoRighe"></tbody></table></div>
+    <p class="stato" style="margin:0">Solo quanti dati e di che tipo: i valori veri non vengono mai registrati. Il registro si azzera chiudendo l'app.</p>
+  </div>
+</aside></div>
 <div class="velo" id="parere" hidden><aside class="pannello">
   <div class="ctesta"><h3>Il tuo parere</h3><div class="dx"><button class="sec" data-chiudi>Chiudi</button></div></div>
   <div class="corpo">
@@ -318,6 +338,22 @@ function sorveglia(){api("/api/stato").then(function(d){
 function usaAppunti(azione){$("appEsito").textContent="…";api("/api/appunti",{azione:azione}).then(function(d){S.appunti=d.messaggio;$("appEsito").textContent=d.messaggio}).catch(function(e){$("appEsito").textContent=e.message})}
 $("appProteggi").onclick=function(){usaAppunti("proteggi")};$("appRipristina").onclick=function(){usaAppunti("ripristina")};
 $("apriAppunti").onclick=function(){$("appunti").hidden=false};
+function disegnaAuto(d){$("autoAcceso").checked=d.attivo;$("autoPallino").hidden=!d.attivo;
+  $("autoOpenai").textContent=d.indirizzi.openai;$("autoAnth").textContent=d.indirizzi.anthropic;
+  if(document.activeElement!==$("autoPorta"))$("autoPorta").value=d.porta;
+  $("autoErrore").hidden=!d.errore;$("autoErrore").textContent=d.errore||"";
+  $("autoTot").textContent=d.attivo?"· "+d.protetti+" dati protetti":"";
+  $("autoRighe").innerHTML=d.registro.length?d.registro.map(function(r){var dati=Object.keys(r.dati).map(function(k){return r.dati[k]+" "+k.toLowerCase().replace(/_/g," ")}).join(", ")||"nessuno";
+    var ok=r.stato<400;return "<tr><td>"+esc(r.ora.slice(11))+"</td><td>"+esc(r.fornitore)+(r.modello?" · "+esc(r.modello):"")+(r.flusso?" <small class=\"stato\">streaming</small>":"")+"</td><td>"+esc(dati)+"</td><td>"+(ok?"ok":"<b>"+({400:"rifiutata",401:"chiave non valida",403:"non permessa",404:"non trovata",429:"troppe richieste",502:"fornitore irraggiungibile",503:"modello in caricamento"}[r.stato]||"errore "+r.stato)+"</b>")+"</td></tr>"}).join("")
+    :"<tr><td colspan=\"4\" class=\"stato\">"+(d.attivo?"Ancora nessuna richiesta.":"Il cancello è spento.")+"</td></tr>"}
+function cancello(azione,porta){return api("/api/cancello",{azione:azione,porta:porta}).then(disegnaAuto).catch(function(e){$("autoErrore").hidden=false;$("autoErrore").textContent=e.message})}
+$("apriAuto").onclick=function(){$("automazioni").hidden=false;cancello("stato")};
+$("autoAcceso").onchange=function(){cancello(this.checked?"accendi":"spegni")};
+$("autoCambia").onclick=function(){cancello("accendi",parseInt($("autoPorta").value,10))};
+document.querySelectorAll("[data-copia]").forEach(function(b){b.onclick=function(){copia($(b.getAttribute("data-copia")).textContent,$("autoCopiato"))}});
+cancello("stato");
+setInterval(function(){if(!$("automazioni").hidden||!$("autoPallino").hidden)cancello("stato")},2000);
+
 function mostraAggiornamento(d){if(!d.nuova)return;var b=$("agg");
   b.textContent="Nuova versione "+d.versione+" · Scarica";b.title=d.note||"";b.hidden=false;b.onclick=function(){api("/api/apri",{url:d.url})}}
 function controllaAggiornamento(){if(ls("sp-agg")==="no")return;api("/api/aggiornamento").then(mostraAggiornamento).catch(function(x){if(window.console)console.warn("aggiornamento:",x.message)})}
@@ -435,7 +471,7 @@ function salva(testo,formato,suffisso,el){api("/api/esporta",{testo:testo,format
 $("salva1").onclick=function(){salva(S.out,$("fmt1").value,"pseudonimizzato",$("cp1"))};
 $("salva2").onclick=function(){salva(S.vero,$("fmt2").value,"risposta",$("cp2"))};
 
-function chiudiPannelli(){$("impost").hidden=true;$("tabella").hidden=true;$("parere").hidden=true;$("appunti").hidden=true}
+function chiudiPannelli(){$("impost").hidden=true;$("tabella").hidden=true;$("parere").hidden=true;$("appunti").hidden=true;$("automazioni").hidden=true}
 $("apriImpost").onclick=function(){disegnaVoci();$("impost").hidden=false};
 $("apriTab").onclick=function(){$("tabella").hidden=false};
 document.querySelectorAll(".velo").forEach(function(v){v.addEventListener("click",function(e){if(e.target===v||e.target.hasAttribute("data-chiudi"))chiudiPannelli()})});

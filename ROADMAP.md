@@ -10,6 +10,9 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
   app locale, pacchetti per Mac e Windows, servizio HTTP locale.
 - **v0.3**: finestra nativa. Documenti in ingresso: Word, PDF con testo, Excel, CSV, email .eml con allegati. Colonne
   riconosciute dall'intestazione, indirizzi, correzioni a mano (clic e selezione), salvataggio nel formato d'origine.
+- **v0.8**: il cancello, proxy locale compatibile con OpenAI e Anthropic (Chat Completions, Responses, Messages,
+  Embeddings, streaming compreso): pseudonimizza all'andata, rimette i nomi al ritorno, registro di cosa è uscito senza i
+  valori. Nell'app (pannello Automazioni, icona) e da terminale (`segnaposto cancello`). Allegati rifiutati.
 - **v0.7.2**: avviso di aggiornamento e pareri funzionanti anche nell'app impacchettata (certificati HTTPS inclusi),
   pulsante «Controlla adesso».
 - **v0.7.1**: icona [–] nella barra dei menu (Mac) e nell'area di notifica (Windows): chiudendo la finestra l'app resta
@@ -35,12 +38,6 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
 ### Dopo la v0.7
 - Menu *Servizi* di macOS e *Invia a* di Windows per i file.
 - Scorciatoie configurabili.
-
-### v0.8: il cancello per i modelli
-- Un **proxy locale compatibile con le API di OpenAI e Anthropic**. n8n, Make, script Python, Open WebUI e gli editor di
-  codice puntano a `http://127.0.0.1` invece che al fornitore. segnaposto pseudonimizza ogni richiesta in uscita, rimette i
-  valori nella risposta (anche in streaming) e tiene un **registro di cosa è uscito**, utile per il registro dei trattamenti.
-- Per le automazioni è il passo decisivo: la protezione non dipende più da chi si ricorda di usarla.
 
 ### v0.9: agenti e browser
 - **Server MCP**: Claude Desktop e gli altri agenti chiamano `pseudonimizza` e `ripristina` come strumenti, e leggono i file

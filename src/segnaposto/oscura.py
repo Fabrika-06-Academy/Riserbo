@@ -24,6 +24,7 @@ class Oscurato:
     pagine: int
     coperti: int = 0                                    # rettangoli disegnati
     non_trovati: list[str] = field(default_factory=list)  # valori della tabella non localizzati sulle pagine
+    anteprime: list[bytes] = field(default_factory=list)  # PNG delle prime pagine, per vederle nell'app
 
 
 def _base(c: str) -> str:
@@ -84,16 +85,22 @@ def _da_testo_pdf(pagina, scala: float, valori: dict[str, str]) -> list[tuple[tu
 def _da_ocr(img, valori: dict[str, str]) -> list[tuple[tuple, str]]:
     out = []
     for riga in ocr.leggi_immagine(img):
-        mappa: list[int] = []  # carattere compatto -> indice della parola
+        mappa: list[tuple[int, int, int]] = []  # carattere compatto -> (parola, posizione nella parola, lunghezza parola)
         compatto = ""
         for j, p in enumerate(riga.parole):
             c = _compatta(p.testo)
             compatto += c
-            mappa += [j] * len(c)
+            mappa += [(j, k, len(c)) for k in range(len(c))]
         for a, b, s in _cerca(compatto, valori):
-            parole = sorted(set(mappa[a:b]))
-            box = [riga.parole[j].box for j in parole]
-            # Una parola presa in parte (es. «Rossi,») si copre tutta: meglio un carattere in più che uno in meno.
+            box = []
+            for j in sorted({m[0] for m in mappa[a:b]}):
+                presi = [m[1] for m in mappa[a:b] if m[0] == j]
+                n = mappa[a:b][[m[0] for m in mappa[a:b]].index(j)][2]
+                x0, y0, x1, y1 = riga.parole[j].box
+                if len(presi) < n:  # parola presa in parte («Ing.Marco»): si copre la sua parte, con mezzo carattere in più
+                    w = (x1 - x0) / n
+                    x0, x1 = x0 + max(0, min(presi) - 0.5) * w, x0 + min(n, max(presi) + 1.5) * w
+                box.append((x0, y0, x1, y1))
             out += [(r, s) for r in _unisci_per_riga(box)]
     return out
 
@@ -131,7 +138,12 @@ def oscura(nome: str, dati: bytes, valori: dict[str, str], dpi: int = ocr.DPI) -
             p = pdf[i]
             img = ocr.rendi_pagina(p, dpi)
             con_testo = len(p.get_textpage().get_text_range().strip()) >= 20 and p.get_rotation() == 0
-            cop = _da_testo_pdf(p, dpi / 72, valori) if con_testo else _da_ocr(img, valori)
+            if con_testo:
+                cop = _da_testo_pdf(p, dpi / 72, valori)
+            else:  # l'OCR lavora sull'immagine migliore; le posizioni si riportano sulla pagina disegnata
+                sorgente = ocr.immagine_per_ocr(p)
+                f = img.width / sorgente.width
+                cop = [((x0 * f, y0 * f, x1 * f, y1 * f), s) for (x0, y0, x1, y1), s in _da_ocr(sorgente, valori)]
             pagine.append(_disegna(img, cop))
             tutte += cop
     elif est in IMMAGINI:
@@ -143,8 +155,19 @@ def oscura(nome: str, dati: bytes, valori: dict[str, str], dpi: int = ocr.DPI) -
         raise ValueError("Il documento oscurato si fa da un PDF o da un'immagine.")
     if not pagine:
         raise ValueError("Il documento non ha pagine.")
+    # Lo stesso valore scritto in modi diversi («347 123 4567» e «3471234567») è un solo punto sulla pagina.
     usati = {s for _, s in tutte}
-    non_trovati = sorted(v for v, s in valori.items() if s not in usati and len(_compatta(v)) >= 2)
+    trovati_chiavi = {_compatta(v) for v, s in valori.items() if s in usati}
+    non_trovati = sorted(v for v, s in valori.items()
+                         if s not in usati and len(_compatta(v)) >= 2
+                         and not any(_compatta(v) in k for k in trovati_chiavi))  # «Vicenza» dentro l'indirizzo coperto
     buf = io.BytesIO()
     pagine[0].save(buf, "PDF", resolution=dpi, save_all=True, append_images=pagine[1:], quality=85)
-    return Oscurato(buf.getvalue(), len(pagine), len(tutte), non_trovati)
+    anteprime = []
+    for img in pagine[:20]:
+        a = img.copy()
+        a.thumbnail((1100, 1600))
+        b = io.BytesIO()
+        a.save(b, "PNG", optimize=True)
+        anteprime.append(b.getvalue())
+    return Oscurato(buf.getvalue(), len(pagine), len(tutte), non_trovati, anteprime)

@@ -26,10 +26,11 @@ class Parola:
 class Riga:
     parole: list[Parola]
     box: tuple[float, float, float, float]
+    testo: str = ""  # la riga come la legge l'OCR, con gli spazi giusti (le parole servono solo per le posizioni)
 
-    @property
-    def testo(self) -> str:
-        return " ".join(p.testo for p in self.parole)
+    def __post_init__(self) -> None:
+        if not self.testo:
+            self.testo = " ".join(p.testo for p in self.parole)
 
 
 def disponibile() -> bool:
@@ -71,7 +72,7 @@ def leggi_immagine(img) -> list[Riga]:
         ps = [Parola(str(p[0]), _rettangolo(p[2])) for p in parole if str(p[0]).strip()]
         if not ps:  # senza posizioni delle parole: una sola «parola» grande quanto la riga
             ps = [Parola(str(testo), b)]
-        righe.append(Riga(ps, b))
+        righe.append(Riga(ps, b, str(testo)))
     return _in_ordine(righe)
 
 
@@ -126,3 +127,29 @@ def apri_immagine(dati: bytes):
 def rendi_pagina(pagina, dpi: int = DPI):
     """Una pagina pypdfium2 come immagine PIL."""
     return pagina.render(scale=dpi / 72).to_pil().convert("RGB")
+
+
+def immagine_per_ocr(pagina):
+    """L'immagine migliore da dare all'OCR per una pagina scansionata.
+
+    Se la pagina è una sola immagine a tutta pagina (la scansione tipica), si usa l'immagine originale: ogni
+    ricampionamento in più cancella gli spazi sottili tra le parole. Altrimenti si disegna la pagina, con il lato
+    lungo entro i 2000 pixel che l'OCR usa comunque.
+    """
+    try:
+        import pypdfium2.raw as raw
+
+        immagini = list(pagina.get_objects(filter=(raw.FPDF_PAGEOBJ_IMAGE,)))
+        if len(immagini) == 1 and pagina.get_rotation() == 0:
+            x0, y0, x1, y1 = immagini[0].get_bounds()
+            w, h = pagina.get_size()
+            if (x1 - x0) * (y1 - y0) >= 0.85 * w * h:
+                img = immagini[0].get_bitmap(render=False).to_pil().convert("RGB")
+                if min(img.size) >= 300:
+                    if max(img.size) > 3000:
+                        img.thumbnail((3000, 3000))
+                    return img
+    except Exception:  # immagini in formati particolari: si ripiega sul disegno della pagina
+        pass
+    w, h = pagina.get_size()
+    return pagina.render(scale=min(DPI / 72, 2000 / max(w, h))).to_pil().convert("RGB")

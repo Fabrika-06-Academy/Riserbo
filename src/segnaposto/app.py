@@ -27,7 +27,7 @@ from pathlib import PurePath
 
 from . import __version__
 from .documenti import FORMATI_USCITA, esporta, leggi
-from .motore import Segnaposto, ripristina
+from .motore import SEGNAPOSTO, Segnaposto, ripristina
 from .oscura import _compatta, oscura
 from .tabella import Tabella
 
@@ -147,7 +147,8 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                 o = oscura(nome, grezzo, valori)
                 return self._json(200, {"nome": re.sub(r"[^\w\- .]", "_", PurePath(nome).stem)[:80] + "-oscurato.pdf",
                                         "dati": base64.b64encode(o.pdf).decode("ascii"), "pagine": o.pagine,
-                                        "coperti": o.coperti, "non_trovati": [valori[v] for v in o.non_trovati]})
+                                        "coperti": o.coperti, "non_trovati": [valori[v] for v in o.non_trovati],
+                                        "anteprime": [base64.b64encode(a).decode("ascii") for a in o.anteprime]})
             with stato.lock:
                 stato.ultimo_uso = time.time()
                 if percorso == "/api/correggi":
@@ -168,12 +169,23 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                     return self._json(200, {"ok": True})
                 if percorso == "/api/ripristina":
                     e = ripristina(testo, stato.tabella, attesi=stato.inviati)
-                    return self._json(200, {"testo": e.testo, "mancanti": e.mancanti, "inventati": e.inventati})
+                    # Pezzi del testo ripristinato: [testo, segnaposto d'origine o ""], per evidenziare i valori rimessi.
+                    pezzi, pos = [], 0
+                    for m in SEGNAPOSTO.finditer(testo):
+                        pezzi.append([testo[pos:m.start()], ""])
+                        s = m.group(0)
+                        pezzi.append([stato.tabella.valori.get(s, s), s])
+                        pos = m.end()
+                    pezzi.append([testo[pos:], ""])
+                    return self._json(200, {"testo": e.testo, "mancanti": e.mancanti, "inventati": e.inventati,
+                                            "pezzi": [x for x in pezzi if x[0]]})
                 if percorso == "/api/pseudonimizza":
                     if stato.sp is None:
                         return self._json(503, {"errore": stato.errore_avvio or "Sto ancora caricando il modello italiano, un attimo…"})
-                    r = stato.sp.pseudonimizza(testo, stato.tabella, forzati=stato.forzati, ignora=stato.ignora)
-                    stato.inviati |= {s for s in stato.tabella.valori if s in r.testo}
+                    escludi = {str(x) for x in dati.get("escludi", []) if isinstance(x, str)}
+                    r = stato.sp.pseudonimizza(testo, stato.tabella, forzati=stato.forzati, ignora=stato.ignora, escludi=escludi)
+                    # I segnaposto attesi nella risposta sono quelli dell'ultimo testo mandato, non di tutta la pratica.
+                    stato.inviati = {s for s in stato.tabella.valori if s in r.testo}
                     conta: dict[str, int] = {}
                     for t in r.trovati:
                         conta[t["tipo"]] = conta.get(t["tipo"], 0) + 1

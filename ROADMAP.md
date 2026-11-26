@@ -10,6 +10,8 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
   app locale, pacchetti per Mac e Windows, servizio HTTP locale.
 - **v0.3**: finestra nativa. Documenti in ingresso: Word, PDF con testo, Excel, CSV, email .eml con allegati. Colonne
   riconosciute dall'intestazione, indirizzi, correzioni a mano (clic e selezione), salvataggio nel formato d'origine.
+- **v0.5**: interfaccia rifatta: schede Proteggi / Rimetti i nomi, segnaposto colorati per tipo, anteprima del PDF oscurato,
+  scelta di cosa nascondere, valori rimessi evidenziati nella risposta.
 - **v0.4**: OCR di PDF scansionati, foto e screenshot. Abbiamo valutato [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR):
   i suoi modelli PP-OCRv6 multilingua leggono benissimo l'italiano, accenti compresi, ma il framework PaddlePaddle pesa
   centinaia di MB. Usiamo quindi gli stessi modelli con ONNX Runtime tramite [RapidOCR](https://github.com/RapidAI/RapidOCR).
@@ -18,6 +20,12 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
   Saluti e titoli («Gentile Ing.», «Spett.le») restano fuori dai nomi.
 
 ## Prossimi passi
+
+### Subito: un riconoscitore migliore, con licenza libera
+- Il modello spaCy `it_core_news_sm` sbaglia troppo (piccoli comuni, cognomi comuni, «Contratto» preso per persona) ed è
+  **CC BY-NC-SA 3.0**: va sostituito. Candidati con licenza Apache 2.0, da misurare su testi italiani veri:
+  `osiria/bert-italian-cased-ner` (F1 92,8 dichiarato), `DeepMount00/Italian_NER_XXL_v2` (oltre 50 categorie),
+  `urchade/gliner_multi_pii-v1` (zero-shot, ONNX già pronto). Tutti eseguibili con ONNX Runtime, senza PyTorch.
 
 ### v0.5: ovunque, dagli appunti
 - Da misurare prima: OCR su documenti italiani veri (fatture, carte d'identità, moduli compilati a mano) e confronto con

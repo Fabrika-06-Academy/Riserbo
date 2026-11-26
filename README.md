@@ -157,6 +157,11 @@ Una soglia ragionevole: zero fughe sui dati a forma fissa, sotto l'uno per cento
 
 MIT. © 2026 Andrea Prando, [Fabrika 06](https://fabrika06.com).
 
+**Attenzione alla licenza del modello italiano.** Il riconoscitore di entità usato oggi, `it_core_news_sm` di spaCy, è
+distribuito con licenza **CC BY-NC-SA 3.0** (non commerciale), perché è addestrato sul corpus UD Italian ISDT. Il codice di
+segnaposto è MIT, ma per un uso commerciale verifica tu quella licenza. Lo stiamo sostituendo con un modello con licenza
+Apache 2.0: vedi [ROADMAP.md](ROADMAP.md).
+
 ---
 
 ### In English

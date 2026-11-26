@@ -177,7 +177,7 @@ def _pdf(nome: str, dati: bytes) -> Documento:
             doc.avvisi.append(f"{len(scansioni)} pagine su {len(pagine)} sembrano scansioni e non sono state lette (OCR non installato).")
         else:
             for i in scansioni:
-                pagine[i] = ocr.testo_da_righe(ocr.leggi_immagine(ocr.rendi_pagina(pdf[i])))
+                pagine[i] = ocr.testo_da_righe(ocr.leggi_immagine(ocr.immagine_per_ocr(pdf[i])))
             doc.ocr_pagine = len(scansioni)
             doc.avvisi.append(("Tutte le pagine sono state lette" if len(scansioni) == len(pagine) else
                                f"{len(scansioni)} pagine su {len(pagine)} sono state lette") +

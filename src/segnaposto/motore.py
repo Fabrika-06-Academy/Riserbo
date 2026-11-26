@@ -97,11 +97,13 @@ class Segnaposto:
         self.entita_ner = set(entita_ner)
         self.controllo_finale = controllo_finale
 
-    def trova(self, testo: str, forzati: dict[str, str] | None = None, ignora: Iterable[str] = ()) -> list[dict]:
+    def trova(self, testo: str, forzati: dict[str, str] | None = None, ignora: Iterable[str] = (),
+              escludi: Iterable[str] = ()) -> list[dict]:
         """Trova i dati da sostituire.
 
         `forzati`: valore -> tipo, da sostituire sempre (colonne «Nome» di un Excel, correzioni a mano, anagrafica).
         `ignora`: valori che chi rilegge ha indicato come non personali (falsi allarmi).
+        `escludi`: tipi di segnaposto da lasciare in chiaro (es. {"LUOGO"} se le città servono al modello).
         """
         ner = ("PERSON", "ORGANIZATION", "LOCATION")
         no = {_chiave(v) for v in ignora}
@@ -136,6 +138,8 @@ class Segnaposto:
             if all(c[2] <= s[1] or c[1] >= s[2] for s in scelti):
                 scelti.append(c)
         scelti.sort(key=lambda c: c[1])
+        fuori = set(escludi)
+        scelti = [c for c in scelti if NOMI.get(c[0], c[0]) not in fuori]
         trovati = [{"tipo": NOMI.get(c[0], c[0]), "valore": testo[c[1]:c[2]],
                     "inizio": c[1], "fine": c[2], "punteggio": round(c[3], 2)} for c in scelti]
         # Strato 3: il modello in casa segnala cosa è sfuggito (stringhe esatte presenti nel testo).
@@ -152,9 +156,9 @@ class Segnaposto:
         return trovati
 
     def pseudonimizza(self, testo: str, tabella: Tabella | None = None, forzati: dict[str, str] | None = None,
-                      ignora: Iterable[str] = ()) -> Risultato:
+                      ignora: Iterable[str] = (), escludi: Iterable[str] = ()) -> Risultato:
         tabella = tabella or Tabella()
-        trovati = self.trova(testo, forzati, ignora)
+        trovati = self.trova(testo, forzati, ignora, escludi)
         parti, pos = [], 0
         for t in trovati:
             parti.append(testo[pos:t["inizio"]])

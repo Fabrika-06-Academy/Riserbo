@@ -68,7 +68,8 @@ def test_documento_correzioni_ed_esportazione(app):
     r2 = post(app, "/api/pseudonimizza", {"testo": "Consegna al deposito Sud."})
     post(app, "/api/correggi", {"azione": "nascondi", "valore": "deposito Sud", "tipo": "dato"})
     r2 = post(app, "/api/pseudonimizza", {"testo": "Consegna al deposito Sud."})
-    assert re.fullmatch(r"Consegna al \[DATO_\d+\]\.", r2["testo"])
+    # Nascosto, con un segnaposto suo: [DATO_n], o quello che aveva già se il modello l'aveva riconosciuto.
+    assert re.fullmatch(r"Consegna al \[[A-Z_]+_\d+\]\.", r2["testo"])
     e = post(app, "/api/esporta", {"testo": r["testo"], "formato": "xlsx", "nome": "contatti.csv", "suffisso": "pseudonimizzato"})
     assert e["nome"] == "contatti-pseudonimizzato.xlsx" and base64.b64decode(e["dati"])[:2] == b"PK"
 

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "segnaposto"
-version = "0.6.0"
+version = "0.6.1"
 description = "Pseudonimizzare testi italiani prima di mandarli a un modello in cloud, e rimettere i valori veri al ritorno."
 readme = "README.md"
 license = "MIT"

@@ -10,6 +10,8 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
   app locale, pacchetti per Mac e Windows, servizio HTTP locale.
 - **v0.3**: finestra nativa. Documenti in ingresso: Word, PDF con testo, Excel, CSV, email .eml con allegati. Colonne
   riconosciute dall'intestazione, indirizzi, correzioni a mano (clic e selezione), salvataggio nel formato d'origine.
+- **v0.6.5**: avviso di nuova versione con scaricamento in un clic, pannello Parere (arriva all'Academy), elenco «sempre in
+  chiaro» e marchi noti non nascosti, spazi mancanti nei PDF ricostruiti dalle posizioni dei caratteri.
 - **v0.6**: nuovo riconoscitore di entità: BERT italiano con oltre 50 categorie (DeepMount00/Italian_NER_XXL_v2, Apache 2.0)
   in ONNX int8, senza PyTorch. Sul set di prova le fughe scendono da 6 a 1-2 su 88 e i falsi allarmi da 9 a 0. Via il
   modello spaCy, che aveva licenza non commerciale. Nuove categorie: età, dati sanitari, documenti, conti, password, IP, catasto.

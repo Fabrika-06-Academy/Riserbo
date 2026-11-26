@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import base64
 import json
+import urllib.error
 import os
 import re
 import secrets
@@ -32,6 +33,56 @@ from .oscura import _compatta, oscura
 from .tabella import Tabella
 
 INATTIVITA_MAX = 3600  # secondi
+REPO_API = "https://api.github.com/repos/Fabrika-06-Academy/segnaposto/releases/latest"
+URL_PARERI = "https://academy.fabrika06.com/wp-json/f06/v1/segnaposto-parere"
+LINK_AMMESSI = ("https://github.com/Fabrika-06-Academy/", "https://academy.fabrika06.com/")
+
+
+def _versione(t: str) -> tuple:
+    return tuple(int(x) for x in re.findall(r"\d+", t)[:3])
+
+
+def _sistema() -> str:
+    import platform
+    return f"{platform.system()} {platform.machine()}".strip()
+
+
+def controlla_aggiornamento() -> dict:
+    """Chiede a GitHub il numero dell'ultima versione. Non manda nulla: è una lettura pubblica, come aprire la pagina."""
+    import sys
+    import urllib.request
+    req = urllib.request.Request(REPO_API, headers={"User-Agent": f"segnaposto/{__version__}", "Accept": "application/vnd.github+json"})
+    d = json.loads(urllib.request.urlopen(req, timeout=6).read())
+    tag = str(d.get("tag_name", ""))
+    file = {a["name"]: a["browser_download_url"] for a in d.get("assets", [])}
+    if sys.platform == "darwin":
+        url = file.get("segnaposto-mac-apple-silicon.dmg") or file.get("segnaposto-mac-apple-silicon.zip")
+    elif os.name == "nt":
+        url = file.get("segnaposto-windows.zip")
+    else:
+        url = None
+    note = re.sub(r"\s+", " ", str(d.get("body") or ""))[:400]
+    return {"nuova": _versione(tag) > _versione(__version__), "versione": tag.lstrip("v"), "attuale": __version__,
+            "url": url or d.get("html_url"), "pagina": d.get("html_url"), "note": note}
+
+
+def invia_parere(dati: dict) -> None:
+    """Manda all'Academy solo quello che la persona ha scritto nel riquadro del parere, più versione e sistema."""
+    import urllib.request
+    corpo = {"voto": int(dati.get("voto") or 0), "testo": str(dati.get("testo") or "")[:3000],
+             "email": str(dati.get("email") or "")[:200], "versione": __version__, "sistema": _sistema(), "sito": ""}
+    req = urllib.request.Request(URL_PARERI, data=json.dumps(corpo).encode("utf-8"), method="POST",
+                                 headers={"Content-Type": "application/json", "User-Agent": f"segnaposto/{__version__}"})
+    try:
+        urllib.request.urlopen(req, timeout=10).read()
+    except urllib.error.HTTPError as e:
+        try:
+            msg = json.loads(e.read()).get("errore")
+        except Exception:
+            msg = None
+        raise ValueError(msg or f"L'Academy ha risposto con un errore ({e.code}).") from e
+    except OSError as e:
+        raise ValueError("Non riesco a raggiungere l'Academy: sei collegato a internet?") from e
 MAX_RICHIESTA = 36 * 1024 * 1024  # un file da 25 MB in base64
 
 
@@ -115,6 +166,20 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
             percorso, testo = self.path, str(dati.get("testo", ""))
             if percorso == "/api/stato":
                 return self._json(200, {"pronto": stato.sp is not None, "errore": stato.errore_avvio, "versione": __version__})
+            if percorso == "/api/aggiornamento":
+                try:
+                    return self._json(200, controlla_aggiornamento())
+                except Exception:
+                    return self._json(200, {"nuova": False, "errore": "controllo non riuscito"})
+            if percorso == "/api/apri":
+                url = str(dati.get("url", ""))
+                if not url.startswith(LINK_AMMESSI):
+                    raise ValueError("Link non ammesso.")
+                webbrowser.open(url)
+                return self._json(200, {"ok": True})
+            if percorso == "/api/parere":
+                invia_parere(dati)
+                return self._json(200, {"ok": True})
             if percorso == "/api/chiudi":
                 self._json(200, {"ok": True})
                 threading.Thread(target=ferma, daemon=True).start()
@@ -183,7 +248,8 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                     if stato.sp is None:
                         return self._json(503, {"errore": stato.errore_avvio or "Sto ancora caricando il modello italiano, un attimo…"})
                     escludi = {str(x) for x in dati.get("escludi", []) if isinstance(x, str)}
-                    r = stato.sp.pseudonimizza(testo, stato.tabella, forzati=stato.forzati, ignora=stato.ignora, escludi=escludi)
+                    sempre = {str(x).strip() for x in dati.get("in_chiaro", []) if isinstance(x, str) and str(x).strip()}
+                    r = stato.sp.pseudonimizza(testo, stato.tabella, forzati=stato.forzati, ignora=stato.ignora | sempre, escludi=escludi)
                     # I segnaposto attesi nella risposta sono quelli dell'ultimo testo mandato, non di tutta la pratica.
                     stato.inviati = {s for s in stato.tabella.valori if s in r.testo}
                     conta: dict[str, int] = {}

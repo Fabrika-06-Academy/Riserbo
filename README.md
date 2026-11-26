@@ -50,6 +50,12 @@ Applicazioni; su Windows decomprimi lo zip e apri `segnaposto.exe`. Si apre in u
    chat ne ha persi o inventati. Anche la risposta si può salvare come file.
 5. **Nuova pratica** cancella la tabella; chiudendo l'app si cancella comunque.
 
+**Cosa esce dal computer, e solo se lo vuoi.** I testi e i documenti mai. All'avvio l'app chiede a GitHub il numero
+dell'ultima versione, per proporti l'aggiornamento (si spegne in «Cosa nascondere → Aggiornamenti»). Il pannello
+**Parere** manda all'Academy solo quello che scrivi lì, con versione e sistema operativo, quando premi «Invia».
+Su Mac l'aggiornamento si scarica con un clic ma si installa a mano (trascinando in Applicazioni): l'installazione
+automatica richiede la firma Apple, che arriverà quando l'app avrà una diffusione ampia.
+
 **Primo avvio su Mac.** L'app non è firmata con un certificato Apple a pagamento, quindi la prima volta macOS la blocca
 («non è possibile verificare lo sviluppatore»). Aprila una volta con doppio clic, poi vai in *Impostazioni di Sistema →
 Privacy e sicurezza* e premi **Apri comunque**. In alternativa, da Terminale: `xattr -dr com.apple.quarantine segnaposto.app`.

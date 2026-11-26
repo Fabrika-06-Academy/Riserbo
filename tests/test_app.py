@@ -97,3 +97,19 @@ def test_pdf_oscurato_dall_app(app):
     o = post(app, "/api/oscura", {})
     assert o["nome"] == "c-oscurato.pdf" and o["coperti"] >= 2
     assert o["non_trovati"] == []  # Giovanna Brun è nella pratica ma non nel PDF: non va cercata lì
+
+
+def test_sempre_in_chiaro(app):
+    post(app, "/api/nuova", {})
+    r = post(app, "/api/pseudonimizza", {"testo": "Ho parlato con Giulia Ferro di Fabrika 06 e di PayPal.", "in_chiaro": ["Fabrika 06"]})
+    assert "Fabrika 06" in r["testo"] and "PayPal" in r["testo"] and "Ferro" not in r["testo"]
+
+
+def test_aggiornamento_e_link(app, monkeypatch):
+    import segnaposto.app as modulo
+    monkeypatch.setattr(modulo, "controlla_aggiornamento", lambda: {"nuova": True, "versione": "9.9.9", "url": "https://github.com/Fabrika-06-Academy/x"})
+    assert post(app, "/api/aggiornamento", {})["versione"] == "9.9.9"
+    with pytest.raises(urllib.error.HTTPError) as e:
+        post(app, "/api/apri", {"url": "https://sito-qualsiasi.example/"})
+    assert e.value.code == 422
+    assert modulo._versione("v0.10.0") > modulo._versione("0.9.12")

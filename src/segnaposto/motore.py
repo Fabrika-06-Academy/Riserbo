@@ -43,6 +43,20 @@ PAROLE_COMUNI = {
     "buongiorno", "buonasera", "salve", "gentile", "gentili", "egregio", "spettabile", "spett.le", "cordiali", "saluti",
     "distinti", "grazie", "ciao", "allegato", "allegati", "oggetto", "re", "fw", "fwd", "ps", "p.s.", "nb", "cordialmente",
 }
+# Marchi e servizi che compaiono in ogni documento di lavoro e non identificano nessuno: il modello li prende spesso
+# per aziende. Restano in chiaro se trovati dal riconoscitore (non se li nascondi tu a mano o da una colonna).
+MARCHI_NOTI = {
+    "paypal", "amazon", "google", "microsoft", "apple", "meta", "facebook", "instagram", "linkedin", "whatsapp", "telegram",
+    "youtube", "tiktok", "x", "twitter", "yandex", "bing", "chatgpt", "openai", "claude", "anthropic", "gemini", "copilot",
+    "mistral", "perplexity", "excel", "word", "powerpoint", "outlook", "teams", "zoom", "skype", "gmail", "office", "windows",
+    "macos", "iphone", "android", "wordpress", "woocommerce", "elementor", "shopify", "wix", "joomla", "drupal", "magento",
+    "aruba", "register", "godaddy", "cloudflare", "hostinger", "siteground", "dropbox", "onedrive", "icloud", "salesforce",
+    "hubspot", "mailchimp", "brevo", "stripe", "satispay", "nexi", "visa", "mastercard", "american express", "n8n", "make",
+    "zapier", "notion", "slack", "trello", "asana", "canva", "adobe", "photoshop", "acrobat", "sap", "oracle", "ibm",
+    "github", "gitlab", "docker", "linux", "ubuntu", "android", "chrome", "firefox", "safari", "edge", "buddyboss",
+    "learndash", "rank math", "yoast", "fatture in cloud", "danea", "teamsystem", "zucchetti", "agenzia delle entrate",
+    "inps", "inail", "pec", "spid", "cie", "sdi", "pagopa", "poste italiane", "unicredit", "intesa sanpaolo",
+}
 
 
 @dataclass
@@ -118,12 +132,13 @@ class Segnaposto:
         """
         ner = ("PERSON", "ORGANIZATION", "LOCATION")
         no = {_chiave(v) for v in ignora}
+        marchi = MARCHI_NOTI | no
         candidati = []  # (tipo, inizio, fine, punteggio, priorità)
         for g in self.analyzer.analyze(text=testo, language="it", score_threshold=self.soglia):
             dal_modello = (g.recognition_metadata or {}).get("recognizer_name") == "RiconoscitoreItaliano"
             if dal_modello:
                 g = _rifinisci(testo, g)
-                if g is None:
+                if g is None or (g.entity_type in ner and _chiave(testo[g.start:g.end]) in marchi):
                     continue
             if g.entity_type in ner:
                 if g.entity_type not in self.entita_ner:

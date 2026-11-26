@@ -165,8 +165,7 @@ def _pdf(nome: str, dati: bytes) -> Documento:
     doc = Documento(nome, "pdf", "")
     pagine, scansioni = [], []
     for i in range(len(pdf)):
-        # \ufffe è il trattino di una parola spezzata a fine riga («wp-admin» → «wp\ufffeadmin»)
-        t = pdf[i].get_textpage().get_text_range().replace("\r\n", "\n").replace("\r", "\n").replace("\ufffe", "-").strip()
+        t = testo_pagina(pdf[i])
         if len(t) < 20:
             scansioni.append(i)
         pagine.append(t)
@@ -187,6 +186,37 @@ def _pdf(nome: str, dati: bytes) -> Documento:
     if not doc.testo.strip():
         raise ValueError("Nel PDF non c'è testo leggibile.")
     return doc
+
+
+def testo_pagina(pagina) -> str:
+    """Il testo di una pagina PDF, con gli spazi che il PDF non scrive.
+
+    Alcuni PDF posizionano le parole senza il carattere di spazio: il testo estratto diventa «serverAmazon». Se tra due
+    caratteri c'è un vuoto visibile (più del 12% dell'altezza della riga) e nessuno spazio, lo si aggiunge.
+    \ufffe è il trattino di una parola spezzata a fine riga («wp-admin» → «wp\ufffeadmin»).
+    """
+    tp = pagina.get_textpage()
+    n = tp.count_chars()
+    testo = tp.get_text_range(0, n) if n else ""
+    if len(testo) != n:  # indici non allineati: meglio il testo così com'è
+        return testo.replace("\r\n", "\n").replace("\r", "\n").replace("\ufffe", "-").strip()
+    out, prec = [], None
+    for i, c in enumerate(testo):
+        if prec is not None and not c.isspace() and not testo[i - 1].isspace() and c not in ".,;:)]»'’" and testo[i - 1] not in "([«'’-/":
+            try:
+                x0, y0, x1, y1 = tp.get_charbox(i, loose=True)
+                px0, py0, px1, py1 = prec
+                h = max(y1 - y0, py1 - py0, 1)
+                if abs((y0 + y1) / 2 - (py0 + py1) / 2) < h * 0.5 and x0 - px1 > 0.12 * h:
+                    out.append(" ")
+            except Exception:
+                pass
+        out.append(c)
+        try:
+            prec = tp.get_charbox(i, loose=True) if not c.isspace() else None
+        except Exception:
+            prec = None
+    return "".join(out).replace("\r\n", "\n").replace("\r", "\n").replace("\ufffe", "-").strip()
 
 
 def _immagine(nome: str, dati: bytes) -> Documento:

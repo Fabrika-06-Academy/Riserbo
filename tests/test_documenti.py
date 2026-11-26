@@ -185,3 +185,23 @@ def test_pdf_oscurato_da_testo_e_da_scansione(sp):
         assert o.pagine == 1 and o.coperti >= len(valori) and o.non_trovati == [], (nome, o.non_trovati)
         pdf = pdfium.PdfDocument(o.pdf)
         assert pdf[0].get_textpage().get_text_range().strip() == ""  # solo immagini: niente testo da copiare
+
+
+def _pdf_flusso(flusso):
+    oggetti = ["<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+               "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+               f"<< /Length {len(flusso)} >>\nstream\n{flusso}\nendstream", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"]
+    out, pos = "%PDF-1.4\n", []
+    for i, o in enumerate(oggetti, 1):
+        pos.append(len(out)); out += f"{i} 0 obj\n{o}\nendobj\n"
+    x = len(out)
+    out += f"xref\n0 {len(oggetti) + 1}\n0000000000 65535 f \n" + "".join(f"{q:010d} 00000 n \n" for q in pos)
+    out += f"trailer\n<< /Size {len(oggetti) + 1} /Root 1 0 R >>\nstartxref\n{x}\n%%EOF\n"
+    return out.encode("latin-1")
+
+
+def test_pdf_spazi_mancanti_ma_codici_interi():
+    # «server» e «Amazon» posizionate a 2 punti di distanza, senza il carattere di spazio
+    assert leggi("a.pdf", _pdf_flusso("BT /F1 12 Tf 50 750 Td (Un server) Tj 54 0 Td (Amazon a Singapore.) Tj ET")).testo == "Un server Amazon a Singapore."
+    t = "CF RSSMRA80A01L840J, tel. 3471234567, wp-admin, WordPress e PayPal"
+    assert leggi("b.pdf", _pdf_flusso(f"BT /F1 12 Tf 50 750 Td ({t}) Tj ET")).testo == t

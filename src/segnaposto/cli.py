@@ -6,6 +6,7 @@
     segnaposto servi --porta 8765
     segnaposto app
     segnaposto cancello --porta 8788      (proxy compatibile con OpenAI e Anthropic)
+    segnaposto mcp --cartella ~/Documenti (server MCP per Claude Desktop e gli altri agenti)
 """
 
 from __future__ import annotations
@@ -64,7 +65,13 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--consenti-allegati", action="store_true", help="lascia passare immagini e file (NON pseudonimizzati)")
     c.add_argument("--anagrafica")
 
+    m = sub.add_parser("mcp", help="server MCP (stdio) per Claude Desktop: legge i documenti attraverso segnaposto")
+    m.add_argument("--cartella", action="append", default=[], help="cartella che l'agente può leggere (si ripete)")
+
     a = ap.parse_args(argv)
+    if a.comando == "mcp":
+        from .server_mcp import main_mcp
+        return main_mcp(sum((["--cartella", c] for c in a.cartella), []))
     if a.comando == "scarica-modello":
         from .ner import scarica_modello
         print(f"Riconoscitore di entità pronto in {scarica_modello()}")

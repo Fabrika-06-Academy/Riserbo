@@ -10,6 +10,8 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
   app locale, pacchetti per Mac e Windows, servizio HTTP locale.
 - **v0.3**: finestra nativa. Documenti in ingresso: Word, PDF con testo, Excel, CSV, email .eml con allegati. Colonne
   riconosciute dall'intestazione, indirizzi, correzioni a mano (clic e selezione), salvataggio nel formato d'origine.
+- **v0.9**: server MCP per Claude Desktop e gli altri agenti: elenca, legge (nomi dei file compresi, solo segnaposto),
+  salva e copia negli appunti rimettendo i nomi veri sul computer. Collegamento a Claude Desktop in un clic dall'app.
 - **v0.8**: il cancello, proxy locale compatibile con OpenAI e Anthropic (Chat Completions, Responses, Messages,
   Embeddings, streaming compreso): pseudonimizza all'andata, rimette i nomi al ritorno, registro di cosa è uscito senza i
   valori. Nell'app (pannello Automazioni, icona) e da terminale (`segnaposto cancello`). Allegati rifiutati.
@@ -39,9 +41,7 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
 - Menu *Servizi* di macOS e *Invia a* di Windows per i file.
 - Scorciatoie configurabili.
 
-### v0.9: agenti e browser
-- **Server MCP**: Claude Desktop e gli altri agenti chiamano `pseudonimizza` e `ripristina` come strumenti, e leggono i file
-  locali solo attraverso segnaposto.
+### v1.0: il browser
 - **Estensione per il browser** su ChatGPT, Claude e Gemini: pseudonimizza prima dell'invio e mostra i nomi veri nella
   risposta solo sul tuo schermo.
 - **Nodo per n8n**.

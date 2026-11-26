@@ -169,3 +169,18 @@ def test_cancello_dall_app(app, monkeypatch, tmp_path):
     assert not d["attivo"] and json.loads((tmp_path / "impostazioni.json").read_text())["cancello"] is False
     with pytest.raises(urllib.error.HTTPError):
         post(app, "/api/cancello", {"azione": "accendi", "porta": 80})
+
+
+def test_collega_claude_desktop_dall_app(app, monkeypatch, tmp_path):
+    from segnaposto import app as modulo, server_mcp
+    conf = tmp_path / "Claude" / "claude_desktop_config.json"
+    monkeypatch.setattr(server_mcp, "file_config_claude", lambda: [conf])
+    monkeypatch.setattr(modulo, "_file_impostazioni", lambda: tmp_path / "impostazioni.json")
+    d = post(app, "/api/mcp", {"azione": "stato"})
+    assert d["collegato"] is False and isinstance(d["proposte"], list)
+    with pytest.raises(urllib.error.HTTPError):
+        post(app, "/api/mcp", {"azione": "collega", "cartelle": [str(tmp_path / "non-esiste")]})
+    d = post(app, "/api/mcp", {"azione": "collega", "cartelle": [str(tmp_path)]})
+    assert d["collegato"] and d["cartelle"] == [str(tmp_path)]
+    assert json.loads(conf.read_text())["mcpServers"]["segnaposto"]["args"][-1] == str(tmp_path)
+    assert not post(app, "/api/mcp", {"azione": "scollega"})["collegato"]

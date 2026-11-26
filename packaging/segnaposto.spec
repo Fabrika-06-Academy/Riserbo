@@ -2,7 +2,7 @@
 import sys
 from PyInstaller.utils.hooks import collect_all, collect_data_files, copy_metadata
 
-VERSIONE = "0.8.0"
+VERSIONE = "0.9.0"
 datas, binaries, hidden = [], [], []
 pacchetti = ["spacy", "presidio_analyzer", "tokenizers", "thinc", "phonenumbers", "spacy_legacy", "spacy_loggers",
              "docx", "pypdfium2", "pypdfium2_raw", "openpyxl", "olefile", "webview",
@@ -27,7 +27,10 @@ a = Analysis(["avvia.py"], pathex=["../src"], binaries=binaries, datas=datas, hi
 pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="segnaposto", console=(sys.platform.startswith("linux")), upx=False,
           icon="icona.png")
-coll = COLLECT(exe, a.binaries, a.datas, name="segnaposto", upx=False)
+# Windows: l'app non ha console, quindi niente stdin/stdout. Claude Desktop avvia il server MCP da questa copia con console.
+extra = [EXE(pyz, a.scripts, [], exclude_binaries=True, name="segnaposto-mcp", console=True, upx=False, icon="icona.png")] \
+    if sys.platform == "win32" else []
+coll = COLLECT(exe, *extra, a.binaries, a.datas, name="segnaposto", upx=False)
 if sys.platform == "darwin":
     app = BUNDLE(coll, name="segnaposto.app", icon="icona.png", bundle_identifier="com.fabrika06.segnaposto",
                  info_plist={"CFBundleName": "segnaposto", "CFBundleDisplayName": "segnaposto",

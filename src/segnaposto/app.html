@@ -104,7 +104,7 @@ mark.vero{cursor:default;font-weight:600;font-size:1em;white-space:normal}
 .esito.warn{color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)}
 .velo{position:fixed;inset:0;background:rgba(10,10,12,.35);z-index:30;display:flex;justify-content:flex-end}
 .pannello{width:min(440px,100%);height:100%;background:var(--card);box-shadow:-10px 0 40px rgba(0,0,0,.2);display:flex;flex-direction:column}
-.pannello .corpo{overflow:auto}
+.pannello .corpo{overflow:auto}.pannello .corpo>*{flex-shrink:0}
 .voce{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .voce input{margin-top:4px;width:18px;height:18px;accent-color:#c99c00}
 .voce small{display:block;color:var(--muted);font-size:.82rem}
@@ -260,6 +260,12 @@ footer a{color:inherit}
     <div class="sezione">Registro: cosa è uscito <span class="stato" id="autoTot"></span></div>
     <div style="overflow:auto;max-height:280px"><table><thead><tr><th>Ora</th><th>Fornitore · modello</th><th>Dati protetti</th><th>Esito</th></tr></thead><tbody id="autoRighe"></tbody></table></div>
     <p class="stato" style="margin:0">Solo quanti dati e di che tipo: i valori veri non vengono mai registrati. Il registro si azzera chiudendo l'app.</p>
+    <div class="sezione">Claude Desktop</div>
+    <p style="margin:0">Claude Desktop legge i documenti delle cartelle che scegli <b>attraverso segnaposto</b>: vede solo i segnaposto, anche nei nomi dei file. Quando gli chiedi di salvare la risposta o di copiarla negli appunti, i nomi veri li rimette segnaposto qui, sul tuo computer.</p>
+    <div id="mcpCartelle"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><input type="text" id="mcpNuova" placeholder="Percorso di una cartella" style="flex:1;min-width:180px"><button class="sec" id="mcpAggiungi">Aggiungi</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="mcpCollega">Collega a Claude Desktop</button><button class="sec" id="mcpScollega" hidden>Scollega</button></div>
+    <p class="esito" id="mcpEsito" hidden></p>
   </div>
 </aside></div>
 <div class="velo" id="parere" hidden><aside class="pannello">
@@ -347,7 +353,21 @@ function disegnaAuto(d){$("autoAcceso").checked=d.attivo;$("autoPallino").hidden
     var ok=r.stato<400;return "<tr><td>"+esc(r.ora.slice(11))+"</td><td>"+esc(r.fornitore)+(r.modello?" · "+esc(r.modello):"")+(r.flusso?" <small class=\"stato\">streaming</small>":"")+"</td><td>"+esc(dati)+"</td><td>"+(ok?"ok":"<b>"+({400:"rifiutata",401:"chiave non valida",403:"non permessa",404:"non trovata",429:"troppe richieste",502:"fornitore irraggiungibile",503:"modello in caricamento"}[r.stato]||"errore "+r.stato)+"</b>")+"</td></tr>"}).join("")
     :"<tr><td colspan=\"4\" class=\"stato\">"+(d.attivo?"Ancora nessuna richiesta.":"Il cancello è spento.")+"</td></tr>"}
 function cancello(azione,porta){return api("/api/cancello",{azione:azione,porta:porta}).then(disegnaAuto).catch(function(e){$("autoErrore").hidden=false;$("autoErrore").textContent=e.message})}
-$("apriAuto").onclick=function(){$("automazioni").hidden=false;cancello("stato")};
+$("apriAuto").onclick=function(){$("automazioni").hidden=false;cancello("stato");mcp("stato")};
+var MCP={cartelle:[]};
+function disegnaMcp(d){var e=$("mcpEsito");if(d){MCP.cartelle=MCP.cartelle.length&&!d.collegato?MCP.cartelle:(d.collegato?d.cartelle:d.proposte);
+    $("mcpScollega").hidden=!d.collegato;$("mcpCollega").textContent=d.collegato?"Aggiorna il collegamento":"Collega a Claude Desktop";
+    e.hidden=false;if(d.collegato&&d.aggiornato===false){e.className="esito warn";e.textContent="Il collegamento punta a un'altra copia di segnaposto (l'app è stata spostata?): premi «Aggiorna il collegamento»."}
+    else if(d.collegato){e.className="esito ok";e.textContent="Collegato. Se Claude Desktop era aperto, chiudilo del tutto e riaprilo: tra gli strumenti trovi «segnaposto»."}
+    else if(d.installato===false){e.className="esito warn";e.textContent="Claude Desktop non sembra installato su questo computer: puoi collegarlo comunque, varrà quando lo installi."}
+    else e.hidden=true}
+  $("mcpCartelle").innerHTML=MCP.cartelle.map(function(c,i){return "<div class=\"indirizzo\"><code>"+esc(c)+"</code><button class=\"sec\" data-togli=\""+i+"\">Togli</button></div>"}).join("")||"<p class=\"stato\" style=\"margin:0\">Nessuna cartella scelta.</p>";
+  $("mcpCartelle").querySelectorAll("[data-togli]").forEach(function(b){b.onclick=function(){MCP.cartelle.splice(+b.getAttribute("data-togli"),1);disegnaMcp()}})}
+function mcp(azione){return api("/api/mcp",{azione:azione,cartelle:MCP.cartelle}).then(disegnaMcp).catch(function(x){var e=$("mcpEsito");e.hidden=false;e.className="esito warn";e.textContent=x.message})}
+$("mcpAggiungi").onclick=function(){var v=$("mcpNuova").value.trim();
+  if(v){MCP.cartelle.push(v);$("mcpNuova").value="";disegnaMcp();return}
+  if(nativo()&&window.pywebview.api.scegli_cartella)window.pywebview.api.scegli_cartella().then(function(c){if(c){MCP.cartelle.push(c);disegnaMcp()}})};
+$("mcpCollega").onclick=function(){mcp("collega")};$("mcpScollega").onclick=function(){mcp("scollega")};
 $("autoAcceso").onchange=function(){cancello(this.checked?"accendi":"spegni")};
 $("autoCambia").onclick=function(){cancello("accendi",parseInt($("autoPorta").value,10))};
 document.querySelectorAll("[data-copia]").forEach(function(b){b.onclick=function(){copia($(b.getAttribute("data-copia")).textContent,$("autoCopiato"))}});

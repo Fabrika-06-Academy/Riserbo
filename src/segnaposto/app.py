@@ -306,6 +306,21 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                     salva_impostazioni(cancello=stato.cancello is not None,
                                        **({"porta_cancello": int(dati["porta"])} if dati.get("porta") else {}))
                 return self._json(200, stato_cancello(stato))
+            if percorso == "/api/mcp":
+                from .server_mcp import cartelle_predefinite, collega_claude_desktop, scollega_claude_desktop, stato_claude_desktop
+                azione = dati.get("azione")
+                if azione == "collega":
+                    cartelle = [str(c) for c in dati.get("cartelle") or [] if isinstance(c, str)]
+                    mancanti = [c for c in cartelle if not os.path.isdir(os.path.expanduser(c))]
+                    if not cartelle or mancanti:
+                        raise ValueError("Scegli almeno una cartella esistente." if not cartelle else f"Non trovo la cartella {mancanti[0]}.")
+                    collega_claude_desktop([os.path.abspath(os.path.expanduser(c)) for c in cartelle])
+                    salva_impostazioni(cartelle_mcp=cartelle)
+                elif azione == "scollega":
+                    scollega_claude_desktop()
+                st = stato_claude_desktop()
+                st["proposte"] = leggi_impostazioni().get("cartelle_mcp") or st["cartelle"] or [str(c) for c in cartelle_predefinite()]
+                return self._json(200, st)
             if percorso == "/api/mostra":  # un secondo avvio dell'app chiede a questa di farsi vedere
                 if stato.mostra_finestra:
                     threading.Thread(target=stato.mostra_finestra, daemon=True).start()
@@ -439,6 +454,12 @@ class Ponte:
         with open(percorso, "wb") as f:
             f.write(base64.b64decode(dati_b64))
         return percorso
+
+    def scegli_cartella(self) -> str:
+        scelta = self.finestra.create_file_dialog(_dialogo("FOLDER"))
+        if not scelta:
+            return ""
+        return scelta if isinstance(scelta, str) else scelta[0]
 
     def apri(self) -> dict:
         tipi = ("Documenti (*.txt;*.md;*.docx;*.pdf;*.eml;*.msg;*.xlsx;*.csv;*.png;*.jpg;*.jpeg;*.tif;*.tiff)", "Tutti i file (*.*)")
@@ -697,6 +718,9 @@ def main() -> None:
     """Punto d'ingresso dell'app impacchettata (doppio clic su Mac e Windows)."""
     if os.environ.get("SEGNAPOSTO_PROVA"):
         return prova_pacchetto()
+    if len(sys.argv) > 1 and sys.argv[1] == "mcp":  # avviato da Claude Desktop: niente finestra, solo stdin/stdout
+        from .server_mcp import main_mcp
+        sys.exit(main_mcp(sys.argv[2:]))
     from .vassoio import ARGOMENTO_SOTTOFONDO, risveglia_istanza
     if risveglia_istanza():  # è già aperta (magari solo nell'icona): mostra quella invece di aprirne un'altra
         return

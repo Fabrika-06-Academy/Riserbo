@@ -172,6 +172,24 @@ Copre Chat Completions, Responses, Messages (anche `count_tokens`), Embeddings e
 - il **registro** (nel pannello) tiene ora, fornitore, modello e quanti dati di che tipo: mai i valori;
 - la tabella dei segnaposto resta in memoria e si azzera dopo un'ora senza richieste.
 
+## Claude Desktop e gli agenti MCP
+
+segnaposto è anche un **server MCP**: Claude Desktop legge i tuoi documenti *attraverso* segnaposto e vede solo i segnaposto,
+nomi dei file compresi («Contratto [PERSONA_1].docx»). Quando gli chiedi di salvare la risposta o di copiarla negli appunti,
+i nomi veri li rimette segnaposto sul tuo computer: il testo con i dati veri non torna mai al modello.
+
+Nell'app: **Automazioni → Claude Desktop**, scegli le cartelle e premi **Collega a Claude Desktop** (la configurazione di
+Claude Desktop viene aggiornata con una copia di sicurezza accanto). Poi chiudi e riapri Claude Desktop.
+
+Strumenti: `elenca_documenti`, `leggi_documento` (Word, PDF anche scansionati, Excel, CSV, email, foto), `salva_documento`
+(docx, txt, md, csv, xlsx: non sovrascrive), `copia_negli_appunti`. Fuori dalle cartelle scelte non legge nulla.
+
+Da terminale, per qualunque client MCP via stdio:
+
+```json
+{"mcpServers": {"segnaposto": {"command": "python", "args": ["-m", "segnaposto", "mcp", "--cartella", "/Users/io/Clienti"]}}}
+```
+
 ## Come servizio locale
 
 Per usarlo da un'automazione (n8n, Make in locale), da un gestionale o da un sito:

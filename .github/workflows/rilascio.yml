@@ -40,6 +40,19 @@ jobs:
           if [ "$RUNNER_OS" = "macOS" ]; then packaging/dist/segnaposto.app/Contents/MacOS/segnaposto; else packaging/dist/segnaposto/segnaposto.exe; fi
           cat esito-prova.txt
           grep -q "pacchetto completo" esito-prova.txt
+      - name: Prova del server MCP (come lo avvia Claude Desktop)
+        shell: bash
+        run: |
+          mkdir -p prova-mcp && printf 'Contratto di Mario Rossi, CF RSSMRA80A01L840J.\n' > prova-mcp/contratto.txt
+          if [ "$RUNNER_OS" = "macOS" ]; then BIN=packaging/dist/segnaposto.app/Contents/MacOS/segnaposto; DIR="$PWD/prova-mcp"
+          else BIN=packaging/dist/segnaposto/segnaposto-mcp.exe; DIR="$(pwd -W)/prova-mcp"; fi
+          printf '%s\n' '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
+            '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+            '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"leggi_documento","arguments":{"documento":"contratto.txt"}}}' \
+            | "$BIN" mcp --cartella "$DIR" > risposta-mcp.txt
+          cat risposta-mcp.txt
+          grep -q "CODICE_FISCALE_1" risposta-mcp.txt
+          ! grep -q "RSSMRA80A01L840J" risposta-mcp.txt
       - name: Pacchetto Mac (zip e dmg)
         if: runner.os == 'macOS'
         run: |

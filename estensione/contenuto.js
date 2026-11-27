@@ -19,6 +19,7 @@
   let pronto = null;   // testo (normalizzato) già controllato: il prossimo invio passa
   let forza = null;    // testo da mandare comunque (app non raggiungibile, la persona ha premuto di nuovo Invio)
   let ultimoRiquadro = null;
+  let ultimoInviato = null; // il riquadro da cui è partito l'ultimo messaggio protetto
   let lasciaPassare = false;
 
   const norm = (s) => String(s || "").replace(/\s+/g, " ").trim();
@@ -108,6 +109,7 @@
   }
 
   function invia(c, comeTasto) {
+    if (ospite) ospite.hidden = true; // il messaggio parte: l'avviso non serve più
     lasciaPassare = true;
     try {
       const b = pulsanteInvio(c);
@@ -119,6 +121,7 @@
   }
 
   async function controlla(c, comeTasto) {
+    ultimoInviato = c;
     const testo = leggi(c);
     avviso("controllo i dati…");
     let r;
@@ -173,7 +176,23 @@
   }, true);
 
   // ------------------------------------------------------------ ritorno: i nomi veri nelle risposte
+  // Nei testi normali della pagina i segnaposto diventano i nomi veri. Nei testi MODIFICABILI (il riquadro dove scrivi,
+  // ma anche la bozza di email di ChatGPT o un documento in modifica) non si scrive mai: l'editor del sito prenderebbe i
+  // nomi veri come se li avessi scritti tu e potrebbe salvarli sui suoi server. Per quei testi c'è il pulsante
+  // «[–] Nomi veri», che li mostra in un riquadro privato con il tasto Copia.
   const dentroRiquadro = (n) => { const p = n.parentElement; return !p || p.isContentEditable || p.closest("textarea,input,script,style"); };
+  const èCompositore = (el) => el.id === "prompt-textarea" || !!el.closest("form, fieldset, rich-textarea") || el === ultimoInviato;
+
+  function testiModificabili() {
+    const fuori = [];
+    for (const el of document.querySelectorAll('[contenteditable="true"], [contenteditable=""], [contenteditable="plaintext-only"], textarea')) {
+      if (el.tagName !== "TEXTAREA" && el.parentElement && el.parentElement.isContentEditable) continue; // solo il più esterno
+      if (èCompositore(el)) continue;
+      const t = leggi(el);
+      if (CE.test(t)) fuori.push(t);
+    }
+    return fuori;
+  }
 
   function nodiConSegnaposto() {
     const fuori = [];
@@ -188,10 +207,11 @@
   async function rimetti() {
     if (!imp.mostra) return;
     const nodi = nodiConSegnaposto();
-    if (!nodi.length) return;
+    const modificabili = testiModificabili();
+    if (!nodi.length && !modificabili.length) { pulsanteNomi([]); return; }
     const ora = Date.now();
     const mancanti = new Set();
-    for (const n of nodi) for (const s of n.data.match(SEGNAPOSTO) || [])
+    for (const t of [...nodi.map((n) => n.data), ...modificabili]) for (const s of t.match(SEGNAPOSTO) || [])
       if (!valori.has(s) && !(ora - (sconosciuti.get(s) || 0) < 15000)) mancanti.add(s);
     if (mancanti.size && !inAttesa) {
       inAttesa = true;
@@ -211,7 +231,54 @@
         n.data = nuovo;
       }
     }
+    pulsanteNomi(testiModificabili().filter((t) => (t.match(SEGNAPOSTO) || []).some((s) => valori.has(s))));
   }
+
+  // Il pulsante e il riquadro privato (shadow root chiuso: gli script del sito non ne leggono il contenuto)
+  let pOspite = null, pRadice = null, pTesti = [];
+  const conNomi = (t) => t.replace(SEGNAPOSTO, (s) => (valori.has(s) ? valori.get(s) : s));
+  function pulsanteNomi(testi) {
+    pTesti = testi;
+    if (!testi.length) { if (pOspite) pOspite.hidden = true; return; }
+    if (!pOspite) {
+      pOspite = document.createElement("div");
+      pOspite.style.cssText = "position:fixed;right:18px;bottom:18px;z-index:2147483646";
+      pRadice = pOspite.attachShadow({ mode: "closed" });
+      document.documentElement.appendChild(pOspite);
+    }
+    pOspite.hidden = false;
+    if (pRadice.querySelector(".pannello")) return; // aperto: non lo ridisegno sotto le mani
+    pRadice.innerHTML = '<style>' + STILE + '</style><button class="nomi">[–] Nomi veri</button>';
+    pRadice.querySelector(".nomi").onclick = apriPannello;
+  }
+  function apriPannello() {
+    pRadice.innerHTML = '<style>' + STILE + '</style><div class="pannello"><div class="testa"><b>Riserbo · con i nomi veri</b>' +
+      '<button class="chiudi">Chiudi</button></div><p class="nota">Solo qui, sul tuo schermo: il sito non vede questo riquadro.</p></div>';
+    const pan = pRadice.querySelector(".pannello");
+    pTesti.forEach((t) => {
+      const blocco = document.createElement("div"); blocco.className = "blocco";
+      const pre = document.createElement("pre"); pre.textContent = conNomi(t);
+      const b = document.createElement("button"); b.className = "copia"; b.textContent = "Copia";
+      b.onclick = async () => {
+        try { await navigator.clipboard.writeText(pre.textContent); }
+        catch (e) { const ta = document.createElement("textarea"); ta.value = pre.textContent; blocco.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
+        b.textContent = "Copiato";
+        setTimeout(() => { b.textContent = "Copia"; }, 1500);
+      };
+      blocco.append(pre, b); pan.appendChild(blocco);
+    });
+    pRadice.querySelector(".chiudi").onclick = () => { pRadice.innerHTML = ""; pulsanteNomi(pTesti); };
+  }
+  const STILE = ".nomi{font:600 14px -apple-system,Segoe UI,sans-serif;background:#121116;color:#FFC700;border:0;border-radius:999px;" +
+    "padding:10px 16px;box-shadow:0 8px 24px rgba(0,0,0,.3);cursor:pointer}" +
+    ".pannello{font:14px/1.5 -apple-system,Segoe UI,sans-serif;background:#fff;color:#121116;width:min(520px,calc(100vw - 36px));" +
+    "max-height:70vh;overflow:auto;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);padding:14px 16px;border-top:4px solid #FFC700}" +
+    ".testa{display:flex;justify-content:space-between;align-items:center;gap:10px}.nota{margin:4px 0 10px;color:#666;font-size:12.5px}" +
+    ".blocco{border:1px solid #e2e0da;border-radius:10px;padding:10px 12px;margin-bottom:10px}" +
+    "pre{white-space:pre-wrap;font:inherit;margin:0 0 8px}button.copia,button.chiudi{font:inherit;border:1px solid #d8d6cf;background:#fff;" +
+    "border-radius:8px;padding:5px 12px;cursor:pointer}button.copia{background:#FFC700;border-color:#FFC700;font-weight:600}" +
+    "@media (prefers-color-scheme:dark){.pannello{background:#1b1a20;color:#eee}.blocco{border-color:#3a3a44}.nota{color:#aaa}" +
+    "button.chiudi{background:transparent;color:#eee;border-color:#3a3a44}}";
 
   function nascondi() { // «Mostra i nomi veri» spento: tornano i segnaposto
     const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);

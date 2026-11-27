@@ -199,7 +199,7 @@ def stato_cancello(stato: Stato) -> dict:
 def proteggi_testo(stato: Stato, testo: str) -> tuple[str, int]:
     """Pseudonimizza nella pratica corrente, con le scelte di «Cosa nascondere». (testo protetto, quanti dati)."""
     if stato.sp is None:
-        return testo, 0
+        return testo, -1  # il riconoscitore si sta ancora caricando: chi chiama lo deve dire
     with stato.lock:
         stato.ultimo_uso = time.time()
         r = stato.sp.pseudonimizza(testo, stato.tabella, forzati=stato.forzati, ignora=stato.ignora | stato.in_chiaro,
@@ -440,6 +440,7 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                                         "automatica": bool(stato.automatica and stato.automatica.attivo),
                                         "automatica_ultimo": stato.automatica.ultimo if stato.automatica else "",
                                         "automatica_vista": _ultima_app_vista(),
+                                        "automatica_registro": list(stato.automatica.registro) if stato.automatica else [],
                                         "desktop": sys.platform == "darwin" or os.name == "nt",
                                         "ponte": stato.ponte_httpd is not None, "cancello": stato.cancello is not None,
                                         "pausa": stato_pausa(stato)})

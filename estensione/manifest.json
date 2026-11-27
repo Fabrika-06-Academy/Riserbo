@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Riserbo",
-  "version": "0.13.2",
+  "version": "0.13.3",
   "description": "Protegge i dati personali prima di mandarli a ChatGPT, Claude e Gemini e rimette i nomi veri nelle risposte, sul tuo schermo. Lavora con l'app Riserbo.",
   "homepage_url": "https://github.com/Fabrika-06-Academy/riserbo",
   "permissions": ["storage"],

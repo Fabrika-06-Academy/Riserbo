@@ -63,3 +63,27 @@ def test_riconosce_la_nuova_app_di_chatgpt_per_mac():
     """Sul Mac di Andrea l'app «ChatGPT» ha l'identificativo com.openai.codex (2026-11)."""
     assert riconosci(("com.openai.codex", "ChatGPT")) == "ChatGPT"
     assert riconosci(("com.openai.codex", "")) == "ChatGPT"
+
+
+def test_testo_copiato_mentre_sei_gia_nell_app(sp):
+    """L'ordine dei gesti non conta: anche se copi quando ChatGPT è già davanti, gli appunti si proteggono."""
+    st, f, g = guardiano(sp)
+    f.app = "ChatGPT"; g.passo()                 # entri con gli appunti vuoti
+    g.passo()
+    f.copia("Il cliente Andrea Galli chiede il rimborso sull'IBAN IT60X0542811101000000123456.")
+    g.passo()
+    assert "Andrea Galli" not in f.appunti and "[IBAN_1]" in f.appunti
+    assert "dati sostituiti" in g.registro[0]
+    f.app = None; g.passo()                      # esci senza copiare altro: torna il testo vero
+    assert f.appunti.startswith("Il cliente Andrea Galli")
+
+
+def test_riconoscitore_non_pronto_lo_dice(sp):
+    from riserbo.app import Stato, proteggi_testo, rimetti_testo
+    st, f = Stato(None), Finto()  # il riconoscitore non c'è ancora
+    g = Guardiano(lambda t: proteggi_testo(st, t), lambda t: rimetti_testo(st, t), lambda a, b: f.avvisi.append(b),
+                  app_attiva=lambda: f.app, leggi=lambda: f.appunti, scrivi=f.scrivi, contatore=lambda: f.n)
+    f.copia("Scrivi a Laura Ferretti.")
+    f.app = "ChatGPT"; g.passo()
+    assert f.appunti == "Scrivi a Laura Ferretti." and "NON sono protetti" in f.avvisi[0]
+    assert "non era ancora pronto" in g.registro[0]

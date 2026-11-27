@@ -257,6 +257,7 @@ footer a{color:inherit}
       <ol><li>Accendi la modalità automatica qui sotto (o dal menu dell'icona [–]).</li><li>Copia il testo dove lavori, passa all'app di ChatGPT o Claude e incolla: negli appunti c'è già la versione protetta. Una notifica te lo conferma.</li><li>Copia la risposta e torna al tuo programma: negli appunti tornano i nomi veri.</li></ol>
       <small>Vale per quello che incolli, non per quello che scrivi a mano nell'app.</small>
       <small id="gAutoVista"></small>
+      <div id="gAutoRegistro" class="guida-flusso" style="white-space:pre-line"></div>
       <div><button class="btn" id="gAuto">Accendi la modalità automatica</button></div></div>
 
     <div class="modo"><div class="modo-testa"><div><h4>4 · Qualunque altro programma</h4><small>Outlook, il gestionale, WhatsApp Web: con due scorciatoie</small></div><span class="etichetta" id="gScStato"></span></div>
@@ -410,7 +411,8 @@ function aggiornaGuida(){api("/api/stato").then(function(d){
     $("gModoAuto").hidden=!d.desktop;etichetta("gAutoStato",d.automatica,"accesa","spenta");
     $("gAuto").textContent=d.automatica?"Spegni la modalità automatica":"Accendi la modalità automatica";$("gAuto").className=d.automatica?"sec":"btn";
     $("gAuto").dataset.accesa=d.automatica?"1":"";
-    $("gAutoVista").textContent=d.automatica?("Ultima app vista: "+(d.automatica_vista||"nessuna ancora")+(d.automatica_ultimo?" · "+d.automatica_ultimo:"")):"";
+    $("gAutoVista").textContent=d.automatica?("Ultima app vista: "+(d.automatica_vista||"nessuna ancora")):"";
+    $("gAutoRegistro").textContent=d.automatica&&d.automatica_registro.length?"Ultime cose fatte:\n"+d.automatica_registro.join("\n"):"";
     etichetta("gAgStato",d.cancello,"cancello acceso","da attivare",!d.cancello)}).catch(function(){})}
 function apriGuida(){chiudiPannelli();$("guida").hidden=false;aggiornaGuida();if(ls("sp-guida")!=="vista")ls("sp-guida","vista")}
 $("apriGuida").onclick=apriGuida;

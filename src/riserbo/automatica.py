@@ -19,6 +19,7 @@ import os
 import sys
 import threading
 import time
+from collections import deque
 from typing import Callable
 
 from .motore import SEGNAPOSTO
@@ -135,15 +136,22 @@ class Guardiano:
         self.originale: str | None = None   # il testo vero che c'era negli appunti entrando
         self.scritto: str | None = None     # il testo protetto che abbiamo messo noi
         self.contatore_scritto = -2
+        self.visto = -3                     # il contatore degli appunti al passo precedente
         self.attivo = False
         self.ultimo = ""                    # cosa è successo l'ultima volta (per la finestra)
+        self.registro: deque[str] = deque(maxlen=10)  # le ultime cose fatte, con l'ora (per la Guida)
         self._ferma = threading.Event()
+
+    def _nota(self, msg: str) -> None:
+        self.ultimo = msg
+        self.registro.appendleft(time.strftime("%H:%M:%S") + " · " + msg)
 
     # -- un passo: si chiama di continuo (thread) o a mano (prove)
     def passo(self) -> None:
         app = self.app_attiva()
         if self.in_pausa():  # in pausa: si segue solo dove sei, senza toccare gli appunti
             self.dentro, self.originale, self.scritto = app, None, None
+            self.visto = self.contatore()
             return
         if app and not self.dentro:
             self.dentro = app
@@ -155,28 +163,40 @@ class Guardiano:
             self._uscendo(self.dentro)
             self.dentro = app
             self._entrando(app)
+        elif app and self.dentro:
+            c = self.contatore()
+            if c >= 0 and self.visto >= 0 and c != self.visto and c != self.contatore_scritto:
+                self._proteggi_appunti(app, "copiato in")  # qualcosa è arrivato negli appunti mentre sei nell'app
+        self.visto = self.contatore()
 
     def _entrando(self, app: str) -> None:
         self.originale = self.scritto = None
+        self._proteggi_appunti(app, "entrato in")
+
+    def _proteggi_appunti(self, app: str, come: str) -> None:
         try:
             testo = self.leggi()
-        except Exception:
+        except Exception as e:
+            self._nota(f"{come} {app}: appunti non leggibili ({e})")
             return
-        if not testo.strip() or (SEGNAPOSTO.search(testo) and not self._ha_dati(testo)):
+        if not testo.strip():
+            self._nota(f"{come} {app}: appunti vuoti")
             return
         protetto, n = self.proteggi(testo)
-        if not n:
+        if n < 0:
+            self._nota(f"{come} {app}: il riconoscitore non era ancora pronto")
+            self.avvisa("Riserbo · aspetta un attimo", "Sto ancora caricando il riconoscitore italiano: gli appunti NON sono "
+                        "protetti. Fra qualche secondo ricopia il testo.")
             return
+        if not n:
+            self._nota(f"{come} {app}: nessun dato personale negli appunti")
+            return
+        self.originale = testo  # uscendo senza copiare altro, negli appunti torna questo
         self.scrivi(protetto)
-        self.originale, self.scritto, self.contatore_scritto = testo, protetto, self.contatore()
-        self.ultimo = f"{app}: {n} dati sostituiti negli appunti"
+        self.scritto, self.contatore_scritto = protetto, self.contatore()
+        self._nota(f"{come} {app}: {n} dati sostituiti negli appunti")
         self.avvisa(f"Riserbo · {app}", (f"{n} dati sostituiti" if n != 1 else "1 dato sostituito")
                     + " negli appunti: incolla pure. Uscendo dall'app rimetto i nomi veri.")
-
-    def _ha_dati(self, testo: str) -> bool:
-        """Un testo che ha già segnaposto ma anche altri dati veri va comunque protetto."""
-        _, n = self.proteggi(testo)
-        return n > 0
 
     def _uscendo(self, app: str) -> None:
         try:
@@ -187,13 +207,18 @@ class Guardiano:
             self.contatore() == self.contatore_scritto if self.contatore_scritto >= 0 else testo == self.scritto)
         if non_toccati and self.originale is not None:
             self.scrivi(self.originale)  # non hai copiato niente lì dentro: torna il tuo testo
+            self._nota(f"uscito da {app}: negli appunti è tornato il tuo testo")
         elif SEGNAPOSTO.search(testo):
             vero, n = self.rimetti(testo)
             if n:
                 self.scrivi(vero)
-                self.ultimo = f"{app}: {n} nomi veri rimessi negli appunti"
+                self._nota(f"uscito da {app}: {n} nomi veri rimessi negli appunti")
                 self.avvisa("Riserbo · nomi veri", (f"{n} valori rimessi" if n != 1 else "1 valore rimesso")
                             + " negli appunti: incolla dove ti serve.")
+            else:
+                self._nota(f"uscito da {app}: segnaposto non di questa pratica, appunti lasciati com'erano")
+        else:
+            self._nota(f"uscito da {app}: negli appunti non ci sono segnaposto")
         self.originale = self.scritto = None
 
     # -- il thread

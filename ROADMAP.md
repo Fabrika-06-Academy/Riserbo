@@ -1,8 +1,8 @@
-# Dove va segnaposto
+# Dove va Riserbo
 
-L'idea: i dati personali non devono uscire dal computer, **qualunque sia lo strumento** con cui si lavora. Oggi segnaposto è
-un'app in cui incollare il testo. Domani deve stare in mezzo, senza farsi notare, tra le app di tutti i giorni e i modelli
-in cloud. Un passo alla volta, ognuno usabile da subito.
+L'idea: i dati personali non devono uscire dal computer, **qualunque sia lo strumento** con cui si lavora. All'inizio era
+un'app in cui incollare il testo; ora sta in mezzo, senza farsi notare, tra le app di tutti i giorni e i modelli
+in cloud: browser, appunti, automazioni, agenti. Un passo alla volta, ognuno usabile da subito.
 
 ## Fatto
 
@@ -10,6 +10,8 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
   app locale, pacchetti per Mac e Windows, servizio HTTP locale.
 - **v0.3**: finestra nativa. Documenti in ingresso: Word, PDF con testo, Excel, CSV, email .eml con allegati. Colonne
   riconosciute dall'intestazione, indirizzi, correzioni a mano (clic e selezione), salvataggio nel formato d'origine.
+- **v0.11**: il nome diventa **Riserbo** (prima *segnaposto*: la parola resta per i segnaposto). README e pagine nuove,
+  con schema, esempi e immagini; parte tecnica in `docs/sviluppatori.md`.
 - **v0.10**: estensione per il browser (ChatGPT, Claude, Gemini, Copilot, Mistral, Perplexity, DeepSeek): protegge il
   messaggio al momento dell'invio mostrando cosa parte, rimette i nomi veri nelle risposte sul tuo schermo. Parla con l'app
   su 127.0.0.1 con un codice di collegamento.
@@ -44,6 +46,10 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
 - Menu *Servizi* di macOS e *Invia a* di Windows per i file.
 - Scorciatoie configurabili.
 
+### Subito
+- Banco di prova più ampio e pubblico (centinaia di testi di PMI annotati), con i numeri sulla pagina.
+- Video dimostrativo dell'estensione su ChatGPT e Claude.
+
 ### v1.0
 - Estensione sul Chrome Web Store e su Firefox; allegati (PDF e immagini) pseudonimizzati prima del caricamento.
 - **Nodo per n8n**.
@@ -56,6 +62,6 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
 
 ## Una famiglia di strumenti
 
-segnaposto è il primo strumento della [Fabrika 06 Academy](https://academy.fabrika06.com). I prossimi (fattura elettronica
+Riserbo è il primo strumento della [Fabrika 06 Academy](https://academy.fabrika06.com). I prossimi (fattura elettronica
 XML in tabella, controllo «questo Excel è leggibile da un modello?», calcolatore del costo reale di un flusso con l'AI) useranno
 la stessa base: finestra nativa, tutto in locale, pacchetti per Mac e Windows, stessa grafica.

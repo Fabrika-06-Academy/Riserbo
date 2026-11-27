@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif">
+  <style>
+    .sfondo{fill:#ffffff}.zona{fill:#f6f5f2;stroke:#e2e0da}.nuvola{fill:#eef2fb;stroke:#c9d4ee}
+    .box{fill:#ffffff;stroke:#d8d6cf}.testo{fill:#1d1c22}.tenue{fill:#6b6a72}.titolo{fill:#1d1c22;font-weight:700}
+    .riserbo{fill:#121116}.riserbo-t{fill:#ffffff;font-weight:700}.giallo{fill:#FFC700}
+    .freccia{stroke:#8a8992;stroke-width:2;fill:none}.punta{fill:#8a8992}
+    .seg{fill:#fff1b8}.seg-t{fill:#6b4e00;font-weight:600}.vero{fill:#d9f2e2}.vero-t{fill:#145c32;font-weight:600}
+    @media (prefers-color-scheme:dark){
+      .sfondo{fill:#0d1117}.zona{fill:#161b22;stroke:#30363d}.nuvola{fill:#141d2e;stroke:#2b3a57}
+      .box{fill:#0d1117;stroke:#30363d}.testo,.titolo{fill:#e6edf3}.tenue{fill:#9aa4af}
+      .riserbo{fill:#FFC700}.riserbo-t{fill:#121116}.giallo{fill:#121116}
+      .freccia{stroke:#6e7681}.punta{fill:#6e7681}
+      .seg{fill:#4a3b00}.seg-t{fill:#ffe08a}.vero{fill:#0f3d22}.vero-t{fill:#8ee0ad}
+    }
+  </style>
+  <defs>
+    <marker id="p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" class="punta"/>
+    </marker>
+  </defs>
+  <rect class="sfondo" width="960" height="400" rx="14"/>
+
+  <!-- zona locale -->
+  <rect class="zona" x="16" y="16" width="664" height="368" rx="12"/>
+  <text class="titolo" x="36" y="46" font-size="15">Sul tuo computer</text>
+  <text class="tenue" x="36" y="66" font-size="12.5">I dati veri e la tabella non escono mai da qui</text>
+
+  <!-- zona cloud -->
+  <rect class="nuvola" x="700" y="16" width="244" height="368" rx="12"/>
+  <text class="titolo" x="720" y="46" font-size="15">Nel cloud</text>
+  <text class="tenue" x="720" y="66" font-size="12.5">ChatGPT, Claude, Gemini…</text>
+
+  <!-- andata -->
+  <rect class="box" x="36" y="92" width="190" height="86" rx="10"/>
+  <text class="tenue" x="50" y="114" font-size="12">1 · Il tuo testo</text>
+  <text class="testo" x="50" y="138" font-size="13">Scrive Laura Ferretti,</text>
+  <text class="testo" x="50" y="158" font-size="13">IBAN IT60X0542811…</text>
+
+  <rect class="riserbo" x="262" y="104" width="130" height="62" rx="10"/>
+  <text class="riserbo-t" x="327" y="131" font-size="15" text-anchor="middle">[–] Riserbo</text>
+  <text class="riserbo-t" x="327" y="151" font-size="12" text-anchor="middle" font-weight="400">sostituisce</text>
+
+  <rect class="box" x="428" y="92" width="232" height="86" rx="10"/>
+  <text class="tenue" x="442" y="114" font-size="12">2 · Cosa esce</text>
+  <rect class="seg" x="442" y="124" width="96" height="20" rx="5"/><text class="seg-t" x="447" y="138" font-size="12.5">[PERSONA_1]</text>
+  <text class="testo" x="542" y="138" font-size="13">,</text>
+  <text class="testo" x="442" y="164" font-size="13">IBAN</text>
+  <rect class="seg" x="474" y="150" width="62" height="20" rx="5"/><text class="seg-t" x="479" y="164" font-size="12.5">[IBAN_1]</text>
+
+  <rect class="box" x="720" y="92" width="204" height="86" rx="10"/>
+  <text class="tenue" x="734" y="114" font-size="12">3 · Il modello lavora</text>
+  <text class="testo" x="734" y="138" font-size="13">vede solo segnaposto:</text>
+  <text class="testo" x="734" y="158" font-size="13">nessun nome, nessun IBAN</text>
+
+  <path class="freccia" d="M226 135 H258" marker-end="url(#p)"/>
+  <path class="freccia" d="M392 135 H424" marker-end="url(#p)"/>
+  <path class="freccia" d="M660 135 H716" marker-end="url(#p)"/>
+
+  <!-- ritorno -->
+  <path class="freccia" d="M822 178 V236" marker-end="url(#p)"/>
+  <rect class="box" x="720" y="240" width="204" height="86" rx="10"/>
+  <text class="tenue" x="734" y="262" font-size="12">4 · La risposta</text>
+  <text class="testo" x="734" y="286" font-size="13">Gentile</text>
+  <rect class="seg" x="785" y="272" width="96" height="20" rx="5"/><text class="seg-t" x="790" y="286" font-size="12.5">[PERSONA_1]</text>
+  <text class="testo" x="734" y="310" font-size="13">ecco la bozza…</text>
+
+  <rect class="riserbo" x="530" y="252" width="130" height="62" rx="10"/>
+  <text class="riserbo-t" x="595" y="279" font-size="15" text-anchor="middle">[–] Riserbo</text>
+  <text class="riserbo-t" x="595" y="299" font-size="12" text-anchor="middle" font-weight="400">rimette i nomi</text>
+
+  <rect class="box" x="282" y="240" width="212" height="86" rx="10"/>
+  <text class="tenue" x="296" y="262" font-size="12">5 · Quello che leggi tu</text>
+  <text class="testo" x="296" y="286" font-size="13">Gentile</text>
+  <rect class="vero" x="347" y="272" width="104" height="20" rx="5"/><text class="vero-t" x="352" y="286" font-size="12.5">Laura Ferretti</text>
+  <text class="testo" x="296" y="310" font-size="13">ecco la bozza…</text>
+
+  <path class="freccia" d="M716 283 H664" marker-end="url(#p)"/>
+  <path class="freccia" d="M530 283 H498" marker-end="url(#p)"/>
+
+  <!-- tabella -->
+  <rect class="box" x="36" y="240" width="210" height="86" rx="10"/>
+  <text class="tenue" x="50" y="262" font-size="12">La tabella (solo qui)</text>
+  <text class="seg-t" x="50" y="286" font-size="12.5">[PERSONA_1]</text><text class="testo" x="140" y="286" font-size="12.5">= Laura Ferretti</text>
+  <text class="seg-t" x="50" y="308" font-size="12.5">[IBAN_1]</text><text class="testo" x="140" y="308" font-size="12.5">= IT60X0542…</text>
+
+  <text class="tenue" x="36" y="364" font-size="12.5">Pseudonimizzazione (GDPR, art. 4.5): senza la tabella, il testo che esce non riporta a nessuno.</text>
+</svg>

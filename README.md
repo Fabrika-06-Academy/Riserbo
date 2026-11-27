@@ -1,266 +1,150 @@
-# segnaposto
+<p align="center"><img src="packaging/icona.png" width="88" alt=""></p>
 
-**Pseudonimizzare testi italiani prima di mandarli a un modello in cloud, e rimettere i valori veri al ritorno.**
+<h1 align="center">Riserbo</h1>
 
-```
-Buongiorno, sono Mario Rossi della Bianchi Srl. CF RSSMRA80A01L840J, IBAN IT60 X054 2811 1010 0000 0123 456.
-                                   ↓ riserbo pseudonimizza
-Buongiorno, sono [PERSONA_1] della [CLIENTE_1]. CF [CODICE_FISCALE_1], IBAN [IBAN_1].
-```
+<p align="center"><b>Usa ChatGPT, Claude e Gemini senza consegnargli i dati dei tuoi clienti.</b></p>
 
-Il modello in cloud lavora sul testo con i segnaposto. Quando la risposta torna, `riserbo ripristina` rimette i nomi veri
-e controlla che il modello non abbia perso o inventato segnaposto. La tabella che collega segnaposto e valori resta in casa tua.
+<p align="center">
+Riserbo sostituisce nomi, codici fiscali, IBAN e indirizzi con segnaposto <i>prima</i> che il testo esca dal tuo computer,<br>
+e nella risposta rimette i valori veri. Gira tutto in locale. Open source, gratuito.
+</p>
 
-Fa parte dei progetti della [Fabrika 06 Academy](https://academy.fabrika06.com), i corsi gratuiti sull'intelligenza
+<p align="center">
+<img alt="100% locale" src="https://img.shields.io/badge/dati-100%25%20locali-1a7f37">
+<img alt="Mac e Windows" src="https://img.shields.io/badge/Mac%20%C2%B7%20Windows-app%20pronta-121116">
+<img alt="Italiano" src="https://img.shields.io/badge/pensato%20per-l'italiano-FFC700">
+<img alt="Licenza MIT" src="https://img.shields.io/badge/licenza-MIT-blue">
+</p>
+
+<p align="center">
+<a href="https://github.com/Fabrika-06-Academy/riserbo/releases/latest/download/riserbo-mac-apple-silicon.dmg"><b>Scarica per Mac</b></a> (Apple Silicon)
+&nbsp;·&nbsp;
+<a href="https://github.com/Fabrika-06-Academy/riserbo/releases/latest/download/riserbo-windows.zip"><b>Scarica per Windows</b></a>
+&nbsp;·&nbsp;
+<a href="https://academy.fabrika06.com/riserbo/">Pagina del progetto</a>
+</p>
+
+<p align="center"><img src="docs/immagini/flusso.gif" width="860" alt="Riserbo: un'email con nomi, codice fiscale e IBAN diventa testo con segnaposto; la risposta della chat torna con i nomi veri"></p>
+
+## Il problema
+
+Un'email di un cliente, un contratto, un Excel di fornitori: incollarli in ChatGPT è comodo, ma vuol dire mandare a un
+fornitore americano nomi, codici fiscali, IBAN e indirizzi di persone che non te l'hanno chiesto. Rinunciare all'AI non è
+la risposta. Mandarle solo quello che le serve, sì: per scrivere una risposta a un cliente il modello non ha bisogno di
+sapere *come si chiama*.
+
+## Come funziona
+
+<p align="center"><img src="docs/immagini/come-funziona.svg" width="860" alt="Schema: il testo diventa segnaposto sul tuo computer, il modello lavora sui segnaposto, Riserbo rimette i nomi veri nella risposta"></p>
+
+1. **Riserbo trova i dati** con un riconoscitore di entità italiano che gira sul tuo computer, più regole che **verificano**
+   codici fiscali, partite IVA e IBAN (un numero a caso non viene scambiato per un IBAN).
+2. **Li sostituisce con segnaposto** come `[PERSONA_1]` o `[IBAN_1]`. Lo stesso valore riceve sempre lo stesso segnaposto,
+   così il modello capisce che si parla della stessa persona.
+3. **Il modello lavora** sul testo con i segnaposto: riassume, risponde, traduce, corregge.
+4. **Riserbo rimette i valori veri** nella risposta e ti avvisa se il modello ha perso o inventato qualche segnaposto.
+
+La tabella che collega segnaposto e valori resta solo in memoria sul tuo computer e si cancella con «Nuova pratica», dopo
+un'ora senza usarla o chiudendo l'app.
+
+| Prima | Cosa esce dal tuo computer |
+|---|---|
+| le scrivo per conto della dott.ssa **Laura Ferretti** (CF **FRRLRA79D52L781G**), titolare della **Bianchi Impianti Srl**, **via Garibaldi 18, 37121 Verona**. Il canone verrà pagato sull'IBAN **IT60X0542811101000000123456**. | le scrivo per conto della dott.ssa `[PERSONA_1]` (CF `[CODICE_FISCALE_1]`), titolare della `[AZIENDA_1]`, `[INDIRIZZO_1]`. Il canone verrà pagato sull'IBAN `[IBAN_1]`. |
+
+## Dove funziona: dove lavori già
+
+| | Come | Per chi |
+|---|---|---|
+| **Nel browser** | Estensione per ChatGPT, Claude, Gemini, Copilot, Mistral, Perplexity e DeepSeek. Quando premi Invio i dati diventano segnaposto *nel riquadro*, così vedi cosa parte; nelle risposte leggi i nomi veri. | tutti |
+| **Nella finestra di Riserbo** | Trascini un documento: Word, PDF anche scansionati, foto, Excel, CSV, email di Outlook e Mail. Ottieni il testo protetto, lo stesso file nel suo formato o un **PDF oscurato**. | chi lavora sui documenti |
+| **In qualunque programma** | Copi il testo, premi **⌃⌥P** (Ctrl+Alt+P su Windows) e incolli la versione protetta. Copi la risposta, premi **⌃⌥R** e tornano i nomi veri. | chi lavora in Outlook, nel gestionale, in WhatsApp Web |
+| **Nelle automazioni** | n8n, Make, script e programmi che usano le API di OpenAI o Anthropic passano da Riserbo: basta cambiare il «Base URL». Ogni richiesta esce protetta, anche in streaming, con un registro di cosa è uscito. | chi automatizza |
+| **In Claude Desktop** | Claude legge i documenti delle cartelle che scegli *attraverso* Riserbo: vede solo segnaposto, anche nei nomi dei file. Quando salva una risposta, i nomi veri li rimette Riserbo sul tuo disco. | chi usa gli agenti |
+
+Riserbo resta acceso nell'icona **[–]** vicino all'orologio e può partire all'accensione.
+
+<p align="center"><img src="docs/immagini/rimetti-light.png" width="860" alt="La risposta della chat con i segnaposto e, a destra, con i nomi veri evidenziati"></p>
+
+## Anonimizzare o pseudonimizzare?
+
+Sono due cose diverse, e la differenza conta per il GDPR.
+
+- **Anonimizzare** vuol dire rendere i dati irreversibilmente non riconducibili a una persona. Dati davvero anonimi escono
+  dal GDPR (considerando 26). Ma non si può tornare indietro: niente nomi veri nella risposta.
+- **Pseudonimizzare** vuol dire sostituire i dati in modo che non si possano attribuire a una persona *senza informazioni
+  aggiuntive conservate separatamente* (art. 4, punto 5). È quello che fa Riserbo: le informazioni aggiuntive sono la
+  tabella, che resta sul tuo computer.
+
+Quindi: il fornitore del modello riceve testo da cui non può risalire alle persone; tu, che hai la tabella, stai ancora
+trattando dati personali. Riserbo **riduce il rischio** e applica la minimizzazione (art. 5), ma il contratto con il
+fornitore del modello, il registro dei trattamenti e l'informativa restano necessari. Chi parla di «anonimizzazione
+reversibile» descrive in realtà una pseudonimizzazione.
+
+## Cosa riconosce
+
+Persone · aziende · clienti e fornitori (anche dall'anagrafica del gestionale) · luoghi · indirizzi · email · telefoni ·
+siti web · codici fiscali · partite IVA · IBAN · targhe · date di nascita · età · dati sanitari · documenti d'identità ·
+conti e carte · password e PIN · indirizzi IP e codici dei dispositivi · dati catastali · stato civile · professioni.
+
+Ogni categoria si può lasciare in chiaro (per esempio le città, se servono per rispondere), e si può tenere un elenco di nomi
+che non vanno mai nascosti: i tuoi prodotti, la tua azienda. In Excel e CSV le colonne intitolate «Nome», «Ragione sociale»,
+«Codice fiscale» vengono nascoste per intero.
+
+## Quanto ci si può fidare
+
+Nessuno strumento trova tutto, e Riserbo non fa eccezione.
+
+- I dati a forma fissa (codice fiscale, partita IVA, IBAN, email, telefoni) vengono trovati da regole con il controllo
+  delle cifre: qui le fughe sono rarissime.
+- Nomi, aziende e luoghi dipendono dal riconoscitore di entità ([DeepMount00/Italian_NER_XXL_v2](https://huggingface.co/DeepMount00/Italian_NER_XXL_v2),
+  un BERT italiano con licenza Apache 2.0). Sul nostro set di prova di testi di PMI (88 entità) ne lascia scoperte 1 o 2,
+  senza falsi allarmi. È un set piccolo: un banco di prova più ampio è nei prossimi passi.
+- Per questo **si rilegge sempre** prima di inviare: nell'app un clic su un segnaposto lo rimette in chiaro, una selezione
+  nasconde una parola ovunque. L'estensione ti mostra il testo protetto nel riquadro prima che parta.
+
+## Cosa esce dal tuo computer
+
+I testi e i documenti: **mai**. Il riconoscitore e l'OCR sono dentro l'app, non c'è nessun account e nessuna telemetria.
+All'avvio l'app chiede a GitHub il numero dell'ultima versione, per proporti l'aggiornamento (si può spegnere). Il pannello
+**Parere** manda all'Academy solo quello che scrivi lì, quando premi «Invia».
+
+## Installare
+
+**Mac** (Apple Silicon): scarica il [.dmg](https://github.com/Fabrika-06-Academy/riserbo/releases/latest/download/riserbo-mac-apple-silicon.dmg)
+e trascina Riserbo in Applicazioni. L'app non è ancora firmata da Apple: la prima volta apri *Impostazioni di Sistema →
+Privacy e sicurezza* e premi **Apri comunque**.
+
+**Windows**: scarica lo [zip](https://github.com/Fabrika-06-Academy/riserbo/releases/latest/download/riserbo-windows.zip),
+decomprimilo e apri `riserbo.exe`. Se compare «Windows ha protetto il PC»: *Ulteriori informazioni → Esegui comunque*.
+
+**Estensione del browser** (Chrome, Edge, Brave), finché non è sul Chrome Web Store: nell'app apri *Automazioni →
+Estensione del browser*, attiva il collegamento e segui le istruzioni (servono due minuti).
+
+**Con Python**, per server e automazioni: vedi [docs/sviluppatori.md](docs/sviluppatori.md).
+
+## Per sviluppatori
+
+Come è fatto (tre strati: regole con verifica delle cifre, riconoscitore di entità, controllo finale facoltativo), uso da
+terminale e da Python, il proxy compatibile con OpenAI e Anthropic, il server MCP, il servizio locale e come misurare le
+fughe sui tuoi testi: [docs/sviluppatori.md](docs/sviluppatori.md). La direzione del progetto è in [ROADMAP.md](ROADMAP.md).
+
+## Chi lo fa
+
+Riserbo è uno strumento della [Fabrika 06 Academy](https://academy.fabrika06.com), i corsi gratuiti sull'intelligenza
 artificiale per le aziende. Il metodo è spiegato nel corso
 [Dati protetti e dati dal web](https://academy.fabrika06.com/corso/dati-protetti-dati-dal-web/).
+Fino alla versione 0.10 si chiamava *segnaposto*.
 
-> **Pseudonimizzare non è anonimizzare.** Finché esiste la tabella per tornare indietro, per te quelli restano dati personali:
-> il contratto con il fornitore del modello (DPA), il registro dei trattamenti e l'informativa servono comunque.
-> `segnaposto` riduce il rischio, non toglie gli obblighi.
-
-## Come funziona: tre strati
-
-| Strato | Cosa trova | Come |
-|---|---|---|
-| 1. Regole | codice fiscale (anche con omocodia), partita IVA, IBAN, email, telefoni, targhe, indirizzi con civico | forma fissa e **controllo delle cifre di verifica**, così un numero a caso non viene scambiato per un IBAN |
-| 1. Anagrafica e codici tuoi | i nomi dei tuoi clienti e fornitori, i codici di commesse e ordini | un CSV esportato dal gestionale, espressioni regolari tue |
-| 1. Colonne riconosciute | in Excel e CSV, intere colonne «Nome», «Ragione sociale», «Email», «Codice fiscale», «Indirizzo»… | l'intestazione dice cosa c'è sotto: il valore viene nascosto anche dove compare nel resto del documento |
-| 2. Riconoscitore di entità | persone, aziende, luoghi, e poi età, date di nascita, dati sanitari, documenti, conti, password, IP, dati catastali | un BERT italiano con oltre 50 categorie ([DeepMount00/Italian_NER_XXL_v2](https://huggingface.co/DeepMount00/Italian_NER_XXL_v2), Apache 2.0) eseguito in locale con ONNX Runtime, dentro [Presidio](https://github.com/data-privacy-stack/presidio) |
-| 3. Controllo finale (facoltativo) | quello che è sfuggito: «il figlio del titolare», un soprannome | una funzione tua, per esempio un modello piccolo in casa |
-
-Lo stesso valore riceve sempre lo stesso segnaposto nella stessa pratica, così il modello capisce che si parla della stessa persona.
-
-## Scarica l'app (Mac e Windows)
-
-Per usarlo ogni giorno con ChatGPT, Claude o Copilot, senza installare Python: scarica l'app dalla pagina
-[Releases](https://github.com/Fabrika-06-Academy/riserbo/releases). Su Mac apri il file `.dmg` e trascina segnaposto in
-Applicazioni; su Windows decomprimi lo zip e apri `riserbo.exe`. Si apre in una finestra sua e gira solo sul tuo computer.
-
-1. **Incolla un testo o trascina un documento**: Word (.docx), PDF anche scansionati, foto di documenti, Excel (.xlsx), CSV,
-   email di Outlook (.msg) e di Mail (.eml) con gli allegati, testo semplice. Puoi anche incollare uno screenshot.
-   Premi **Pseudonimizza** (⌘/Ctrl + Invio).
-2. **Rileggi e correggi**: clic su un segnaposto per rimettere in chiaro un falso allarme, seleziona una parola per nasconderla
-   ovunque. Le correzioni valgono per tutta la pratica.
-3. **Copia o salva** il risultato nel formato che ti serve (.docx, .xlsx, .csv, .txt): un Excel torna Excel, con le colonne
-   al loro posto e i numeri ancora numeri. Da un PDF o da una foto puoi creare il **PDF oscurato**: le pagine originali con i
-   dati coperti da rettangoli neri e il segnaposto sopra. È fatto di sole immagini, quindi sotto i rettangoli non resta
-   testo da copiare.
-4. **Incolla la risposta della chat** e premi **Rimetti i valori veri**: l'app sostituisce i segnaposto e ti avvisa se la
-   chat ne ha persi o inventati. Anche la risposta si può salvare come file.
-5. **Nuova pratica** cancella la tabella; chiudendo l'app si cancella comunque.
-
-**Da qualunque programma, con gli appunti.** Lascia l'app aperta e lavora dove vuoi (Outlook, il gestionale, WhatsApp Web):
-copi il testo, premi **⌃⌥P** su Mac (**Ctrl+Alt+P** su Windows) e negli appunti trovi la versione con i segnaposto, da
-incollare nella chat. Copi la risposta, premi **⌃⌥R** (**Ctrl+Alt+R**) e tornano i nomi veri. Una notifica conferma
-quanti dati sono stati sostituiti. Su Mac le scorciatoie non richiedono il permesso di Accessibilità. Se un altro
-programma le usa già, nel pannello «Appunti» ci sono gli stessi comandi come pulsanti.
-
-**Sempre pronta, senza finestra.** Chiudendo la finestra segnaposto resta nell'icona **[–]** vicino all'orologio (barra dei
-menu su Mac, area di notifica su Windows) e le scorciatoie continuano a funzionare. Dall'icona riapri la finestra, proteggi
-o ripristini gli appunti, inizi una nuova pratica, scegli **Apri all'accensione** ed esci davvero. Dopo un'ora senza usarla
-la tabella della pratica si cancella da sola: i dati veri non restano in memoria per giorni.
-
-**Cosa esce dal computer, e solo se lo vuoi.** I testi e i documenti mai. All'avvio l'app chiede a GitHub il numero
-dell'ultima versione, per proporti l'aggiornamento (si spegne in «Cosa nascondere → Aggiornamenti»). Il pannello
-**Parere** manda all'Academy solo quello che scrivi lì, con versione e sistema operativo, quando premi «Invia».
-Su Mac l'aggiornamento si scarica con un clic ma si installa a mano (trascinando in Applicazioni): l'installazione
-automatica richiede la firma Apple, che arriverà quando l'app avrà una diffusione ampia.
-
-**Primo avvio su Mac.** L'app non è firmata con un certificato Apple a pagamento, quindi la prima volta macOS la blocca
-(«non è possibile verificare lo sviluppatore»). Aprila una volta con doppio clic, poi vai in *Impostazioni di Sistema →
-Privacy e sicurezza* e premi **Apri comunque**. In alternativa, da Terminale: `xattr -dr com.apple.quarantine riserbo.app`.
-Il codice è tutto qui: se preferisci, puoi installarlo con Python come descritto sotto.
-
-**Primo avvio su Windows.** SmartScreen può mostrare «Windows ha protetto il PC»: *Ulteriori informazioni → Esegui comunque*.
-
-## Installazione con Python
-
-```bash
-python -m venv .venv && . .venv/bin/activate
-# Non è (ancora) su PyPI: si installa direttamente da GitHub
-pip install "segnaposto @ git+https://github.com/Fabrika-06-Academy/riserbo"
-# con documenti, OCR e finestra dell'app:
-# pip install "riserbo[app] @ git+https://github.com/Fabrika-06-Academy/riserbo"
-# oppure, da una copia del repository: pip install -e ".[app]"
-riserbo scarica-modello   # il riconoscitore di entità, circa 110 MB, una volta sola (altrimenti lo scarica al primo uso)
-```
-
-Tutto gira sul tuo computer o sul tuo server. Nessun dato viene mandato fuori.
-
-## Uso da terminale
-
-```bash
-# Pseudonimizzare: la tabella va in un file a parte (permessi 600, scade dopo 30 giorni)
-riserbo pseudonimizza email.txt --tabella pratica-123.tabella.json --anagrafica clienti.csv --mostra > email-pulita.txt
-
-# ... email-pulita.txt va al modello in cloud, la risposta torna in risposta.txt ...
-
-# Ripristinare: esce con codice 2 se il modello ha inventato segnaposto
-riserbo ripristina risposta.txt --tabella pratica-123.tabella.json > risposta-vera.txt
-
-# Misurare le fughe sul tuo set di prova
-riserbo valuta esempi/set-di-prova.jsonl --anagrafica esempi/anagrafica.csv
-```
-
-## Uso da Python
-
-```python
-from riserbo import Segnaposto, Tabella, ripristina
-from riserbo.riconoscitori import carica_anagrafica, riconoscitore_codice
-
-sp = Segnaposto(riconoscitori=[
-    carica_anagrafica("clienti.csv", entita="CLIENTE"),
-    riconoscitore_codice("COMMESSA", r"\bC-\d{4}-\d{3}\b", contesto=["commessa"]),
-])
-tabella = Tabella()
-pulito = sp.pseudonimizza(testo, tabella)          # pulito.testo va in cloud
-risposta = chiama_il_modello(pulito.testo)
-esito = ripristina(risposta, tabella, attesi=set(tabella.valori))
-if esito.inventati:
-    ...  # il modello ha creato segnaposto suoi: la risposta va riletta da una persona
-```
-
-Strato 3, con un modello in casa (per esempio con Ollama):
-
-```python
-def controllo(testo: str) -> list[str]:
-    # chiedi al modello locale: «elenca, parola per parola, i dati che identificano una persona o un cliente»
-    return [...]
-
-sp = Segnaposto(controllo_finale=controllo)
-```
-
-## L'app dal terminale
-
-```bash
-pip install "riserbo[app] @ git+https://github.com/Fabrika-06-Academy/riserbo"   # documenti, OCR e finestra nativa
-riserbo app            # finestra nativa; senza pywebview, o con --browser, si apre nel browser (127.0.0.1, chiave casuale)
-```
-
-## Il cancello: per n8n, Make e i programmi che usano ChatGPT o Claude
-
-Un proxy locale compatibile con le API di OpenAI e Anthropic. Il programma parla con segnaposto invece che con il fornitore:
-ogni richiesta esce pseudonimizzata, la risposta torna con i nomi veri, anche in streaming. La protezione non dipende più da
-chi si ricorda di usarla.
-
-Nell'app: pannello **Automazioni → Attiva il cancello** (o dal menu dell'icona). Da terminale, anche su un server:
-
-```bash
-riserbo cancello                     # 127.0.0.1:8788
-riserbo cancello --openai https://openrouter.ai/api     # un servizio compatibile con OpenAI
-```
-
-| Programma | Base URL |
-|---|---|
-| OpenAI e compatibili (OpenRouter, Mistral, Ollama…) | `http://127.0.0.1:8788/openai/v1` |
-| Anthropic (Claude) | `http://127.0.0.1:8788/anthropic` |
-
-In n8n è il campo **Base URL** della credenziale OpenAI o Anthropic. In Python:
-
-```python
-from openai import OpenAI
-client = OpenAI(base_url="http://127.0.0.1:8788/openai/v1")   # la chiave API resta la tua, passa com'è
-```
-
-Copre Chat Completions, Responses, Messages (anche `count_tokens`), Embeddings e gli argomenti degli strumenti. Regole:
-
-- si rimettono solo i segnaposto nati dalla stessa richiesta: un segnaposto scritto apposta non tira fuori dati di altre conversazioni;
-- immagini e file allegati sono **rifiutati** (non sappiamo ancora pseudonimizzarli), salvo `--consenti-allegati`;
-- le richieste che arrivano da pagine web sono rifiutate; fuori da 127.0.0.1 serve `--chiave` (finisce nel percorso:
-  `…/k/CHIAVE/openai/v1`);
-- il **registro** (nel pannello) tiene ora, fornitore, modello e quanti dati di che tipo: mai i valori;
-- la tabella dei segnaposto resta in memoria e si azzera dopo un'ora senza richieste.
-
-## Estensione per il browser: ChatGPT, Claude, Gemini
-
-Quando premi Invio, l'estensione chiede all'app aperta di controllare il messaggio: se ci sono dati personali, nel riquadro
-compare la versione con i segnaposto (vedi esattamente cosa parte) e premi Invio una seconda volta. Nelle risposte, e nei
-tuoi messaggi già inviati, i segnaposto diventano i nomi veri solo sul tuo schermo; il riquadro dove scrivi non viene mai
-toccato. Usa la stessa pratica della finestra e delle scorciatoie.
-
-Funziona su chatgpt.com, claude.ai, gemini.google.com, Copilot, Le Chat di Mistral, Perplexity e DeepSeek, con Chrome,
-Edge e Brave. Installazione, finché non è sul Chrome Web Store:
-
-1. Nell'app: **Automazioni → Estensione del browser → Collega l'estensione** e copia il codice.
-2. Scarica `riserbo-estensione.zip` dall'[ultima versione](https://github.com/Fabrika-06-Academy/riserbo/releases/latest)
-   e decomprimilo.
-3. In Chrome apri `chrome://extensions`, attiva **Modalità sviluppatore**, premi **Carica estensione non pacchettizzata** e
-   scegli la cartella.
-4. Clicca l'icona di segnaposto nella barra del browser e incolla il codice.
-
-Cosa sapere: l'estensione parla solo con l'app su `127.0.0.1:8789`, con il codice di collegamento; le pagine web non possono
-usare quel canale. Se l'app è chiusa il messaggio non parte e compare un avviso: premendo di nuovo Invio parte **senza**
-protezione. I nomi veri mostrati nelle risposte non vengono inviati, ma tecnicamente gli script del sito potrebbero leggerli
-dalla pagina: chi preferisce spegne «Mostra i nomi veri» e usa ⌃⌥R. Gli allegati (file, immagini) non passano da segnaposto.
-
-## Claude Desktop e gli agenti MCP
-
-segnaposto è anche un **server MCP**: Claude Desktop legge i tuoi documenti *attraverso* segnaposto e vede solo i segnaposto,
-nomi dei file compresi («Contratto [PERSONA_1].docx»). Quando gli chiedi di salvare la risposta o di copiarla negli appunti,
-i nomi veri li rimette segnaposto sul tuo computer: il testo con i dati veri non torna mai al modello.
-
-Nell'app: **Automazioni → Claude Desktop**, scegli le cartelle e premi **Collega a Claude Desktop** (la configurazione di
-Claude Desktop viene aggiornata con una copia di sicurezza accanto). Poi chiudi e riapri Claude Desktop.
-
-Strumenti: `elenca_documenti`, `leggi_documento` (Word, PDF anche scansionati, Excel, CSV, email, foto), `salva_documento`
-(docx, txt, md, csv, xlsx: non sovrascrive), `copia_negli_appunti`. Fuori dalle cartelle scelte non legge nulla.
-
-Da terminale, per qualunque client MCP via stdio:
-
-```json
-{"mcpServers": {"segnaposto": {"command": "python", "args": ["-m", "riserbo", "mcp", "--cartella", "/Users/io/Clienti"]}}}
-```
-
-## Come servizio locale
-
-Per usarlo da un'automazione (n8n, Make in locale), da un gestionale o da un sito:
-
-```bash
-riserbo servi --porta 8765          # ascolta solo su 127.0.0.1
-curl -X POST localhost:8765/pseudonimizza -d '{"testo": "Scrive Mario Rossi della Bianchi Srl"}'
-```
-
-Risponde con il testo pseudonimizzato, i dati trovati e la tabella dei segnaposto, che resta al chiamante. Non salva e non
-registra i testi. Un esempio di servizio systemd è in `deploy/riserbo.service`. Non esporlo direttamente su internet.
-
-## Misurare prima di fidarsi
-
-Nessuno strumento trova tutto. Prima di usarlo su un processo vero:
-
-1. prendi **cento testi veri** del processo (email, reclami, schede) e annota a mano cosa va tolto;
-2. scrivili in un file JSONL come `esempi/set-di-prova.jsonl`;
-3. lancia `riserbo valuta` e guarda due numeri: le **fughe** (quello che resta leggibile) e le **sostituzioni non annotate** (il testo rovinato, che fa lavorare peggio il modello).
-
-Una soglia ragionevole: zero fughe sui dati a forma fissa, sotto l'uno per cento su nomi e aziende, e un controllo a campione in produzione.
-
-## Limiti noti
-
-- Il riconoscitore di entità sbaglia ancora su qualche nome scritto tutto in minuscolo dopo un articolo («la sara») e su aziende senza forma giuridica poco note. Sul set di prova `esempi/ner-prova.txt` (88 entità in testi di PMI) lascia scoperte 1-2 entità e non dà falsi allarmi; il vecchio modello spaCy ne lasciava 6, con 9 falsi allarmi. Le correzioni a mano dell'app coprono il resto.
-- Gli indirizzi vengono sostituiti quando hanno il numero civico; una città da sola dipende dal riconoscitore di entità, che sui piccoli comuni sbaglia spesso. Date di nascita e importi restano di proposito (servono al modello), salvo nelle colonne di un Excel intitolate così.
-- Scansioni e foto si leggono con l'OCR ([PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) PP-OCRv6 tramite
-  [RapidOCR](https://github.com/RapidAI/RapidOCR), in locale): ottimo sui documenti stampati, meno sulla scrittura a mano.
-  L'app avvisa quando un testo viene dall'OCR: confrontalo con l'originale. Se un dato non viene ritrovato sulla pagina,
-  il PDF oscurato lo dice.
-- Le email .msg con il corpo solo in RTF non si leggono: copia il testo dall'email.
-
-## Licenza
-
-MIT. © 2026 Andrea Prando, [Fabrika 06](https://fabrika06.com).
-
-**Modello del riconoscitore di entità.** [DeepMount00/Italian_NER_XXL_v2](https://huggingface.co/DeepMount00/Italian_NER_XXL_v2),
-licenza Apache 2.0, convertito in ONNX int8 dal workflow `modello` e pubblicato nella release
-[modello-ner-1](https://github.com/Fabrika-06-Academy/riserbo/releases/tag/modello-ner-1) con le impronte SHA-256 dei file.
-Fino alla versione 0.5 segnaposto usava il modello spaCy `it_core_news_sm`, che ha licenza CC BY-NC-SA 3.0 (non
-commerciale): dalla 0.6 non è più usato né distribuito.
+Licenza MIT, anche per le app scaricabili. © 2026 Andrea Prando, [Fabrika 06](https://fabrika06.com).
+Pareri e segnalazioni: il pannello **Parere** dell'app, oppure le [issue](https://github.com/Fabrika-06-Academy/riserbo/issues).
 
 ---
 
 ### In English
 
-`segnaposto` ("placeholder") pseudonymises Italian text before it is sent to a cloud LLM, and restores the original values in
-the answer. It is built on Microsoft's Presidio with Italian recognisers that check the codes (fiscal code with *omocodia*,
-VAT number, IBAN, number plates), a customer list exported from the ERP, your own business codes, spaCy's Italian NER, and an
-optional final check by a local model. The placeholder table stays on your machine (JSON, mode 600, with an expiry date). It also
-checks that the LLM did not drop or invent placeholders, and includes an evaluation command to measure leaks on your own test set.
-Pseudonymised data is still personal data under the GDPR: this tool lowers the risk, it does not remove your obligations.
+**Riserbo** ("discretion") lets you use ChatGPT, Claude and Gemini without handing over your clients' data. Before any
+text leaves your computer it replaces names, Italian tax codes, VAT numbers, IBANs and addresses with placeholders like
+`[PERSONA_1]`, and it puts the real values back into the answer. It runs locally (Italian BERT NER plus checksum-validated
+rules), as a desktop app for Mac and Windows, a browser extension for the major chatbots, global hotkeys for any program,
+an OpenAI/Anthropic-compatible local proxy for automations, and an MCP server for Claude Desktop. This is
+pseudonymisation under GDPR art. 4(5), not anonymisation: it lowers the risk, it does not remove your obligations. MIT licence.

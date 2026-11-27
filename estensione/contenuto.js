@@ -199,25 +199,44 @@
     return fuori;
   }
 
-  function nodiConSegnaposto() {
-    const fuori = [];
+  // Il testo della pagina come un filo unico: ChatGPT scrive la risposta a pezzi, e un segnaposto può restare diviso fra
+  // più nodi di testo («[AZIEN» + «DA_1]»). Si cerca sul filo intero e si modifica solo il testo dei nodi, mai la struttura.
+  function filo() {
+    const nodi = [], inizi = [];
+    let testo = "";
     const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-      acceptNode: (n) => (CE.test(n.data) && !dentroRiquadro(n) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP),
+      acceptNode: (n) => (n.data && !dentroRiquadro(n) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP),
     });
-    while (w.nextNode()) fuori.push(w.currentNode);
-    return fuori;
+    while (w.nextNode()) { nodi.push(w.currentNode); inizi.push(testo.length); testo += w.currentNode.data; }
+    return { nodi, inizi, testo };
   }
 
-  let inAttesa = false;
+  function sostituisciNelFilo(f) {
+    const trovati = [...f.testo.matchAll(SEGNAPOSTO)].filter((m) => valori.has(m[0]));
+    let k = f.nodi.length - 1;
+    for (let i = trovati.length - 1; i >= 0; i--) { // dall'ultimo: le posizioni dei precedenti restano valide
+      const m = trovati[i], inizio = m.index, fine = m.index + m[0].length;
+      while (k > 0 && f.inizi[k] > inizio) k--;     // il nodo dove comincia il segnaposto
+      for (let j = k; j < f.nodi.length && f.inizi[j] < fine; j++) {
+        const n = f.nodi[j], da = Math.max(inizio, f.inizi[j]) - f.inizi[j], a = Math.min(fine, f.inizi[j] + n.data.length) - f.inizi[j];
+        if (a <= da && j !== k) continue;
+        if (!originali.has(n)) originali.set(n, n.data);
+        n.data = n.data.slice(0, da) + (j === k ? valori.get(m[0]) : "") + n.data.slice(a);
+      }
+    }
+  }
+
+  let inAttesa = false, rimandato = false;
   async function rimetti() {
     if (!imp.mostra) return;
-    const nodi = nodiConSegnaposto();
+    const f = filo();
     const modificabili = testiModificabili();
-    if (!nodi.length && !modificabili.length) { pulsanteNomi([]); return; }
+    if (!CE.test(f.testo) && !modificabili.length) { pulsanteNomi([]); return; }
     const ora = Date.now();
     const mancanti = new Set();
-    for (const t of [...nodi.map((n) => n.data), ...modificabili]) for (const s of t.match(SEGNAPOSTO) || [])
+    for (const t of [f.testo, ...modificabili]) for (const s of t.match(SEGNAPOSTO) || [])
       if (!valori.has(s) && !(ora - (sconosciuti.get(s) || 0) < 15000)) mancanti.add(s);
+    if (mancanti.size && inAttesa) rimandato = true; // una richiesta è già in corso: si riprova quando torna
     if (mancanti.size && !inAttesa) {
       inAttesa = true;
       try {
@@ -227,15 +246,10 @@
         for (const s of mancanti) sconosciuti.set(s, ora);
       } finally {
         inAttesa = false;
+        if (rimandato) { rimandato = false; programma(); }
       }
     }
-    for (const n of nodiConSegnaposto()) {
-      const nuovo = n.data.replace(SEGNAPOSTO, (s) => (valori.has(s) ? valori.get(s) : s));
-      if (nuovo !== n.data) {
-        originali.set(n, n.data);
-        n.data = nuovo;
-      }
-    }
+    sostituisciNelFilo(filo());
     pulsanteNomi(testiModificabili().filter((t) => (t.match(SEGNAPOSTO) || []).some((s) => valori.has(s))));
   }
 

@@ -231,6 +231,11 @@ def _avvisa(stato: Stato, titolo: str, testo: str) -> None:
         pass
 
 
+def _ultima_app_vista() -> str:
+    from .automatica import ULTIMA_VISTA
+    return ULTIMA_VISTA["app"]
+
+
 def stato_pausa(stato: Stato) -> dict:
     """In pausa estensione e modalità automatica non proteggono. Il cancello no: le automazioni non si mettono in pausa."""
     f = stato.pausa_fino
@@ -434,6 +439,7 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                                         "vassoio": bool(stato.vassoio and stato.vassoio.attivo),
                                         "automatica": bool(stato.automatica and stato.automatica.attivo),
                                         "automatica_ultimo": stato.automatica.ultimo if stato.automatica else "",
+                                        "automatica_vista": _ultima_app_vista(),
                                         "desktop": sys.platform == "darwin" or os.name == "nt",
                                         "ponte": stato.ponte_httpd is not None, "cancello": stato.cancello is not None,
                                         "pausa": stato_pausa(stato)})

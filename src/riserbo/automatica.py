@@ -28,7 +28,7 @@ WIN = os.name == "nt"
 
 # Mac: identificativo del pacchetto o nome; Windows: nome dell'eseguibile (minuscolo, senza .exe)
 APP_AI = {
-    "ChatGPT": {"com.openai.chat", "chatgpt"},
+    "ChatGPT": {"com.openai.chat", "com.openai.codex", "chatgpt"},  # l'app recente di ChatGPT per Mac è com.openai.codex
     "Claude": {"com.anthropic.claudefordesktop", "claude"},
     "Copilot": {"com.microsoft.copilot-mac", "com.microsoft.copilot", "copilot", "microsoft.copilot"},
     "Perplexity": {"ai.perplexity.mac", "perplexity"},
@@ -45,12 +45,43 @@ def riconosci(identificativi: tuple[str, ...]) -> str | None:
     return None
 
 
+ULTIMA_VISTA: dict = {"app": "", "quando": 0.0}  # per la Guida: quale app il sistema dice in primo piano
+
+
+def _mac_primo_piano() -> tuple[str, str]:
+    from AppKit import NSWorkspace
+    a = NSWorkspace.sharedWorkspace().frontmostApplication()
+    return (str(a.bundleIdentifier() or ""), str(a.localizedName() or "")) if a else ("", "")
+
+
+def _sul_principale(f):
+    """Su Mac l'app in primo piano è aggiornata sul thread principale: chiesta da un thread in sottofondo può essere vecchia."""
+    if threading.current_thread() is threading.main_thread():
+        return f()
+    try:
+        from PyObjCTools import AppHelper
+        esito, fatto = [], threading.Event()
+
+        def sul_main() -> None:
+            try:
+                esito.append(f())
+            finally:
+                fatto.set()
+
+        AppHelper.callAfter(sul_main)
+        if fatto.wait(1.0) and esito:
+            return esito[0]
+    except Exception:
+        pass
+    return f()
+
+
 def app_in_primo_piano() -> str | None:
     try:
         if MAC:
-            from AppKit import NSWorkspace
-            a = NSWorkspace.sharedWorkspace().frontmostApplication()
-            return riconosci((str(a.bundleIdentifier() or ""), str(a.localizedName() or ""))) if a else None
+            ident = _sul_principale(_mac_primo_piano)
+            ULTIMA_VISTA.update(app=" · ".join(x for x in ident if x), quando=time.time())
+            return riconosci(ident)
         if WIN:
             from ctypes import wintypes
             u, k = ctypes.windll.user32, ctypes.windll.kernel32
@@ -64,6 +95,7 @@ def app_in_primo_piano() -> str | None:
                 buf, n = ctypes.create_unicode_buffer(1024), wintypes.DWORD(1024)
                 if not k.QueryFullProcessImageNameW(h, 0, buf, ctypes.byref(n)):
                     return None
+                ULTIMA_VISTA.update(app=os.path.basename(buf.value), quando=time.time())
                 return riconosci((os.path.basename(buf.value),))
             finally:
                 k.CloseHandle(h)

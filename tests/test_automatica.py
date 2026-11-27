@@ -57,3 +57,9 @@ def test_testo_senza_dati_non_si_tocca(sp):
     prima = f.n
     f.app = "ChatGPT"; g.passo()
     assert f.appunti == "Riassumi in tre punti il testo seguente." and f.n == prima and not f.avvisi
+
+
+def test_riconosce_la_nuova_app_di_chatgpt_per_mac():
+    """Sul Mac di Andrea l'app «ChatGPT» ha l'identificativo com.openai.codex (2026-11)."""
+    assert riconosci(("com.openai.codex", "ChatGPT")) == "ChatGPT"
+    assert riconosci(("com.openai.codex", "")) == "ChatGPT"

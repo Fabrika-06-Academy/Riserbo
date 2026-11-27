@@ -2,7 +2,7 @@
 import sys
 from PyInstaller.utils.hooks import collect_all, collect_data_files, copy_metadata
 
-VERSIONE = "0.13.1"
+VERSIONE = "0.13.2"
 datas, binaries, hidden = [], [], []
 pacchetti = ["spacy", "presidio_analyzer", "tokenizers", "thinc", "phonenumbers", "spacy_legacy", "spacy_loggers",
              "docx", "pypdfium2", "pypdfium2_raw", "openpyxl", "olefile", "webview",

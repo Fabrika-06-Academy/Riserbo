@@ -10,6 +10,8 @@ in cloud: browser, appunti, automazioni, agenti. Un passo alla volta, ognuno usa
   app locale, pacchetti per Mac e Windows, servizio HTTP locale.
 - **v0.3**: finestra nativa. Documenti in ingresso: Word, PDF con testo, Excel, CSV, email .eml con allegati. Colonne
   riconosciute dall'intestazione, indirizzi, correzioni a mano (clic e selezione), salvataggio nel formato d'origine.
+- **v0.13.2**: modalità automatica, riconosciuta la nuova app di ChatGPT per Mac (com.openai.codex); l'app in primo
+  piano si chiede sul thread principale; nella Guida «Ultima app vista».
 - **v0.13.1**: estensione, i segnaposto spezzati dallo streaming (ChatGPT scrive a pezzi) tornano veri anche loro.
 - **v0.13**: Pausa (15 minuti, un'ora, finché non la riattivi) dalla finestra, dal menu dell'icona e dall'estensione: si
   riattiva da sola, l'icona cambia aspetto, il cancello resta acceso.

@@ -168,6 +168,13 @@ personali li sostituisce con la versione protetta; uscendo, se dentro l'app è s
 altrimenti rimette il testo di prima. Le app riconosciute sono in `APP_AI`. Si accende dalla Guida, dal menu dell'icona o
 con `"automatica": true` nelle impostazioni.
 
+## La pausa
+
+`metti_in_pausa(stato, minuti)` / `riprendi(stato)` in `app.py`: in pausa la modalità automatica non tocca gli appunti e il
+canale dell'estensione risponde a `/proteggi` con il testo com'è e `"pausa": {...}`, così l'estensione lo dice a chi scrive.
+Scorciatoie e finestra funzionano (agiscono solo se le usi), il **cancello no**: le automazioni non vanno in pausa per
+sbaglio. La pausa non si salva: riaprendo l'app si riparte protetti. Allo scadere si riattiva da sola, con una notifica.
+
 ## Le impostazioni
 
 Sul computer, in un file JSON: Mac `~/Library/Application Support/riserbo/impostazioni.json`, Windows

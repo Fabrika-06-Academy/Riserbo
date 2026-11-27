@@ -91,13 +91,14 @@ class Guardiano:
     def __init__(self, proteggi: Callable[[str], tuple[str, int]], rimetti: Callable[[str], tuple[str, int]],
                  avvisa: Callable[[str, str], None], app_attiva: Callable[[], str | None] = app_in_primo_piano,
                  leggi: Callable[[], str] | None = None, scrivi: Callable[[str], None] | None = None,
-                 contatore: Callable[[], int] = contatore_appunti, intervallo: float = 0.2) -> None:
+                 contatore: Callable[[], int] = contatore_appunti, intervallo: float = 0.2,
+                 in_pausa: Callable[[], bool] = lambda: False) -> None:
         if leggi is None or scrivi is None:
             from .scorciatoie import leggi_appunti, scrivi_appunti
             leggi, scrivi = leggi or leggi_appunti, scrivi or scrivi_appunti
         self.proteggi, self.rimetti, self.avvisa = proteggi, rimetti, avvisa
         self.app_attiva, self.leggi, self.scrivi, self.contatore = app_attiva, leggi, scrivi, contatore
-        self.intervallo = intervallo
+        self.intervallo, self.in_pausa = intervallo, in_pausa
         self.dentro: str | None = None
         self.originale: str | None = None   # il testo vero che c'era negli appunti entrando
         self.scritto: str | None = None     # il testo protetto che abbiamo messo noi
@@ -109,6 +110,9 @@ class Guardiano:
     # -- un passo: si chiama di continuo (thread) o a mano (prove)
     def passo(self) -> None:
         app = self.app_attiva()
+        if self.in_pausa():  # in pausa: si segue solo dove sei, senza toccare gli appunti
+            self.dentro, self.originale, self.scritto = app, None, None
+            return
         if app and not self.dentro:
             self.dentro = app
             self._entrando(app)

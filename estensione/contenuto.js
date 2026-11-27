@@ -133,6 +133,11 @@
       return;
     }
     if (norm(leggi(c)) !== norm(testo)) return; // nel frattempo la persona ha continuato a scrivere
+    if (r.pausa) { // la persona ha messo Riserbo in pausa: il messaggio parte com'è, e lo diciamo
+      pronto = norm(testo);
+      avviso(`${r.pausa.testo}: messaggio inviato così com'è. Riattiva dall'icona di Riserbo.`, 4500, true);
+      return invia(c, comeTasto);
+    }
     if (!r.trovati) {
       pronto = norm(testo);
       avviso("nessun dato personale trovato.", 1800);

@@ -10,6 +10,8 @@ in cloud: browser, appunti, automazioni, agenti. Un passo alla volta, ognuno usa
   app locale, pacchetti per Mac e Windows, servizio HTTP locale.
 - **v0.3**: finestra nativa. Documenti in ingresso: Word, PDF con testo, Excel, CSV, email .eml con allegati. Colonne
   riconosciute dall'intestazione, indirizzi, correzioni a mano (clic e selezione), salvataggio nel formato d'origine.
+- **v0.13**: Pausa (15 minuti, un'ora, finché non la riattivi) dalla finestra, dal menu dell'icona e dall'estensione: si
+  riattiva da sola, l'icona cambia aspetto, il cancello resta acceso.
 - **v0.12**: modalità automatica per le app di AI sul computer (ChatGPT, Claude, Copilot, Perplexity): gli appunti si
   proteggono entrando nell'app e tornano veri uscendo. Guida nell'app, aperta al primo avvio, con lo stato di ogni modo
   d'uso. Le preferenze della pagina si salvano sul computer (prima si perdevano a ogni chiusura).

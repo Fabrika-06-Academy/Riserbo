@@ -35,6 +35,7 @@ class Voce:
     spunta: Callable[[], bool] | None = None     # voce con il segno di spunta: stato attuale
     cambia: Callable[[bool], None] | None = None  # ... e cosa fare quando la si clicca
     tasto: str = ""                              # "proteggi" / "ripristina": mostra la scorciatoia accanto
+    titolo_fn: Callable[[], str] | None = None    # titolo che cambia (si ricalcola a ogni apertura del menu)
 
 
 def _lancia(f: Callable[[], None]) -> None:
@@ -115,6 +116,7 @@ def migra_avvio() -> None:
 
 _GESTORI: dict[int, Callable] = {}
 _SPUNTE: dict[int, Callable[[], bool]] = {}
+_TITOLI: dict[int, Callable[[], str]] = {}
 _CLASSE = None
 
 
@@ -132,6 +134,12 @@ def _classe_bersaglio():
 
             def menuNeedsUpdate_(self, menu):  # le spunte seguono lo stato vero (può cambiare dalla finestra)
                 for it in menu.itemArray():
+                    t = _TITOLI.get(int(it.tag()))
+                    if t:
+                        try:
+                            it.setTitle_(t())
+                        except Exception:
+                            pass
                     f = _SPUNTE.get(int(it.tag()))
                     if f:
                         try:
@@ -183,6 +191,9 @@ class Vassoio:
             if voce.spunta:
                 it.setState_(1 if voce.spunta() else 0)
                 _SPUNTE[1000 + i] = voce.spunta
+            if voce.titolo_fn:
+                it.setTitle_(voce.titolo_fn())
+                _TITOLI[1000 + i] = voce.titolo_fn
             menu.addItem_(it)
             _GESTORI[1000 + i] = self._gestore_mac(voce)
         menu.setDelegate_(bersaglio)
@@ -193,7 +204,11 @@ class Vassoio:
         item.button().setImage_(img)
         item.button().setToolTip_("Riserbo")
         item.setMenu_(menu)
-        self._rif += [bersaglio, menu, item, img]
+        img_pausa = NSImage.alloc().initWithContentsOfFile_(str(QUI / "vassoio-mac-pausa.png"))
+        img_pausa.setSize_((18, 18))
+        img_pausa.setTemplate_(True)
+        self._mac_immagini = (item, img, img_pausa)
+        self._rif += [bersaglio, menu, item, img, img_pausa]
         self.attivo = True
 
     @staticmethod
@@ -225,14 +240,16 @@ class Vassoio:
         def corpo() -> None:
             try:
                 ni = NotifyIcon()
-                ni.Icon = Icon.FromHandle(Bitmap(str(QUI / "vassoio-win.png")).GetHicon())
+                self._win_icone = (Icon.FromHandle(Bitmap(str(QUI / "vassoio-win.png")).GetHicon()),
+                                   Icon.FromHandle(Bitmap(str(QUI / "vassoio-win-pausa.png")).GetHicon()))
+                ni.Icon = self._win_icone[0]
                 ni.Text = "Riserbo"
                 menu = ContextMenuStrip()
                 for voce in self.voci:
                     if voce is None:
                         menu.Items.Add(ToolStripSeparator())
                         continue
-                    it = ToolStripMenuItem(voce.titolo)
+                    it = ToolStripMenuItem(voce.titolo_fn() if voce.titolo_fn else voce.titolo)
                     if voce.tasto:
                         it.ShortcutKeyDisplayString = DESCRIZIONE[voce.tasto]
                         it.ShowShortcutKeys = True
@@ -242,13 +259,16 @@ class Vassoio:
                     menu.Items.Add(it)
                 spunte = []
                 for voce, it in zip([v for v in self.voci if v is not None], [x for x in menu.Items if isinstance(x, ToolStripMenuItem)]):
-                    if voce.spunta:
+                    if voce.spunta or voce.titolo_fn:
                         spunte.append((voce, it))
 
                 def aggiorna_spunte(_s, _e) -> None:
                     for voce, it in spunte:
                         try:
-                            it.Checked = bool(voce.spunta())
+                            if voce.spunta:
+                                it.Checked = bool(voce.spunta())
+                            if voce.titolo_fn:
+                                it.Text = voce.titolo_fn()
                         except Exception:
                             pass
 
@@ -300,6 +320,20 @@ class Vassoio:
                 self._win()
         except Exception as e:
             self.errore = str(e)
+
+    def imposta_pausa(self, pausa: bool) -> None:
+        """L'icona cambia aspetto quando Riserbo è in pausa: si vede a colpo d'occhio."""
+        try:
+            if MAC and getattr(self, "_mac_immagini", None):
+                from PyObjCTools import AppHelper
+                item, img, img_pausa = self._mac_immagini
+                AppHelper.callAfter(item.button().setImage_, img_pausa if pausa else img)
+                AppHelper.callAfter(item.button().setToolTip_, "Riserbo · in pausa" if pausa else "Riserbo")
+            elif WIN and self._ni is not None and getattr(self, "_win_icone", None):
+                self._ni.Icon = self._win_icone[1 if pausa else 0]
+                self._ni.Text = "Riserbo · in pausa" if pausa else "Riserbo"
+        except Exception:
+            pass
 
     def avviso(self, titolo: str, testo: str) -> bool:
         """Windows: la notifica di sistema che parte dall'icona. False se non è disponibile."""

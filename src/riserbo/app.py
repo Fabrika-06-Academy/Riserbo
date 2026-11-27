@@ -109,6 +109,8 @@ class Stato:
         self.ponte_httpd = None                # il canale per l'estensione del browser (ponte_browser.py)
         self.ponte_errore = ""
         self.automatica = None                 # la modalità automatica per le app di AI (automatica.py)
+        self.pausa_fino = None                 # None: attivo; un orario; inf: finché non si riattiva (mai salvata: si riparte protetti)
+        self.timer_pausa = None
         self.avvisa = None                     # la notifica di sistema, quando c'è la finestra
         self.pref = dict(leggi_impostazioni().get("pagina") or {})  # le preferenze della pagina, salvate sul computer
         self.nuova_pratica()
@@ -221,12 +223,64 @@ def rimetti_testo(stato: Stato, testo: str) -> tuple[str, int]:
         return SEGNAPOSTO.sub(sost, testo), conta[0]
 
 
+def _avvisa(stato: Stato, titolo: str, testo: str) -> None:
+    from .scorciatoie import notifica
+    try:
+        (stato.avvisa or notifica)(titolo, testo)
+    except Exception:
+        pass
+
+
+def stato_pausa(stato: Stato) -> dict:
+    """In pausa estensione e modalità automatica non proteggono. Il cancello no: le automazioni non si mettono in pausa."""
+    f = stato.pausa_fino
+    if f is not None and f != float("inf") and time.time() >= f:
+        riprendi(stato)  # scaduta: Riserbo si riattiva da solo
+        f = None
+    if f is None:
+        return {"attiva": False, "fino": None, "testo": ""}
+    testo = "in pausa finché non la riattivi" if f == float("inf") else "in pausa fino alle " + time.strftime("%H:%M", time.localtime(f))
+    return {"attiva": True, "fino": None if f == float("inf") else f, "testo": testo}
+
+
+def in_pausa(stato: Stato) -> bool:
+    return stato_pausa(stato)["attiva"]
+
+
+def metti_in_pausa(stato: Stato, minuti: int | None) -> None:
+    if stato.timer_pausa is not None:
+        stato.timer_pausa.cancel()
+        stato.timer_pausa = None
+    stato.pausa_fino = time.time() + minuti * 60 if minuti else float("inf")
+    if minuti:
+        stato.timer_pausa = threading.Timer(minuti * 60 + 0.5, lambda: in_pausa(stato))
+        stato.timer_pausa.daemon = True
+        stato.timer_pausa.start()
+    if stato.vassoio is not None:
+        stato.vassoio.imposta_pausa(True)
+    _avvisa(stato, "Riserbo in pausa", stato_pausa(stato)["testo"].capitalize()
+            + ": estensione e modalità automatica non proteggono. Le scorciatoie e il cancello funzionano.")
+
+
+def riprendi(stato: Stato) -> None:
+    era = stato.pausa_fino is not None
+    stato.pausa_fino = None
+    if stato.timer_pausa is not None:
+        stato.timer_pausa.cancel()
+        stato.timer_pausa = None
+    if era:
+        if stato.vassoio is not None:
+            stato.vassoio.imposta_pausa(False)
+        _avvisa(stato, "Riserbo è di nuovo attivo", "I dati personali vengono di nuovo sostituiti prima di partire.")
+
+
 def accendi_automatica(stato: Stato) -> None:
     from .automatica import Guardiano
     if stato.automatica is None:
         from .scorciatoie import notifica
         stato.automatica = Guardiano(lambda t: proteggi_testo(stato, t), lambda t: rimetti_testo(stato, t),
-                                     lambda titolo, testo: (stato.avvisa or notifica)(titolo, testo))
+                                     lambda titolo, testo: (stato.avvisa or notifica)(titolo, testo),
+                                     in_pausa=lambda: in_pausa(stato))
     stato.automatica.avvia()
 
 
@@ -381,7 +435,8 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                                         "automatica": bool(stato.automatica and stato.automatica.attivo),
                                         "automatica_ultimo": stato.automatica.ultimo if stato.automatica else "",
                                         "desktop": sys.platform == "darwin" or os.name == "nt",
-                                        "ponte": stato.ponte_httpd is not None, "cancello": stato.cancello is not None})
+                                        "ponte": stato.ponte_httpd is not None, "cancello": stato.cancello is not None,
+                                        "pausa": stato_pausa(stato)})
             if percorso == "/api/cancello":
                 azione = dati.get("azione")
                 if dati.get("porta") and not 1024 <= int(dati["porta"]) <= 65535:
@@ -394,6 +449,13 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                     salva_impostazioni(cancello=stato.cancello is not None,
                                        **({"porta_cancello": int(dati["porta"])} if dati.get("porta") else {}))
                 return self._json(200, stato_cancello(stato))
+            if percorso == "/api/pausa":
+                if dati.get("azione") == "riprendi":
+                    riprendi(stato)
+                elif dati.get("azione") == "pausa":
+                    m = dati.get("minuti")
+                    metti_in_pausa(stato, int(m) if m else None)
+                return self._json(200, stato_pausa(stato))
             if percorso == "/api/automatica":
                 if dati.get("azione") in ("accendi", "spegni"):
                     accendi_automatica(stato) if dati["azione"] == "accendi" else spegni_automatica(stato)
@@ -691,7 +753,13 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
             vassoio.togli()
             ferma()
 
-        voci: list = [Voce("Apri Riserbo", apri_finestra), None,
+        def pausa_da_menu() -> None:
+            riprendi(stato) if in_pausa(stato) else metti_in_pausa(stato, 60)
+
+        voci: list = [Voce("Apri Riserbo", apri_finestra),
+                      Voce("Pausa", pausa_da_menu, titolo_fn=lambda: (f"Riattiva Riserbo ({stato_pausa(stato)['testo']})"
+                                                                      if in_pausa(stato) else "Metti in pausa per un'ora")),
+                      None,
                       Voce("Proteggi gli appunti", lambda: proteggi_appunti(stato, avvisa_fn), tasto="proteggi"),
                       Voce("Rimetti i nomi negli appunti", lambda: ripristina_appunti(stato, avvisa_fn), tasto="ripristina"),
                       Voce("Nuova pratica", nuova), None,

@@ -11,6 +11,7 @@ POST /stato    {}                         -> {ok, versione, pronto, segnaposto}
 POST /proteggi {testo}                    -> {testo, trovati, tipi}
 POST /valori   {segnaposto: ["[PERSONA_1]"]} -> {valori: {"[PERSONA_1]": "Mario Rossi"}}
 POST /nuova    {}                         -> {ok}
+POST /pausa    {minuti: 15 | 60 | null}  /riprendi {}   -> {pausa}
 """
 
 from __future__ import annotations
@@ -68,11 +69,22 @@ def crea_gestore(stato, codice: str):
                 return self._json(400, {"errore": str(e)})
 
         def _instrada(self, percorso: str, dati: dict) -> dict:
+            from .app import metti_in_pausa, riprendi, stato_pausa
             if percorso == "/stato":
                 return {"ok": True, "versione": __version__, "pronto": stato.sp is not None,
-                        "segnaposto": len(stato.tabella.valori)}
+                        "segnaposto": len(stato.tabella.valori), "pausa": stato_pausa(stato)}
+            if percorso == "/pausa":
+                m = dati.get("minuti")
+                metti_in_pausa(stato, int(m) if m else None)
+                return {"pausa": stato_pausa(stato)}
+            if percorso == "/riprendi":
+                riprendi(stato)
+                return {"pausa": stato_pausa(stato)}
             if percorso == "/proteggi":
                 testo = str(dati.get("testo", ""))[:MAX_TESTO]
+                p = stato_pausa(stato)
+                if p["attiva"]:  # la persona ha messo in pausa: il messaggio parte com'è, e l'estensione lo dice
+                    return {"testo": testo, "trovati": 0, "tipi": {}, "pausa": p}
                 if stato.sp is None:
                     raise ValueError("Riserbo sta ancora caricando il modello italiano: riprova tra qualche secondo.")
                 with stato.lock:

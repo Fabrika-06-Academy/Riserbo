@@ -102,6 +102,7 @@ mark.vero{cursor:default;font-weight:600;font-size:1em;white-space:normal}
 .esito{font-size:.86rem;border-radius:10px;padding:8px 12px;line-height:1.45}
 .esito.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 11%,transparent)}
 .esito.warn{color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)}
+.hbtn.in-pausa{background:var(--y);color:#111;border-color:var(--y);font-weight:700}
 .pannello.largo{width:min(640px,100%)}
 .guida-intro{background:color-mix(in srgb,var(--y) 14%,transparent);border-radius:12px;padding:12px 14px;margin:0}
 .guida-flusso{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.8rem;color:var(--muted);margin:6px 0 0}
@@ -143,6 +144,7 @@ footer a{color:inherit}
     <button class="aggiorna" id="agg" hidden></button>
     <span class="pillola carica" id="pill">Carico il modello…</span>
     <button class="hbtn" id="apriGuida" title="Come si usa Riserbo, passo per passo"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/></svg>Guida</button>
+    <button class="hbtn" id="pausaBtn" title="Sospendi per un po' la protezione di estensione e modalità automatica">Pausa</button>
     <button class="hbtn" id="apriImpost" title="Scegli quali dati nascondere"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Cosa nascondere</button>
     <button class="hbtn" id="apriTab" title="La tabella che collega segnaposto e valori veri"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>Tabella <span class="badge" id="ntab">0</span></button>
     <button class="hbtn" id="apriAppunti" title="Proteggi il testo copiato da qualunque programma"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h4"/></svg>Appunti</button>
@@ -240,6 +242,7 @@ footer a{color:inherit}
   <div class="corpo">
     <div class="guida-intro"><b>Riserbo sostituisce i dati personali con segnaposto prima che arrivino a ChatGPT, Claude o Gemini, e rimette i nomi veri nella risposta.</b> La tabella che li collega resta qui, sul tuo computer.
       <p class="guida-flusso">Laura Ferretti → [PERSONA_1] → la chat lavora → [PERSONA_1] → Laura Ferretti</p></div>
+    <p class="stato" style="margin:0">Per mandare qualcosa così com'è per un po', usa <b>Pausa</b> in alto o nel menu dell'icona [–]: estensione e modalità automatica si fermano e si riattivano da sole.</p>
     <p class="stato" style="margin:0">Scegli come usarlo: puoi usarne più di un modo insieme. Finestra, scorciatoie, estensione e modalità automatica usano la stessa pratica, quindi un nome ha lo stesso segnaposto ovunque.</p>
 
     <div class="modo"><div class="modo-testa"><div><h4>1 · Documenti e testi, qui nella finestra</h4><small>Word, PDF anche scansionati, foto, Excel, email di Outlook</small></div><span class="etichetta ok">sempre pronto</span></div>
@@ -389,6 +392,7 @@ var MACOS=/Mac/i.test(navigator.platform||navigator.userAgent);
 document.querySelectorAll("[data-tasto]").forEach(function(k){k.textContent=k.getAttribute("data-tasto")==="proteggi"?(MACOS?"⌃⌥P":"Ctrl+Alt+P"):(MACOS?"⌃⌥R":"Ctrl+Alt+R")});
 function inviaPreferenze(){api("/api/preferenze",{escludi:escludi(),in_chiaro:inChiaro()}).catch(function(){})}
 function sorveglia(){api("/api/stato").then(function(d){
+  disegnaPausa(d.pausa);
   $("appVassoio").hidden=!d.vassoio;
   if(d.scorciatoie){var e=$("appStato");e.hidden=false;
     if(d.scorciatoie.attive.length===2){e.className="esito ok";e.textContent="Scorciatoie attive: "+(MACOS?"⌃⌥P e ⌃⌥R":"Ctrl+Alt+P e Ctrl+Alt+R")+"."}
@@ -408,6 +412,15 @@ function aggiornaGuida(){api("/api/stato").then(function(d){
     etichetta("gAgStato",d.cancello,"cancello acceso","da attivare",!d.cancello)}).catch(function(){})}
 function apriGuida(){chiudiPannelli();$("guida").hidden=false;aggiornaGuida();if(ls("sp-guida")!=="vista")ls("sp-guida","vista")}
 $("apriGuida").onclick=apriGuida;
+var PAUSA={attiva:false};
+function disegnaPausa(p){PAUSA=p||{attiva:false};var b=$("pausaBtn");b.classList.toggle("in-pausa",!!PAUSA.attiva);
+  b.textContent=PAUSA.attiva?"In pausa · Riattiva":"Pausa";b.title=PAUSA.attiva?"Riserbo è "+PAUSA.testo+": premi per riattivarlo":"Sospendi per un po' la protezione di estensione e modalità automatica"}
+$("pausaBtn").onclick=function(e){e.stopPropagation();
+  if(PAUSA.attiva){api("/api/pausa",{azione:"riprendi"}).then(disegnaPausa).catch(function(){});return}
+  var r=this.getBoundingClientRect();
+  var p=apriPop(r.left,r.bottom,'<b>Metti in pausa la protezione</b><p class="stato" style="margin:4px 0 8px;max-width:300px">Estensione e modalità automatica mandano i testi così come sono. Scorciatoie e cancello continuano a funzionare. Si riattiva da sola.</p><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="sec" data-min="15">15 minuti</button><button class="sec" data-min="60">1 ora</button><button class="sec" data-min="0">Finché non la riattivo</button></div>');
+  p.querySelectorAll("[data-min]").forEach(function(x){x.onclick=function(){chiudiPop();api("/api/pausa",{azione:"pausa",minuti:(+x.getAttribute("data-min"))||null}).then(disegnaPausa).catch(function(){})}})};
+
 $("gAuto").onclick=function(){api("/api/automatica",{azione:this.dataset.accesa?"spegni":"accendi"}).then(aggiornaGuida).catch(function(){})};
 $("gVaiProteggi").onclick=function(){chiudiPannelli();var b=document.querySelector('button[data-vista="proteggi"]');if(b)b.click()};
 document.querySelectorAll("[data-apri-auto]").forEach(function(b){b.onclick=function(){chiudiPannelli();$("apriAuto").click()}});

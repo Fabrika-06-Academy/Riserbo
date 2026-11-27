@@ -21,10 +21,16 @@ async function aggiorna() {
   }
   try {
     const d = await chiedi("/stato");
-    st.className = "stato ok";
-    st.textContent = d.pronto
-      ? `Collegata a Riserbo ${d.versione}. Nella pratica: ${d.segnaposto} segnaposto.`
-      : "Collegata: l'app sta caricando il modello italiano…";
+    const p = d.pausa || { attiva: false };
+    st.className = p.attiva ? "stato ko" : "stato ok";
+    st.textContent = p.attiva
+      ? `Riserbo è ${p.testo}: i messaggi partono così come sono.`
+      : d.pronto
+        ? `Collegata a Riserbo ${d.versione}. Nella pratica: ${d.segnaposto} segnaposto.`
+        : "Collegata: l'app sta caricando il modello italiano…";
+    $("rigaPausa").hidden = false;
+    $("pausa").hidden = p.attiva;
+    $("riattiva").hidden = !p.attiva;
   } catch (e) {
     st.className = "stato ko";
     st.textContent = e.message;
@@ -42,6 +48,8 @@ $("scollega").onclick = async () => { await chrome.storage.local.remove("codice"
 $("guardia").onchange = (e) => chrome.storage.local.set({ guardia: e.target.checked });
 $("mostra").onchange = (e) => chrome.storage.local.set({ mostra: e.target.checked });
 $("porta").onchange = (e) => { const p = parseInt(e.target.value, 10); if (p >= 1024 && p <= 65535) chrome.storage.local.set({ porta: p }).then(aggiorna); };
+$("pausa").onclick = () => chiedi("/pausa", { minuti: 60 }).then(aggiorna, (e) => { $("stato").textContent = e.message; });
+$("riattiva").onclick = () => chiedi("/riprendi").then(aggiorna, (e) => { $("stato").textContent = e.message; });
 $("nuova").onclick = async () => {
   try {
     await chiedi("/nuova");

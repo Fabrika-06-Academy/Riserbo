@@ -2,7 +2,7 @@
 // Le pagine dei chatbot non possono raggiungerlo: chiedono a questo script, che aggiunge il codice di collegamento.
 
 const PREDEFINITE = { porta: 8789, codice: "", guardia: true, mostra: true };
-const PERCORSI = new Set(["/stato", "/proteggi", "/valori", "/nuova"]);
+const PERCORSI = new Set(["/stato", "/proteggi", "/valori", "/nuova", "/pausa", "/riprendi"]);
 
 async function impostazioni() {
   return Object.assign({}, PREDEFINITE, await chrome.storage.local.get(Object.keys(PREDEFINITE)));

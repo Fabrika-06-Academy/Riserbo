@@ -64,6 +64,8 @@ un'ora senza usarla o chiudendo l'app.
 
 Riserbo resta acceso nell'icona **[–]** vicino all'orologio e può partire all'accensione. Al primo avvio si apre la
 **Guida**, che spiega ogni modo d'uso e mostra quali sono già attivi; si riapre dal pulsante «Guida».
+Per mandare qualcosa così com'è c'è **Pausa** (15 minuti, un'ora o finché non la riattivi): estensione e modalità
+automatica si fermano e si riattivano da sole, il cancello delle automazioni no.
 
 <p align="center"><img src="docs/immagini/rimetti-light.png" width="860" alt="La risposta della chat con i segnaposto e, a destra, con i nomi veri evidenziati"></p>
 

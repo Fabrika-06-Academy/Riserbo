@@ -3,7 +3,7 @@
 from .tabella import Tabella
 from .validatori import codice_fiscale_valido, iban_valido, partita_iva_valida, targa_valida
 
-__version__ = "0.12.0"
+__version__ = "0.13.0"
 __all__ = ["Tabella", "Segnaposto", "ripristina", "codice_fiscale_valido", "partita_iva_valida", "iban_valido", "targa_valida"]
 
 

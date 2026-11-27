@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Riserbo · usa ChatGPT e Claude senza consegnargli i dati dei tuoi clienti</title>
+<meta name="description" content="Riserbo sostituisce nomi, codici fiscali, IBAN e indirizzi con segnaposto prima che il testo esca dal tuo computer, e rimette i valori veri nella risposta. Gratis, open source, tutto in locale.">
+<meta property="og:title" content="Riserbo">
+<meta property="og:description" content="Usa ChatGPT, Claude e Gemini senza consegnargli i dati dei tuoi clienti. Gratis, open source, tutto in locale.">
+<meta property="og:image" content="https://fabrika-06-academy.github.io/riserbo/immagini/proteggi-light.png">
+<link rel="icon" href="immagini/icona-32.png">
+<style>
+:root{--ink:#121116;--y:#FFC700;--paper:#f6f5f2;--line:#e2e0da;--muted:#5d5c64;--bg:#fff;--fg:#121116;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--paper:#17161b;--line:#2c2b33;--muted:#a3a2ab;--bg:#0f0e12;--fg:#ecebf0;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;font:17px/1.55 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;background:var(--bg);color:var(--fg)}
+a{color:inherit}
+.in{max-width:1040px;margin:0 auto;padding:0 20px}
+header{background:var(--ink);color:#fff;padding:56px 0 64px}
+.nome{display:flex;align-items:center;gap:14px;margin:0 0 18px}
+.nome img{width:60px;height:60px;border-radius:14px}
+h1{font-size:clamp(2.2rem,6vw,3.4rem);margin:0;letter-spacing:-.02em}
+.promessa{font-size:clamp(1.25rem,2.6vw,1.6rem);font-weight:700;margin:0 0 12px;max-width:760px}
+.sotto{color:rgba(255,255,255,.78);max-width:720px;margin:0 0 28px}
+.cta{display:flex;flex-wrap:wrap;gap:12px}
+.btn{display:inline-block;background:var(--y);color:var(--ink);font-weight:800;padding:14px 22px;border-radius:12px;text-decoration:none}
+.btn.chiaro{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.45);padding:12px 20px}
+.meta{margin:16px 0 0;font-size:.9rem;color:rgba(255,255,255,.6)}
+.demo{margin:-36px auto 0;max-width:1000px;padding:0 20px}
+.demo img{width:100%;border-radius:14px;box-shadow:0 30px 60px -30px rgba(0,0,0,.55);border:1px solid var(--line);display:block}
+section{padding:56px 0}
+section.carta{background:var(--paper)}
+h2{font-size:clamp(1.5rem,3vw,2rem);margin:0 0 22px;line-height:1.2}
+.tre{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.tre div{border-top:3px solid var(--y);padding-top:14px}
+.tre h3{margin:0 0 6px;font-size:1.08rem}.tre p{margin:0;color:var(--muted)}
+.porte{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.porte div{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:18px}
+.porte b{display:block;margin-bottom:4px}.porte span{color:var(--muted);font-size:.95rem}
+.schema{width:100%;height:auto;display:block}
+.nota{background:var(--paper);border-left:4px solid var(--y);padding:16px 18px;border-radius:8px;max-width:820px}
+footer{padding:34px 0 44px;color:var(--muted);font-size:.92rem}
+@media(max-width:760px){.tre{grid-template-columns:1fr}header{padding:40px 0 56px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="in">
+    <div class="nome"><img src="immagini/icona.png" alt=""><h1>Riserbo</h1></div>
+    <p class="promessa">Usa ChatGPT, Claude e Gemini senza consegnargli i dati dei tuoi clienti.</p>
+    <p class="sotto">Riserbo sostituisce nomi, codici fiscali, IBAN e indirizzi con segnaposto <em>prima</em> che il testo esca dal tuo computer, e nella risposta rimette i valori veri. Tutto in locale: niente account, niente telemetria.</p>
+    <div class="cta">
+      <a class="btn" href="https://github.com/Fabrika-06-Academy/riserbo/releases/latest/download/riserbo-mac-apple-silicon.dmg">Scarica per Mac</a>
+      <a class="btn" href="https://github.com/Fabrika-06-Academy/riserbo/releases/latest/download/riserbo-windows.zip">Scarica per Windows</a>
+      <a class="btn chiaro" href="https://academy.fabrika06.com/strumenti/riserbo/">La pagina completa</a>
+    </div>
+    <p class="meta">Gratis, licenza MIT · Mac con chip Apple e Windows 10/11 · <a href="https://github.com/Fabrika-06-Academy/riserbo">Codice su GitHub</a></p>
+  </div>
+</header>
+
+<div class="demo"><img src="immagini/flusso.gif" alt="Un'email con nomi, codice fiscale e IBAN diventa testo con segnaposto; la risposta della chat torna con i nomi veri" width="960" height="600"></div>
+
+<section>
+  <div class="in">
+    <h2>Il modello non ha bisogno di sapere come si chiama il tuo cliente</h2>
+    <div class="tre">
+      <div><h3>1 · Sostituisce</h3><p>Persone, aziende, codici fiscali, IBAN, indirizzi diventano <code>[PERSONA_1]</code>, <code>[IBAN_1]</code>. I codici sono verificati con le cifre di controllo.</p></div>
+      <div><h3>2 · Il modello lavora</h3><p>Riassume, risponde, traduce sul testo con i segnaposto. Lo stesso nome ha sempre lo stesso segnaposto, così il senso resta.</p></div>
+      <div><h3>3 · Rimette i nomi</h3><p>Nella risposta tornano i valori veri, e Riserbo ti avvisa se il modello ha perso o inventato un segnaposto.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="carta">
+  <div class="in">
+    <h2>Dove lavori già</h2>
+    <div class="porte">
+      <div><b>Nel browser</b><span>Estensione per ChatGPT, Claude, Gemini, Copilot, Mistral, Perplexity: vedi cosa parte prima di inviare.</span></div>
+      <div><b>Sui documenti</b><span>Word, PDF anche scansionati, foto, Excel, email di Outlook: testo protetto o PDF oscurato.</span></div>
+      <div><b>In qualunque programma</b><span>⌃⌥P protegge il testo copiato, ⌃⌥R rimette i nomi. Outlook, gestionale, WhatsApp Web.</span></div>
+      <div><b>Nelle automazioni</b><span>n8n, Make e gli script cambiano solo il «Base URL»: ogni richiesta esce protetta.</span></div>
+      <div><b>In Claude Desktop</b><span>Legge i documenti attraverso Riserbo e vede solo segnaposto, anche nei nomi dei file.</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="in">
+    <h2>Come funziona</h2>
+    <img class="schema" src="immagini/come-funziona.svg" alt="Il testo diventa segnaposto sul tuo computer, il modello lavora sui segnaposto, Riserbo rimette i nomi veri nella risposta" width="960" height="400">
+    <p class="nota"><b>È pseudonimizzazione, non anonimizzazione.</b> Il fornitore del modello riceve testo da cui non può risalire alle persone; la tabella per tornare indietro resta solo sul tuo computer (GDPR, art. 4.5). Riserbo riduce il rischio e applica la minimizzazione, ma non toglie gli obblighi: contratto con il fornitore, registro dei trattamenti, informativa. E nessuno strumento trova tutto: rileggi prima di inviare.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="in">Riserbo è uno strumento della <a href="https://academy.fabrika06.com">Fabrika 06 Academy</a>, i corsi gratuiti sull'intelligenza artificiale per le aziende. © 2026 Andrea Prando, <a href="https://fabrika06.com">Fabrika 06</a> · Licenza MIT · <a href="https://github.com/Fabrika-06-Academy/riserbo">GitHub</a></div>
+</footer>
+</body>
+</html>

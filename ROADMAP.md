@@ -10,6 +10,8 @@ in cloud: browser, appunti, automazioni, agenti. Un passo alla volta, ognuno usa
   app locale, pacchetti per Mac e Windows, servizio HTTP locale.
 - **v0.3**: finestra nativa. Documenti in ingresso: Word, PDF con testo, Excel, CSV, email .eml con allegati. Colonne
   riconosciute dall'intestazione, indirizzi, correzioni a mano (clic e selezione), salvataggio nel formato d'origine.
+- **v0.13.5**: i segnaposto copiati col «Copia» di ChatGPT arrivano in Markdown (\\[PERSONA\\_1\\]): ora si riconoscono
+  e i nomi veri tornano (modalità automatica, ⌃⌥R, finestra).
 - **v0.13.4**: modalità automatica, uscendo dall'app i nomi veri tornano sempre (prima, se la risposta copiata veniva
   riprotetta per un falso allarme, tornava con i segnaposto).
 - **v0.13.3**: modalità automatica, protegge anche quello che copi quando sei già nell'app; avvisa se il riconoscitore

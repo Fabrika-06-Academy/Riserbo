@@ -22,7 +22,7 @@ import time
 from collections import deque
 from typing import Callable
 
-from .motore import SEGNAPOSTO
+from .motore import SEGNAPOSTO, normalizza_segnaposto
 
 MAC = sys.platform == "darwin"
 WIN = os.name == "nt"
@@ -207,7 +207,7 @@ class Guardiano:
             return
         non_toccati = self.scritto is not None and (
             self.contatore() == self.contatore_scritto if self.contatore_scritto >= 0 else testo == self.scritto)
-        base = self.originale if non_toccati and self.originale is not None else testo
+        base = normalizza_segnaposto(self.originale if non_toccati and self.originale is not None else testo)
         vero, n = self.rimetti(base) if SEGNAPOSTO.search(base) else (base, 0)
         if vero != testo:
             self.scrivi(vero)

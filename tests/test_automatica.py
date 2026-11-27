@@ -103,3 +103,17 @@ def test_risposta_copiata_con_un_falso_allarme_torna_con_i_nomi_veri(sp):
     f.app = None; g.passo()
     assert f.appunti == "Gentile Andrea Galli, la richiesta è stata girata a Marco Bianchi."
     assert "nomi veri rimessi" in g.registro[0]
+
+
+def test_risposta_copiata_col_pulsante_copia_di_chatgpt(sp):
+    """Il «Copia» di ChatGPT dà Markdown: \\[PERSONA\\_1\\]. Uscendo devono tornare i nomi veri (caso reale, 2026-11-27)."""
+    st, f, g = guardiano(sp)
+    f.copia("Il cliente Andrea Galli, via Mazzini 8, 20121 Milano, chiede il rimborso sull'IBAN IT60X0542811101000000123456.")
+    f.app = "ChatGPT"; g.passo()
+    tab = {v: s for s, v in st.tabella.valori.items()}
+    esc = lambda s: s.replace("[", "\\[").replace("]", "\\]").replace("_", "\\_")
+    g.passo()
+    f.copia(f"Gentile {esc(tab['Andrea Galli'])},\n\n- IBAN: {esc(tab['IT60X0542811101000000123456'])}\n\nCordiali saluti.")
+    g.passo()
+    f.app = None; g.passo()
+    assert f.appunti == "Gentile Andrea Galli,\n\n- IBAN: IT60X0542811101000000123456\n\nCordiali saluti."

@@ -38,6 +38,13 @@ ESCLUSI_PREDEFINITI = frozenset({"PROFESSIONE"})
 PRIORITA = {"IT_FISCAL_CODE": 9, "IT_VAT_CODE": 9, "IBAN": 9, "EMAIL_ADDRESS": 8, "PHONE_NUMBER": 7, "TARGA": 6,
             "CLIENTE": 8, "FORNITORE": 8, "DIPENDENTE": 8, "INDIRIZZO": 7, "SITO": 6, "PERSON": 3, "ORGANIZATION": 4, "LOCATION": 2}
 SEGNAPOSTO = re.compile(r"\[[A-Z_]+_\d+\]")
+# Il «Copia» di ChatGPT dà Markdown, dove parentesi e trattini bassi arrivano con la barra: \[PERSONA\_1\].
+_SEGNAPOSTO_CON_BARRE = re.compile(r"\\?\[([A-Z]+(?:\\?_[A-Z]+)*)\\?_(\d+)\\?\]")
+
+
+def normalizza_segnaposto(testo: str) -> str:
+    """«\\[PERSONA\\_1\\]», «[PERSONA\\_1]» e simili tornano «[PERSONA_1]», così si possono rimettere i valori veri."""
+    return _SEGNAPOSTO_CON_BARRE.sub(lambda m: "[" + m.group(1).replace("\\_", "_") + "_" + m.group(2) + "]", testo)
 # Parole che il modello piccolo scambia per nomi o luoghi, soprattutto a inizio frase nelle email.
 PAROLE_COMUNI = {
     "buongiorno", "buonasera", "salve", "gentile", "gentili", "egregio", "spettabile", "spett.le", "cordiali", "saluti",
@@ -334,6 +341,7 @@ def ripristina(testo: str, tabella: Tabella, attesi: Iterable[str] | None = None
 
     `attesi`: i segnaposto che dovrebbero esserci (di solito quelli del testo mandato). Se None, non si controllano i mancanti.
     """
+    testo = normalizza_segnaposto(testo)
     presenti = set(SEGNAPOSTO.findall(testo))
     inventati = sorted(s for s in presenti if s not in tabella.valori)
     mancanti = sorted(set(attesi) - presenti) if attesi is not None else []

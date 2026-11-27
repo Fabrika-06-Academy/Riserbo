@@ -30,7 +30,7 @@ from pathlib import PurePath
 
 from . import __version__
 from .documenti import FORMATI_USCITA, esporta, leggi
-from .motore import SEGNAPOSTO, Segnaposto, ripristina
+from .motore import SEGNAPOSTO, Segnaposto, normalizza_segnaposto, ripristina
 from .oscura import _compatta, oscura
 from .tabella import Tabella
 
@@ -210,6 +210,7 @@ def proteggi_testo(stato: Stato, testo: str) -> tuple[str, int]:
 
 
 def rimetti_testo(stato: Stato, testo: str) -> tuple[str, int]:
+    testo = normalizza_segnaposto(testo)
     with stato.lock:
         stato.ultimo_uso = time.time()
         conta = [0]
@@ -357,7 +358,7 @@ def ripristina_appunti(stato: Stato, avvisa=None) -> str:
     from .scorciatoie import leggi_appunti, notifica, scrivi_appunti
     avvisa = avvisa or notifica
     try:
-        testo = leggi_appunti()
+        testo = normalizza_segnaposto(leggi_appunti())
         with stato.lock:
             stato.ultimo_uso = time.time()
             e = ripristina(testo, stato.tabella, attesi=stato.inviati)
@@ -584,6 +585,7 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                     stato.nuova_pratica()
                     return self._json(200, {"ok": True})
                 if percorso == "/api/ripristina":
+                    testo = normalizza_segnaposto(testo)
                     e = ripristina(testo, stato.tabella, attesi=stato.inviati)
                     # Pezzi del testo ripristinato: [testo, segnaposto d'origine o ""], per evidenziare i valori rimessi.
                     pezzi, pos = [], 0

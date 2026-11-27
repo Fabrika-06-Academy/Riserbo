@@ -120,3 +120,12 @@ def test_nome_dal_dominio_vince_sulle_etichette_sbagliate():
     r = sp.pseudonimizza(t)
     assert "Didattica" not in r.testo and "Facile" not in r.testo, r.testo
     assert r.testo.startswith("[AZIENDA_1] – Intervento")
+
+
+def test_ripristina_segnaposto_con_le_barre_del_markdown():
+    from riserbo.motore import ripristina
+    from riserbo.tabella import Tabella
+    t = Tabella()
+    t.segnaposto("PERSONA", "Andrea Galli"); t.segnaposto("CODICE_FISCALE", "FRRLRA79D52L781G")
+    e = ripristina("Gentile \\[PERSONA\\_1\\], CF [CODICE\\_FISCALE\\_1].", t)
+    assert e.testo == "Gentile Andrea Galli, CF FRRLRA79D52L781G."

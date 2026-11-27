@@ -199,24 +199,26 @@ class Guardiano:
                     + " negli appunti: incolla pure. Uscendo dall'app rimetto i nomi veri.")
 
     def _uscendo(self, app: str) -> None:
+        """Uscendo dall'app di AI negli appunti tornano i nomi veri, sempre: sia che tu abbia copiato la risposta, sia che
+        negli appunti ci sia ancora il testo che avevi (anche se era a sua volta una risposta con segnaposto)."""
         try:
             testo = self.leggi()
         except Exception:
             return
         non_toccati = self.scritto is not None and (
             self.contatore() == self.contatore_scritto if self.contatore_scritto >= 0 else testo == self.scritto)
-        if non_toccati and self.originale is not None:
-            self.scrivi(self.originale)  # non hai copiato niente lì dentro: torna il tuo testo
+        base = self.originale if non_toccati and self.originale is not None else testo
+        vero, n = self.rimetti(base) if SEGNAPOSTO.search(base) else (base, 0)
+        if vero != testo:
+            self.scrivi(vero)
+        if n:
+            self._nota(f"uscito da {app}: {n} nomi veri rimessi negli appunti")
+            self.avvisa("Riserbo · nomi veri", (f"{n} valori rimessi" if n != 1 else "1 valore rimesso")
+                        + " negli appunti: incolla dove ti serve.")
+        elif SEGNAPOSTO.search(base):
+            self._nota(f"uscito da {app}: segnaposto non di questa pratica, appunti lasciati com'erano")
+        elif base is not testo:
             self._nota(f"uscito da {app}: negli appunti è tornato il tuo testo")
-        elif SEGNAPOSTO.search(testo):
-            vero, n = self.rimetti(testo)
-            if n:
-                self.scrivi(vero)
-                self._nota(f"uscito da {app}: {n} nomi veri rimessi negli appunti")
-                self.avvisa("Riserbo · nomi veri", (f"{n} valori rimessi" if n != 1 else "1 valore rimesso")
-                            + " negli appunti: incolla dove ti serve.")
-            else:
-                self._nota(f"uscito da {app}: segnaposto non di questa pratica, appunti lasciati com'erano")
         else:
             self._nota(f"uscito da {app}: negli appunti non ci sono segnaposto")
         self.originale = self.scritto = None

@@ -87,3 +87,19 @@ def test_riconoscitore_non_pronto_lo_dice(sp):
     f.app = "ChatGPT"; g.passo()
     assert f.appunti == "Scrivi a Laura Ferretti." and "NON sono protetti" in f.avvisi[0]
     assert "non era ancora pronto" in g.registro[0]
+
+
+def test_risposta_copiata_con_un_falso_allarme_torna_con_i_nomi_veri(sp):
+    """Copiando la risposta dentro l'app, se il riconoscitore vede un «dato» in più la protegge di nuovo: uscendo
+    devono comunque tornare i nomi veri (prima tornava la risposta con i segnaposto)."""
+    st, f, g = guardiano(sp)
+    f.copia("Il cliente Andrea Galli chiede il rimborso sull'IBAN IT60X0542811101000000123456.")
+    f.app = "ChatGPT"; g.passo()
+    persona = next(s for s, v in st.tabella.valori.items() if v == "Andrea Galli")
+    g.passo()
+    f.copia(f"Gentile {persona}, la richiesta è stata girata a Marco Bianchi.")  # un nome nuovo: si riprotegge
+    g.passo()
+    assert "Marco Bianchi" not in f.appunti
+    f.app = None; g.passo()
+    assert f.appunti == "Gentile Andrea Galli, la richiesta è stata girata a Marco Bianchi."
+    assert "nomi veri rimessi" in g.registro[0]

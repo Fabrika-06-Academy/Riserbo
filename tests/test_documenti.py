@@ -3,9 +3,9 @@ from email.message import EmailMessage
 
 import pytest
 
-from segnaposto.documenti import FOGLIO, esporta, leggi
-from segnaposto.motore import Segnaposto
-from segnaposto.tabella import Tabella
+from riserbo.documenti import FOGLIO, esporta, leggi
+from riserbo.motore import Segnaposto
+from riserbo.tabella import Tabella
 
 
 @pytest.fixture(scope="module")
@@ -174,7 +174,7 @@ def test_pdf_scansionato_e_misto():
 
 def test_pdf_oscurato_da_testo_e_da_scansione(sp):
     import pypdfium2 as pdfium
-    from segnaposto.oscura import oscura
+    from riserbo.oscura import oscura
     for nome, dati in (("contratto.pdf", _pdf(["Contratto con Mario Rossi,", "codice fiscale RSSMRA80A01L840J."])),
                        ("scansione.pdf", _byte(_immagine(), "PDF")), ("foto.png", _byte(_immagine(), "PNG"))):
         doc = leggi(nome, dati)

@@ -1,4 +1,4 @@
-// segnaposto nelle pagine dei chatbot.
+// Riserbo nelle pagine dei chatbot.
 // Andata: quando premi Invio (o il pulsante di invio), il testo del riquadro viene controllato dall'app; se ci sono dati
 //   personali, nel riquadro compare la versione con i segnaposto e si preme Invio una seconda volta. Vedi cosa parte.
 // Ritorno: nelle risposte (e nei tuoi messaggi già inviati) i segnaposto diventano i nomi veri, solo sul tuo schermo.
@@ -49,7 +49,7 @@
       radice.appendChild(scatola);
       document.documentElement.appendChild(ospite);
     }
-    scatola.textContent = "segnaposto · " + testo;
+    scatola.textContent = "Riserbo · " + testo;
     scatola.style.borderLeftColor = grave ? "#e5484d" : "#FFC700";
     ospite.hidden = false;
     clearTimeout(timer);

@@ -1,4 +1,4 @@
-// Lo script di sfondo: l'unico che parla con l'app segnaposto su 127.0.0.1.
+// Lo script di sfondo: l'unico che parla con l'app Riserbo su 127.0.0.1.
 // Le pagine dei chatbot non possono raggiungerlo: chiedono a questo script, che aggiunge il codice di collegamento.
 
 const PREDEFINITE = { porta: 8789, codice: "", guardia: true, mostra: true };
@@ -11,16 +11,16 @@ async function impostazioni() {
 async function app(percorso, dati) {
   if (!PERCORSI.has(percorso)) throw new Error("percorso non previsto");
   const imp = await impostazioni();
-  if (!imp.codice) throw new Error("estensione non collegata: incolla il codice dall'app (icona di segnaposto nella barra del browser)");
+  if (!imp.codice) throw new Error("estensione non collegata: incolla il codice dall'app (icona di Riserbo nella barra del browser)");
   let r;
   try {
     r = await fetch(`http://127.0.0.1:${imp.porta}${percorso}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Segnaposto-Token": imp.codice },
+      headers: { "Content-Type": "application/json", "X-Riserbo-Token": imp.codice },
       body: JSON.stringify(dati || {}),
     });
   } catch (e) {
-    throw new Error("l'app segnaposto non risponde: è aperta, con «Collega l'estensione» attivo?");
+    throw new Error("l'app Riserbo non risponde: è aperta, con «Collega l'estensione» attivo?");
   }
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.errore || `errore ${r.status}`);

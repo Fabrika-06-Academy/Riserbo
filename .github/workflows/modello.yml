@@ -21,7 +21,7 @@ jobs:
         with:
           name: "Modello: riconoscitore di entità italiano (${{ github.ref_name }})"
           body: |
-            Il riconoscitore di entità usato da segnaposto, convertito in ONNX int8.
+            Il riconoscitore di entità usato da Riserbo, convertito in ONNX int8.
             Originale: https://huggingface.co/DeepMount00/Italian_NER_XXL_v2 (licenza Apache 2.0).
             Non è una versione dell'app: l'app lo scarica o lo include da qui.
           prerelease: true

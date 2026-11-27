@@ -18,4 +18,4 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: pip install -e ".[test]" pytest-github-actions-annotate-failures
       - run: pytest -q
-      - run: segnaposto valuta esempi/set-di-prova.jsonl --anagrafica esempi/anagrafica.csv
+      - run: riserbo valuta esempi/set-di-prova.jsonl --anagrafica esempi/anagrafica.csv

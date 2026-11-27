@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "segnaposto"
+name = "riserbo"
 version = "0.10.0"
 description = "Pseudonimizzare testi italiani prima di mandarli a un modello in cloud, e rimettere i valori veri al ritorno."
 readme = "README.md"
@@ -24,17 +24,18 @@ dependencies = ["presidio-analyzer>=2.2.360", "phonenumbers>=8.13", "onnxruntime
 # Leggere e scrivere Word, PDF ed Excel (l'app li usa; il servizio da riga di comando no).
 documenti = ["python-docx>=1.1", "pypdfium2>=4.30", "openpyxl>=3.1", "olefile>=0.46", "Pillow>=10.1"]
 # Scansioni e foto: modelli PP-OCRv6 di PaddleOCR con ONNX Runtime (RapidOCR). Inclusi nel pacchetto, niente download.
-ocr = ["segnaposto[documenti]", "rapidocr>=3.4", "onnxruntime>=1.18"]
+ocr = ["riserbo[documenti]", "rapidocr>=3.4", "onnxruntime>=1.18"]
 # La finestra nativa dell'app (WebKit su Mac, WebView2 su Windows). Senza, l'app si apre nel browser.
-app = ["segnaposto[documenti,ocr]", "pywebview>=5.3"]
-test = ["pytest>=8", "segnaposto[documenti,ocr]"]
+app = ["riserbo[documenti,ocr]", "pywebview>=5.3"]
+test = ["pytest>=8", "riserbo[documenti,ocr]"]
 
 [project.scripts]
-segnaposto = "segnaposto.cli:main"
+riserbo = "riserbo.cli:main"
+segnaposto = "riserbo.cli:main"  # il vecchio nome del comando, per chi lo usa già
 
 [project.urls]
-Homepage = "https://github.com/Fabrika-06-Academy/segnaposto"
+Homepage = "https://github.com/Fabrika-06-Academy/riserbo"
 Lezione = "https://academy.fabrika06.com/corso/dati-protetti-dati-dal-web/"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/segnaposto"]
+packages = ["src/riserbo"]

@@ -8,7 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
 
-from segnaposto.cancello import Cancello, avvia_cancello, indirizzi
+from riserbo.cancello import Cancello, avvia_cancello, indirizzi
 
 TESTO = "Scrivi a Mario Rossi (mario.rossi@example.com) che il preventivo è pronto."
 RICEVUTI: list[dict] = []

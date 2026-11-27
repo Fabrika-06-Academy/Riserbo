@@ -1,4 +1,4 @@
-"""L'app: `segnaposto app` apre una finestra (o, se manca pywebview, il browser) che gira solo sul tuo computer.
+"""L'app: `riserbo app` apre una finestra (o, se manca pywebview, il browser) che gira solo sul tuo computer.
 
 Il flusso di ogni giorno:
   1. incolli un testo o trascini un documento (Word, PDF, Excel, email) e lo pseudonimizzi;
@@ -35,7 +35,7 @@ from .oscura import _compatta, oscura
 from .tabella import Tabella
 
 INATTIVITA_MAX = 3600  # secondi
-REPO_API = "https://api.github.com/repos/Fabrika-06-Academy/segnaposto/releases/latest"
+REPO_API = "https://api.github.com/repos/Fabrika-06-Academy/riserbo/releases/latest"
 URL_PARERI = "https://academy.fabrika06.com/wp-json/f06/v1/segnaposto-parere"
 LINK_AMMESSI = ("https://github.com/Fabrika-06-Academy/", "https://academy.fabrika06.com/")
 
@@ -53,15 +53,15 @@ def controlla_aggiornamento() -> dict:
     """Chiede a GitHub il numero dell'ultima versione. Non manda nulla: è una lettura pubblica, come aprire la pagina."""
     import sys
     import urllib.request
-    req = urllib.request.Request(REPO_API, headers={"User-Agent": f"segnaposto/{__version__}", "Accept": "application/vnd.github+json"})
+    req = urllib.request.Request(REPO_API, headers={"User-Agent": f"riserbo/{__version__}", "Accept": "application/vnd.github+json"})
     from .rete import apri
     d = json.loads(apri(req, 6).read())
     tag = str(d.get("tag_name", ""))
     file = {a["name"]: a["browser_download_url"] for a in d.get("assets", [])}
     if sys.platform == "darwin":
-        url = file.get("segnaposto-mac-apple-silicon.dmg") or file.get("segnaposto-mac-apple-silicon.zip")
+        url = file.get("riserbo-mac-apple-silicon.dmg") or file.get("riserbo-mac-apple-silicon.zip")
     elif os.name == "nt":
-        url = file.get("segnaposto-windows.zip")
+        url = file.get("riserbo-windows.zip")
     else:
         url = None
     note = re.sub(r"\s+", " ", str(d.get("body") or ""))[:400]
@@ -75,7 +75,7 @@ def invia_parere(dati: dict) -> None:
     corpo = {"voto": int(dati.get("voto") or 0), "testo": str(dati.get("testo") or "")[:3000],
              "email": str(dati.get("email") or "")[:200], "versione": __version__, "sistema": _sistema(), "sito": ""}
     req = urllib.request.Request(URL_PARERI, data=json.dumps(corpo).encode("utf-8"), method="POST",
-                                 headers={"Content-Type": "application/json", "User-Agent": f"segnaposto/{__version__}"})
+                                 headers={"Content-Type": "application/json", "User-Agent": f"riserbo/{__version__}"})
     try:
         from .rete import apri
         apri(req, 10).read()
@@ -135,7 +135,14 @@ def _file_impostazioni():
         base = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
     else:
         base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    return base / "segnaposto" / "impostazioni.json"
+    nuovo, vecchio = base / "riserbo" / "impostazioni.json", base / "segnaposto" / "impostazioni.json"
+    if not nuovo.exists() and vecchio.exists():  # l'app si chiamava segnaposto: le scelte non si perdono
+        try:
+            nuovo.parent.mkdir(parents=True, exist_ok=True)
+            nuovo.write_bytes(vecchio.read_bytes())
+        except OSError:
+            return vecchio
+    return nuovo
 
 
 def leggi_impostazioni() -> dict:
@@ -163,7 +170,7 @@ def accendi_cancello(stato: Stato, porta: int | None = None) -> None:
     try:
         stato.cancello_httpd = avvia_cancello(c, porta=porta)
     except OSError:
-        stato.cancello_errore = f"La porta {porta} è già usata da un altro programma (o da un'altra copia di segnaposto)."
+        stato.cancello_errore = f"La porta {porta} è già usata da un altro programma (o da un'altra copia di Riserbo)."
         return
     stato.cancello, stato.cancello_errore = c, ""
 
@@ -198,7 +205,7 @@ def accendi_ponte(stato: Stato, rigenera: bool = False) -> None:
         stato.ponte_httpd = avvia_ponte(stato, codice, porta)
         stato.ponte_errore = ""
     except OSError:
-        stato.ponte_errore = f"La porta {porta} è già usata da un altro programma (o da un'altra copia di segnaposto)."
+        stato.ponte_errore = f"La porta {porta} è già usata da un altro programma (o da un'altra copia di Riserbo)."
 
 
 def spegni_ponte(stato: Stato) -> None:
@@ -238,7 +245,7 @@ def proteggi_appunti(stato: Stato, avvisa=None) -> str:
     except Exception as e:
         msg = f"Non riesco a usare gli appunti: {e}"
     stato.ultimo_appunti = msg
-    avvisa("segnaposto · proteggi", msg)
+    avvisa("Riserbo · proteggi", msg)
     return msg
 
 
@@ -262,15 +269,15 @@ def ripristina_appunti(stato: Stato, avvisa=None) -> str:
     except Exception as ex:
         msg = f"Non riesco a usare gli appunti: {ex}"
     stato.ultimo_appunti = msg
-    avvisa("segnaposto · rimetti i nomi", msg)
+    avvisa("Riserbo · rimetti i nomi", msg)
     return msg
 
 
 def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
-    pagina = files("segnaposto").joinpath("app.html").read_text(encoding="utf-8")
+    pagina = files("riserbo").joinpath("app.html").read_text(encoding="utf-8")
 
     class Gestore(BaseHTTPRequestHandler):
-        server_version = "segnaposto-app"
+        server_version = "riserbo-app"
 
         def log_message(self, *args) -> None:
             pass
@@ -296,7 +303,7 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                 return self._json(403, {"errore": "host non ammesso"})
             if self.path.split("?")[0] == "/":
                 if f"t={chiave}" not in self.path:
-                    return self._invia(403, "Apri l'app dal programma segnaposto.".encode("utf-8"), "text/plain; charset=utf-8")
+                    return self._invia(403, "Apri l'app dal programma Riserbo.".encode("utf-8"), "text/plain; charset=utf-8")
                 html = pagina.replace("__CHIAVE__", chiave).replace("__VERSIONE__", __version__)
                 return self._invia(200, html.encode("utf-8"), "text/html; charset=utf-8")
             self._json(404, {"errore": "non trovato"})
@@ -565,7 +572,7 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
         in_finestra[0] = True
         threading.Thread(target=httpd.serve_forever, daemon=True).start()
         ponte = Ponte()
-        win = webview.create_window("segnaposto", url, js_api=ponte, width=1280, height=860, min_size=(820, 600),
+        win = webview.create_window("Riserbo", url, js_api=ponte, width=1280, height=860, min_size=(820, 600),
                                     text_select=True, hidden=nascosta)
         ponte.finestra = win
         from .scorciatoie import Scorciatoie, notifica
@@ -604,26 +611,26 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
         def nuova() -> None:
             with stato.lock:
                 stato.nuova_pratica()
-            avvisa_fn("segnaposto", "Nuova pratica: la tabella precedente è stata cancellata.")
+            avvisa_fn("Riserbo", "Nuova pratica: la tabella precedente è stata cancellata.")
 
         def cancello_da_menu(acceso: bool) -> None:
             accendi_cancello(stato) if acceso else spegni_cancello(stato)
             salva_impostazioni(cancello=stato.cancello is not None)
             if acceso and stato.cancello is None:
-                avvisa_fn("segnaposto · cancello", stato.cancello_errore)
+                avvisa_fn("Riserbo · cancello", stato.cancello_errore)
 
         def esci() -> None:
             vassoio.togli()
             ferma()
 
-        voci: list = [Voce("Apri segnaposto", apri_finestra), None,
+        voci: list = [Voce("Apri Riserbo", apri_finestra), None,
                       Voce("Proteggi gli appunti", lambda: proteggi_appunti(stato, avvisa_fn), tasto="proteggi"),
                       Voce("Rimetti i nomi negli appunti", lambda: ripristina_appunti(stato, avvisa_fn), tasto="ripristina"),
                       Voce("Nuova pratica", nuova), None,
                       Voce("Cancello per le automazioni", spunta=lambda: stato.cancello is not None, cambia=cancello_da_menu), None]
         if avvio_possibile():
             voci += [Voce("Apri all'accensione", spunta=avvio_automatico, cambia=imposta_avvio), None]
-        voci.append(Voce("Esci da segnaposto", esci))
+        voci.append(Voce("Esci da Riserbo", esci))
         vassoio = Vassoio(voci, apri_finestra)
         stato.vassoio, stato.mostra_finestra = vassoio, apri_finestra
         segna_istanza(porta_ref[0], chiave)
@@ -638,8 +645,8 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
             mostra_nel_dock(False)
             if not avvisato[0]:
                 avvisato[0] = True
-                avvisa_fn("segnaposto resta attivo",
-                          "Lo trovi nell'icona vicino all'orologio. Per uscire: icona → Esci da segnaposto.")
+                avvisa_fn("Riserbo resta attivo",
+                          "Lo trovi nell'icona vicino all'orologio. Per uscire: icona → Esci da Riserbo.")
             return False
 
         win.events.closing += chiudendo
@@ -648,6 +655,13 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
         stato.scorciatoie = sc
 
         def all_avvio() -> None:
+            try:  # l'app si chiamava segnaposto: avvio all'accensione e Claude Desktop passano a Riserbo
+                from .server_mcp import migra_claude_desktop
+                from .vassoio import migra_avvio
+                migra_avvio()
+                migra_claude_desktop()
+            except Exception:
+                pass
             sc.registra()
             if sys.platform == "darwin":
                 from PyObjCTools import AppHelper
@@ -670,14 +684,14 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
         httpd.shutdown()
         return
 
-    print(f"segnaposto è aperto nel browser: {url}\nPer chiuderlo usa il pulsante «Chiudi» nella pagina (o Ctrl+C qui).", flush=True)
+    print(f"Riserbo è aperto nel browser: {url}\nPer chiuderlo usa il pulsante «Chiudi» nella pagina (o Ctrl+C qui).", flush=True)
     if apri_browser:
         webbrowser.open(url)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
         pass
-    print("segnaposto chiuso. La tabella della pratica è stata cancellata.", flush=True)
+    print("Riserbo chiuso. La tabella della pratica è stata cancellata.", flush=True)
 
 
 def prova_pacchetto() -> None:
@@ -722,7 +736,7 @@ def prova_pacchetto() -> None:
     nota("::notice::cancello: ok")
     from .rete import apri as _apri  # HTTPS con i certificati inclusi: senza, niente avviso di aggiornamento né pareri
     try:
-        _apri(urllib.request.Request(REPO_API, headers={"User-Agent": f"segnaposto/{__version__}"}), 20).read()
+        _apri(urllib.request.Request(REPO_API, headers={"User-Agent": f"riserbo/{__version__}"}), 20).read()
     except urllib.error.HTTPError:
         pass  # GitHub ha risposto (anche con un limite di richieste): la connessione HTTPS funziona
     nota("::notice::HTTPS verso GitHub: ok")
@@ -754,7 +768,7 @@ def prova_pacchetto() -> None:
             from AppKit import NSMenu, NSStatusBar  # noqa: F401
             import objc  # noqa: F401
         nota(f"::notice::avvio all'accensione possibile: {_v.avvio_possibile()}")
-    nota(f"segnaposto {__version__}: pacchetto completo")
+    nota(f"Riserbo {__version__}: pacchetto completo")
 
 
 def main() -> None:

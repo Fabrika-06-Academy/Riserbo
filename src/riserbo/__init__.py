@@ -1,4 +1,4 @@
-"""segnaposto: pseudonimizzare testi italiani prima di mandarli a un modello in cloud, e rimettere i valori al ritorno."""
+"""Riserbo: pseudonimizzare testi italiani prima di mandarli a un modello in cloud, e rimettere i valori al ritorno."""
 
 from .tabella import Tabella
 from .validatori import codice_fiscale_valido, iban_valido, partita_iva_valida, targa_valida

@@ -1,12 +1,12 @@
 """Il cancello: un proxy locale compatibile con le API di OpenAI e Anthropic.
 
 n8n, Make, script Python, Open WebUI, gli editor di codice: invece di parlare direttamente con il fornitore parlano con
-segnaposto, che pseudonimizza ogni richiesta in uscita e rimette i valori veri nella risposta (anche in streaming).
+Riserbo, che pseudonimizza ogni richiesta in uscita e rimette i valori veri nella risposta (anche in streaming).
 
     OpenAI e compatibili   base URL  http://127.0.0.1:8788/openai/v1
     Anthropic              base URL  http://127.0.0.1:8788/anthropic
 
-La chiave API del fornitore passa com'è: segnaposto non la conserva. Le regole:
+La chiave API del fornitore passa com'è: Riserbo non la conserva. Le regole:
 - si rimettono solo i segnaposto nati da *questa* richiesta: un segnaposto scritto apposta nel testo non tira fuori
   il valore di un'altra conversazione;
 - immagini e file allegati sono rifiutati (non sappiamo ancora pseudonimizzarli), a meno di `consenti_allegati`;
@@ -91,7 +91,7 @@ class Cancello:
             return testo
         sp = self.motore()
         if sp is None:
-            raise Rifiuto(503, "segnaposto sta ancora caricando il modello italiano: riprova tra qualche secondo.")
+            raise Rifiuto(503, "Riserbo sta ancora caricando il modello italiano: riprova tra qualche secondo.")
         with self.lock:
             if time.time() - self.ultimo_uso > self.rinnova:  # dopo un'ora ferma la tabella non resta in memoria
                 self.nuova_tabella()
@@ -137,7 +137,7 @@ class Cancello:
             if t in PENSIERI:
                 continue
             if t in ALLEGATI and not self.consenti_allegati:
-                raise Rifiuto(400, "segnaposto non sa ancora proteggere immagini e file allegati: la richiesta non è "
+                raise Rifiuto(400, "Riserbo non sa ancora proteggere immagini e file allegati: la richiesta non è "
                                    "partita. Manda il testo, oppure avvia il cancello con --consenti-allegati.")
             if isinstance(p.get("text"), str):
                 p["text"] = self.proteggi(p["text"], ric)
@@ -296,13 +296,13 @@ class Flusso:
 
 def crea_gestore(cancello: Cancello, chiave: str = "", host_locale: bool = True):
     class Gestore(BaseHTTPRequestHandler):
-        server_version = "segnaposto-cancello"
+        server_version = "riserbo-cancello"
 
         def log_message(self, *args) -> None:  # i testi possono contenere dati personali: niente registro HTTP
             pass
 
         def _errore(self, stato: int, messaggio: str) -> None:
-            corpo = json.dumps({"type": "error", "error": {"type": "segnaposto", "message": messaggio}},
+            corpo = json.dumps({"type": "error", "error": {"type": "riserbo", "message": messaggio}},
                                ensure_ascii=False).encode("utf-8")
             self.send_response(stato)
             self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -327,9 +327,9 @@ def crea_gestore(cancello: Cancello, chiave: str = "", host_locale: bool = True)
         def do_GET(self) -> None:
             p = self._percorso()
             if p is None:
-                return self._errore(403, "Richiesta rifiutata dal cancello di segnaposto.")
+                return self._errore(403, "Richiesta rifiutata dal cancello di Riserbo.")
             if p in ("/", "/salute"):
-                return self._json(200, {"ok": True, "segnaposto": "il cancello è attivo"})
+                return self._json(200, {"ok": True, "riserbo": "il cancello è attivo"})
             _f, url = cancello.instrada(p)
             self._inoltra("GET", url, None, Richiesta(), _f, "", False)
 
@@ -344,11 +344,11 @@ def crea_gestore(cancello: Cancello, chiave: str = "", host_locale: bool = True)
         def do_POST(self) -> None:
             p = self._percorso()
             if p is None:
-                return self._errore(403, "Richiesta rifiutata dal cancello di segnaposto.")
+                return self._errore(403, "Richiesta rifiutata dal cancello di Riserbo.")
             fornitore, url = cancello.instrada(p)
             interno = url[len(cancello.fornitori[fornitore]):].split("?")[0]
             if not interno.endswith(PROTETTI):
-                return self._errore(400, f"segnaposto non sa proteggere {interno}: la richiesta non è partita.")
+                return self._errore(400, f"Riserbo non sa proteggere {interno}: la richiesta non è partita.")
             n = int(self.headers.get("Content-Length") or 0)
             if n <= 0 or n > MAX_CORPO:
                 return self._errore(413, "Richiesta vuota o troppo grande.")
@@ -365,7 +365,7 @@ def crea_gestore(cancello: Cancello, chiave: str = "", host_locale: bool = True)
                 cancello.annota(fornitore, corpo.get("model"), ric, e.stato, False)
                 return self._errore(e.stato, e.messaggio)
             except Exception as e:  # mai inoltrare una richiesta che non siamo riusciti a proteggere
-                return self._errore(500, f"segnaposto non è riuscito a proteggere la richiesta, che non è partita: {e}")
+                return self._errore(500, f"Riserbo non è riuscito a proteggere la richiesta, che non è partita: {e}")
             dati = json.dumps(corpo, ensure_ascii=False).encode("utf-8")
             self._inoltra("POST", url, dati, ric, fornitore, corpo.get("model"), bool(corpo.get("stream")))
 
@@ -383,7 +383,7 @@ def crea_gestore(cancello: Cancello, chiave: str = "", host_locale: bool = True)
                 r, stato = e, e.code
             except Exception as e:
                 cancello.annota(fornitore, modello, ric, 502, flusso)
-                return self._errore(502, f"segnaposto non raggiunge {fornitore}: {getattr(e, 'reason', e)}")
+                return self._errore(502, f"Riserbo non raggiunge {fornitore}: {getattr(e, 'reason', e)}")
             tipo = r.headers.get("Content-Type", "")
             if "text/event-stream" in tipo:
                 self._flusso(r, stato, ric)

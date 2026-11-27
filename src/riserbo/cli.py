@@ -1,12 +1,12 @@
-"""Comando `segnaposto`.
+"""Comando `riserbo` (anche col vecchio nome `segnaposto`).
 
-    segnaposto pseudonimizza email.txt --tabella pratica-123.json [--anagrafica clienti.csv] > email-pulita.txt
-    segnaposto ripristina risposta.txt --tabella pratica-123.json > risposta-vera.txt
-    segnaposto valuta set-di-prova.jsonl
-    segnaposto servi --porta 8765
-    segnaposto app
-    segnaposto cancello --porta 8788      (proxy compatibile con OpenAI e Anthropic)
-    segnaposto mcp --cartella ~/Documenti (server MCP per Claude Desktop e gli altri agenti)
+    riserbo pseudonimizza email.txt --tabella pratica-123.json [--anagrafica clienti.csv] > email-pulita.txt
+    riserbo ripristina risposta.txt --tabella pratica-123.json > risposta-vera.txt
+    riserbo valuta set-di-prova.jsonl
+    riserbo servi --porta 8765
+    riserbo app
+    riserbo cancello --porta 8788      (proxy compatibile con OpenAI e Anthropic)
+    riserbo mcp --cartella ~/Documenti (server MCP per Claude Desktop e gli altri agenti)
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ def _leggi(p: str) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(prog="segnaposto", description="Pseudonimizzare testi italiani prima di mandarli a un modello in cloud.")
+    ap = argparse.ArgumentParser(prog="riserbo", description="Pseudonimizzare testi italiani prima di mandarli a un modello in cloud.")
     sub = ap.add_subparsers(dest="comando", required=True)
 
     p = sub.add_parser("pseudonimizza", help="sostituisce i dati con segnaposto e salva la tabella")
@@ -65,7 +65,7 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--consenti-allegati", action="store_true", help="lascia passare immagini e file (NON pseudonimizzati)")
     c.add_argument("--anagrafica")
 
-    m = sub.add_parser("mcp", help="server MCP (stdio) per Claude Desktop: legge i documenti attraverso segnaposto")
+    m = sub.add_parser("mcp", help="server MCP (stdio) per Claude Desktop: legge i documenti attraverso Riserbo")
     m.add_argument("--cartella", action="append", default=[], help="cartella che l'agente può leggere (si ripete)")
 
     a = ap.parse_args(argv)
@@ -114,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
         canc = Cancello(sp, fornitori=fornitori, consenti_allegati=a.consenti_allegati)
         httpd = avvia_cancello(canc, a.host, a.porta, a.chiave)
         url = indirizzi(a.porta, a.host if a.host != "0.0.0.0" else "INDIRIZZO-DI-QUESTO-SERVER", a.chiave)
-        print(f"Cancello di segnaposto attivo.\n  OpenAI e compatibili  base URL: {url['openai']}\n"
+        print(f"Cancello di Riserbo attivo.\n  OpenAI e compatibili  base URL: {url['openai']}\n"
               f"  Anthropic             base URL: {url['anthropic']}\n"
               f"Fornitori: {canc.fornitori['openai']} · {canc.fornitori['anthropic']}\nCtrl+C per fermarlo.", flush=True)
         try:

@@ -1,6 +1,6 @@
-"""Un piccolo servizio HTTP locale, per usare segnaposto da altri programmi (un'automazione, un sito, n8n).
+"""Un piccolo servizio HTTP locale, per usare Riserbo da altri programmi (un'automazione, un sito, n8n).
 
-    segnaposto servi --porta 8765
+    riserbo servi --porta 8765
 
 POST /pseudonimizza  {"testo": "..."}  ->  {"testo": "...", "trovati": [{"tipo", "valore", "inizio", "fine"}], "segnaposto": {...}}
 GET  /salute                           ->  {"ok": true}
@@ -21,7 +21,7 @@ MAX_CARATTERI = 20000
 
 def crea_gestore(sp: Segnaposto, max_caratteri: int = MAX_CARATTERI):
     class Gestore(BaseHTTPRequestHandler):
-        server_version = "segnaposto"
+        server_version = "riserbo"
 
         def log_message(self, *args) -> None:  # niente registro delle richieste: i testi possono contenere dati personali
             pass
@@ -62,7 +62,7 @@ def servi(host: str = "127.0.0.1", porta: int = 8765, sp: Segnaposto | None = No
     sp = sp or Segnaposto()
     sp.pseudonimizza("Prova di avvio, Mario Rossi.")  # carica il modello prima della prima richiesta vera
     httpd = ThreadingHTTPServer((host, porta), crea_gestore(sp, max_caratteri))
-    print(f"segnaposto in ascolto su http://{host}:{porta}", flush=True)
+    print(f"Riserbo in ascolto su http://{host}:{porta}", flush=True)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>segnaposto</title>
+<title>Riserbo</title>
 <style>
 :root{
   --ink:#121116;--y:#FFC700;--y2:#ffd84d;--y-soft:#fff6d6;
@@ -123,7 +123,7 @@ footer a{color:inherit}
 <header>
   <div class="marchio">
     <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#24242b"/><path d="M22 14h-8v36h8" fill="none" stroke="#FFC700" stroke-width="6" stroke-linejoin="round"/><path d="M42 14h8v36h-8" fill="none" stroke="#FFC700" stroke-width="6" stroke-linejoin="round"/><rect x="24" y="29" width="16" height="6" rx="3" fill="#fff"/></svg>
-    <b>segna<i>posto</i></b><small>v__VERSIONE__</small>
+    <b>Riserbo</b><small>v__VERSIONE__</small>
   </div>
   <nav class="schede" role="tablist">
     <button class="attiva" data-vista="proteggi" role="tab"><span class="n">1</span>Proteggi</button>
@@ -135,7 +135,7 @@ footer a{color:inherit}
     <button class="hbtn" id="apriImpost" title="Scegli quali dati nascondere"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Cosa nascondere</button>
     <button class="hbtn" id="apriTab" title="La tabella che collega segnaposto e valori veri"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>Tabella <span class="badge" id="ntab">0</span></button>
     <button class="hbtn" id="apriAppunti" title="Proteggi il testo copiato da qualunque programma"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h4"/></svg>Appunti</button>
-    <button class="hbtn" id="apriAuto" title="n8n, Make e i programmi che usano ChatGPT o Claude passano da segnaposto"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h5M15 12h5M9 8v8M15 8v8"/></svg>Automazioni <span class="badge" id="autoPallino" hidden>on</span></button>
+    <button class="hbtn" id="apriAuto" title="n8n, Make e i programmi che usano ChatGPT o Claude passano da Riserbo"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h5M15 12h5M9 8v8M15 8v8"/></svg>Automazioni <span class="badge" id="autoPallino" hidden>on</span></button>
     <button class="hbtn" id="apriParere" title="Dicci cosa funziona e cosa no">Parere</button>
     <button class="hbtn" id="nuova" title="Cancella tabella e testi e ricomincia">Nuova pratica</button>
     <button class="hbtn" id="chiudi" hidden>Chiudi</button>
@@ -221,7 +221,7 @@ footer a{color:inherit}
   </div>
 </main>
 <footer>Tutto gira su questo computer: niente viene mandato a internet. Nessuno strumento trova tutto: rileggi prima di incollare. ·
-  <a href="https://github.com/Fabrika-06-Academy/segnaposto" target="_blank" rel="noopener">segnaposto</a> è open source (MIT), di
+  <a href="https://github.com/Fabrika-06-Academy/riserbo" target="_blank" rel="noopener">Riserbo</a> è open source (MIT), di
   <a href="https://academy.fabrika06.com" target="_blank" rel="noopener">Fabrika 06 Academy</a>.</footer>
 
 <div class="velo" id="impost" hidden><aside class="pannello">
@@ -231,8 +231,8 @@ footer a{color:inherit}
 <div class="velo" id="appunti" hidden><aside class="pannello">
   <div class="ctesta"><h3>Da qualunque programma</h3><div class="dx"><button class="sec" data-chiudi>Chiudi</button></div></div>
   <div class="corpo">
-    <p style="margin:0">Lascia segnaposto aperto (anche ridotto a icona) e lavora dove vuoi: Outlook, il gestionale, WhatsApp Web.</p>
-    <p class="stato" id="appVassoio" style="margin:0" hidden>Puoi anche chiudere la finestra: segnaposto resta attivo nell'icona <b>[–]</b> vicino all'orologio, da cui riapri la finestra, avvii una nuova pratica o esci. Dopo un'ora senza usarlo la tabella della pratica si cancella da sola.</p>
+    <p style="margin:0">Lascia Riserbo aperto (anche ridotto a icona) e lavora dove vuoi: Outlook, il gestionale, WhatsApp Web.</p>
+    <p class="stato" id="appVassoio" style="margin:0" hidden>Puoi anche chiudere la finestra: Riserbo resta attivo nell'icona <b>[–]</b> vicino all'orologio, da cui riapri la finestra, avvii una nuova pratica o esci. Dopo un'ora senza usarlo la tabella della pratica si cancella da sola.</p>
     <div class="sezione">Andata</div>
     <p style="margin:0">1. Seleziona e copia il testo.<br>2. Premi <span class="kbd" data-tasto="proteggi">⌃⌥P</span>: negli appunti c'è la versione con i segnaposto.<br>3. Incolla nella chat.</p>
     <div class="sezione">Ritorno</div>
@@ -247,7 +247,7 @@ footer a{color:inherit}
 <div class="velo" id="automazioni" hidden><aside class="pannello">
   <div class="ctesta"><h3>Per le automazioni</h3><div class="dx"><button class="sec" data-chiudi>Chiudi</button></div></div>
   <div class="corpo">
-    <p style="margin:0">n8n, Make, gli script e i programmi che usano ChatGPT o Claude possono passare da segnaposto: al fornitore arrivano solo i segnaposto, le risposte tornano con i nomi veri, anche in streaming. La chiave API resta quella del fornitore.</p>
+    <p style="margin:0">n8n, Make, gli script e i programmi che usano ChatGPT o Claude possono passare da Riserbo: al fornitore arrivano solo i segnaposto, le risposte tornano con i nomi veri, anche in streaming. La chiave API resta quella del fornitore.</p>
     <label class="interruttore"><input type="checkbox" id="autoAcceso"><span><b>Attiva il cancello</b><small class="stato" style="display:block">Ascolta solo su questo computer. Resta attivo a finestra chiusa e si riaccende con l'app.</small></span></label>
     <p class="esito warn" id="autoErrore" hidden></p>
     <div class="sezione">Base URL da usare al posto del fornitore</div>
@@ -261,7 +261,7 @@ footer a{color:inherit}
     <div style="overflow:auto;max-height:280px"><table><thead><tr><th>Ora</th><th>Fornitore · modello</th><th>Dati protetti</th><th>Esito</th></tr></thead><tbody id="autoRighe"></tbody></table></div>
     <p class="stato" style="margin:0">Solo quanti dati e di che tipo: i valori veri non vengono mai registrati. Il registro si azzera chiudendo l'app.</p>
     <div class="sezione">Claude Desktop</div>
-    <p style="margin:0">Claude Desktop legge i documenti delle cartelle che scegli <b>attraverso segnaposto</b>: vede solo i segnaposto, anche nei nomi dei file. Quando gli chiedi di salvare la risposta o di copiarla negli appunti, i nomi veri li rimette segnaposto qui, sul tuo computer.</p>
+    <p style="margin:0">Claude Desktop legge i documenti delle cartelle che scegli <b>attraverso Riserbo</b>: vede solo i segnaposto, anche nei nomi dei file. Quando gli chiedi di salvare la risposta o di copiarla negli appunti, i nomi veri li rimette Riserbo qui, sul tuo computer.</p>
     <div id="mcpCartelle"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><input type="text" id="mcpNuova" placeholder="Percorso di una cartella" style="flex:1;min-width:180px"><button class="sec" id="mcpAggiungi">Aggiungi</button></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="mcpCollega">Collega a Claude Desktop</button><button class="sec" id="mcpScollega" hidden>Scollega</button></div>
@@ -271,7 +271,7 @@ footer a{color:inherit}
     <label class="interruttore"><input type="checkbox" id="brAcceso"><span><b>Collega l'estensione</b><small class="stato" style="display:block">Apre un canale solo su questo computer (porta 8789), protetto da un codice.</small></span></label>
     <div id="brBox" hidden><small class="stato">Codice di collegamento da incollare nell'estensione</small><div class="indirizzo"><code id="brCodice"></code><button class="sec" data-copia="brCodice" data-esito="brCopiato">Copia</button><button class="sec" id="brRigenera" title="Il vecchio codice smette di funzionare">Nuovo codice</button></div><p class="stato" id="brCopiato" style="margin:0"></p></div>
     <p class="esito warn" id="brErrore" hidden></p>
-    <p class="stato" style="margin:0">Installazione, finché non è sul Chrome Web Store: scarica <a href="https://github.com/Fabrika-06-Academy/segnaposto/releases/latest/download/segnaposto-estensione.zip">segnaposto-estensione.zip</a> e decomprimilo; in Chrome (o Edge, Brave) apri <code>chrome://extensions</code>, attiva «Modalità sviluppatore», premi «Carica estensione non pacchettizzata» e scegli la cartella. Poi clicca l'icona di segnaposto nella barra del browser e incolla il codice.</p>
+    <p class="stato" style="margin:0">Installazione, finché non è sul Chrome Web Store: scarica <a href="https://github.com/Fabrika-06-Academy/riserbo/releases/latest/download/riserbo-estensione.zip">riserbo-estensione.zip</a> e decomprimilo; in Chrome (o Edge, Brave) apri <code>chrome://extensions</code>, attiva «Modalità sviluppatore», premi «Carica estensione non pacchettizzata» e scegli la cartella. Poi clicca l'icona di Riserbo nella barra del browser e incolla il codice.</p>
     <p class="stato" style="margin:0">I nomi veri nelle risposte compaiono solo nella pagina sul tuo schermo e non vengono inviati; tecnicamente gli script del sito potrebbero leggerli. Se preferisci, nell'estensione spegni «Mostra i nomi veri» e usa ⌃⌥R.</p>
   </div>
 </aside></div>
@@ -364,8 +364,8 @@ $("apriAuto").onclick=function(){$("automazioni").hidden=false;cancello("stato")
 var MCP={cartelle:[]};
 function disegnaMcp(d){var e=$("mcpEsito");if(d){MCP.cartelle=MCP.cartelle.length&&!d.collegato?MCP.cartelle:(d.collegato?d.cartelle:d.proposte);
     $("mcpScollega").hidden=!d.collegato;$("mcpCollega").textContent=d.collegato?"Aggiorna il collegamento":"Collega a Claude Desktop";
-    e.hidden=false;if(d.collegato&&d.aggiornato===false){e.className="esito warn";e.textContent="Il collegamento punta a un'altra copia di segnaposto (l'app è stata spostata?): premi «Aggiorna il collegamento»."}
-    else if(d.collegato){e.className="esito ok";e.textContent="Collegato. Se Claude Desktop era aperto, chiudilo del tutto e riaprilo: tra gli strumenti trovi «segnaposto»."}
+    e.hidden=false;if(d.collegato&&d.aggiornato===false){e.className="esito warn";e.textContent="Il collegamento punta a un'altra copia di Riserbo (l'app è stata spostata?): premi «Aggiorna il collegamento»."}
+    else if(d.collegato){e.className="esito ok";e.textContent="Collegato. Se Claude Desktop era aperto, chiudilo del tutto e riaprilo: tra gli strumenti trovi «riserbo»."}
     else if(d.installato===false){e.className="esito warn";e.textContent="Claude Desktop non sembra installato su questo computer: puoi collegarlo comunque, varrà quando lo installi."}
     else e.hidden=true}
   $("mcpCartelle").innerHTML=MCP.cartelle.map(function(c,i){return "<div class=\"indirizzo\"><code>"+esc(c)+"</code><button class=\"sec\" data-togli=\""+i+"\">Togli</button></div>"}).join("")||"<p class=\"stato\" style=\"margin:0\">Nessuna cartella scelta.</p>";
@@ -394,7 +394,7 @@ document.addEventListener("click",apriLink,true);
 var voto=0;
 function disegnaStelle(){$("stelle").querySelectorAll("button").forEach(function(b){b.classList.toggle("on",+b.getAttribute("data-v")<=voto)})}
 $("stelle").querySelectorAll("button").forEach(function(b){b.onclick=function(){voto=+b.getAttribute("data-v");disegnaStelle()}});
-$("apriParere").onclick=function(){$("parCosa").textContent="Verranno inviati: il voto, il testo che scrivi, l'email se la lasci, la versione di segnaposto ("+(S.versione||"")+") e il sistema operativo. Nient'altro.";$("parEsito").textContent="";$("parere").hidden=false;$("parTesto").focus()};
+$("apriParere").onclick=function(){$("parCosa").textContent="Verranno inviati: il voto, il testo che scrivi, l'email se la lasci, la versione di Riserbo ("+(S.versione||"")+") e il sistema operativo. Nient'altro.";$("parEsito").textContent="";$("parere").hidden=false;$("parTesto").focus()};
 $("parInvia").onclick=function(){var b=this;if(!voto&&!$("parTesto").value.trim()){$("parEsito").textContent="Scegli un voto o scrivi qualcosa.";return}
   b.disabled=true;$("parEsito").textContent="Invio…";
   api("/api/parere",{voto:voto,testo:$("parTesto").value,email:$("parEmail").value}).then(function(){$("parEsito").textContent="Grazie! Il parere è arrivato.";$("parTesto").value="";voto=0;disegnaStelle()})
@@ -511,7 +511,7 @@ $("nuova").onclick=function(){api("/api/nuova").then(function(){pulisci();$("ris
   ["out","outTesto","conte","pagine","vero"].forEach(function(i){$(i).innerHTML=""});$("vero").hidden=true;$("attesa2").hidden=false;$("esito").hidden=true;
   ["copia1","salva1","fmt1","copia2","salva2","fmt2"].forEach(function(i){$(i).disabled=true});
   tabella({});mostraRisultato();vista("proteggi");aggiorna()})};
-$("chiudi").onclick=function(){api("/api/chiudi").finally(function(){document.body.innerHTML="<main style=\"padding:40px\"><h2>segnaposto è chiuso.</h2><p>La tabella della pratica è stata cancellata. Puoi chiudere questa finestra.</p></main>"})};
+$("chiudi").onclick=function(){api("/api/chiudi").finally(function(){document.body.innerHTML="<main style=\"padding:40px\"><h2>Riserbo è chiuso.</h2><p>La tabella della pratica è stata cancellata. Puoi chiudere questa finestra.</p></main>"})};
 tabella({});mostraRisultato();
 })();
 </script>

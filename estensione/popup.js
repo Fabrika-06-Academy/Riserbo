@@ -23,7 +23,7 @@ async function aggiorna() {
     const d = await chiedi("/stato");
     st.className = "stato ok";
     st.textContent = d.pronto
-      ? `Collegata a segnaposto ${d.versione}. Nella pratica: ${d.segnaposto} segnaposto.`
+      ? `Collegata a Riserbo ${d.versione}. Nella pratica: ${d.segnaposto} segnaposto.`
       : "Collegata: l'app sta caricando il modello italiano…";
   } catch (e) {
     st.className = "stato ko";

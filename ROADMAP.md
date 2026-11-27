@@ -17,7 +17,7 @@ in cloud. Un passo alla volta, ognuno usabile da subito.
   salva e copia negli appunti rimettendo i nomi veri sul computer. Collegamento a Claude Desktop in un clic dall'app.
 - **v0.8**: il cancello, proxy locale compatibile con OpenAI e Anthropic (Chat Completions, Responses, Messages,
   Embeddings, streaming compreso): pseudonimizza all'andata, rimette i nomi al ritorno, registro di cosa è uscito senza i
-  valori. Nell'app (pannello Automazioni, icona) e da terminale (`segnaposto cancello`). Allegati rifiutati.
+  valori. Nell'app (pannello Automazioni, icona) e da terminale (`riserbo cancello`). Allegati rifiutati.
 - **v0.7.2**: avviso di aggiornamento e pareri funzionanti anche nell'app impacchettata (certificati HTTPS inclusi),
   pulsante «Controlla adesso».
 - **v0.7.1**: icona [–] nella barra dei menu (Mac) e nell'area di notifica (Windows): chiudendo la finestra l'app resta

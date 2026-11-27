@@ -6,8 +6,8 @@ from http.server import ThreadingHTTPServer
 
 import pytest
 
-from segnaposto.app import Stato, crea_gestore
-from segnaposto.motore import Segnaposto
+from riserbo.app import Stato, crea_gestore
+from riserbo.motore import Segnaposto
 
 
 @pytest.fixture(scope="module")
@@ -106,7 +106,7 @@ def test_sempre_in_chiaro(app):
 
 
 def test_aggiornamento_e_link(app, monkeypatch):
-    import segnaposto.app as modulo
+    import riserbo.app as modulo
     monkeypatch.setattr(modulo, "controlla_aggiornamento", lambda: {"nuova": True, "versione": "9.9.9", "url": "https://github.com/Fabrika-06-Academy/x"})
     assert post(app, "/api/aggiornamento", {})["versione"] == "9.9.9"
     with pytest.raises(urllib.error.HTTPError) as e:
@@ -116,7 +116,7 @@ def test_aggiornamento_e_link(app, monkeypatch):
 
 
 def test_scorciatoie_sugli_appunti(app, monkeypatch):
-    import segnaposto.scorciatoie as sc
+    import riserbo.scorciatoie as sc
     appunti = {"t": "Scrivo a Giulia Ferro di Costruzioni Dalla Pozza, tel. 347 123 4567."}
     monkeypatch.setattr(sc, "leggi_appunti", lambda: appunti["t"])
     monkeypatch.setattr(sc, "scrivi_appunti", lambda t: appunti.__setitem__("t", t))
@@ -133,7 +133,7 @@ def test_scorciatoie_sugli_appunti(app, monkeypatch):
 
 def test_seconda_istanza_sveglia_la_prima(monkeypatch, tmp_path):
     """Il secondo avvio (doppio clic, avvio all'accensione) chiede alla prima di mostrare la finestra e si ferma."""
-    from segnaposto import vassoio
+    from riserbo import vassoio
     monkeypatch.setattr(vassoio, "_file_istanza", lambda: tmp_path / "istanza.json")
     assert vassoio.risveglia_istanza() is False  # nessuna istanza aperta
     stato, porta, mostrata = Stato(Segnaposto()), [0], threading.Event()
@@ -156,7 +156,7 @@ def test_seconda_istanza_sveglia_la_prima(monkeypatch, tmp_path):
 def test_cancello_dall_app(app, monkeypatch, tmp_path):
     import socket
 
-    from segnaposto import app as modulo
+    from riserbo import app as modulo
     monkeypatch.setattr(modulo, "_file_impostazioni", lambda: tmp_path / "impostazioni.json")
     with socket.socket() as s:
         s.bind(("127.0.0.1", 0))
@@ -172,7 +172,7 @@ def test_cancello_dall_app(app, monkeypatch, tmp_path):
 
 
 def test_collega_claude_desktop_dall_app(app, monkeypatch, tmp_path):
-    from segnaposto import app as modulo, server_mcp
+    from riserbo import app as modulo, server_mcp
     conf = tmp_path / "Claude" / "claude_desktop_config.json"
     monkeypatch.setattr(server_mcp, "file_config_claude", lambda: [conf])
     monkeypatch.setattr(modulo, "_file_impostazioni", lambda: tmp_path / "impostazioni.json")
@@ -182,5 +182,5 @@ def test_collega_claude_desktop_dall_app(app, monkeypatch, tmp_path):
         post(app, "/api/mcp", {"azione": "collega", "cartelle": [str(tmp_path / "non-esiste")]})
     d = post(app, "/api/mcp", {"azione": "collega", "cartelle": [str(tmp_path)]})
     assert d["collegato"] and d["cartelle"] == [str(tmp_path)]
-    assert json.loads(conf.read_text())["mcpServers"]["segnaposto"]["args"][-1] == str(tmp_path)
+    assert json.loads(conf.read_text())["mcpServers"]["riserbo"]["args"][-1] == str(tmp_path)
     assert not post(app, "/api/mcp", {"azione": "scollega"})["collegato"]

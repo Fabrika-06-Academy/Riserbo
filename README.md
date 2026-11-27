@@ -4,11 +4,11 @@
 
 ```
 Buongiorno, sono Mario Rossi della Bianchi Srl. CF RSSMRA80A01L840J, IBAN IT60 X054 2811 1010 0000 0123 456.
-                                   ↓ segnaposto pseudonimizza
+                                   ↓ riserbo pseudonimizza
 Buongiorno, sono [PERSONA_1] della [CLIENTE_1]. CF [CODICE_FISCALE_1], IBAN [IBAN_1].
 ```
 
-Il modello in cloud lavora sul testo con i segnaposto. Quando la risposta torna, `segnaposto ripristina` rimette i nomi veri
+Il modello in cloud lavora sul testo con i segnaposto. Quando la risposta torna, `riserbo ripristina` rimette i nomi veri
 e controlla che il modello non abbia perso o inventato segnaposto. La tabella che collega segnaposto e valori resta in casa tua.
 
 Fa parte dei progetti della [Fabrika 06 Academy](https://academy.fabrika06.com), i corsi gratuiti sull'intelligenza
@@ -34,8 +34,8 @@ Lo stesso valore riceve sempre lo stesso segnaposto nella stessa pratica, così 
 ## Scarica l'app (Mac e Windows)
 
 Per usarlo ogni giorno con ChatGPT, Claude o Copilot, senza installare Python: scarica l'app dalla pagina
-[Releases](https://github.com/Fabrika-06-Academy/segnaposto/releases). Su Mac apri il file `.dmg` e trascina segnaposto in
-Applicazioni; su Windows decomprimi lo zip e apri `segnaposto.exe`. Si apre in una finestra sua e gira solo sul tuo computer.
+[Releases](https://github.com/Fabrika-06-Academy/riserbo/releases). Su Mac apri il file `.dmg` e trascina segnaposto in
+Applicazioni; su Windows decomprimi lo zip e apri `riserbo.exe`. Si apre in una finestra sua e gira solo sul tuo computer.
 
 1. **Incolla un testo o trascina un documento**: Word (.docx), PDF anche scansionati, foto di documenti, Excel (.xlsx), CSV,
    email di Outlook (.msg) e di Mail (.eml) con gli allegati, testo semplice. Puoi anche incollare uno screenshot.
@@ -69,7 +69,7 @@ automatica richiede la firma Apple, che arriverà quando l'app avrà una diffusi
 
 **Primo avvio su Mac.** L'app non è firmata con un certificato Apple a pagamento, quindi la prima volta macOS la blocca
 («non è possibile verificare lo sviluppatore»). Aprila una volta con doppio clic, poi vai in *Impostazioni di Sistema →
-Privacy e sicurezza* e premi **Apri comunque**. In alternativa, da Terminale: `xattr -dr com.apple.quarantine segnaposto.app`.
+Privacy e sicurezza* e premi **Apri comunque**. In alternativa, da Terminale: `xattr -dr com.apple.quarantine riserbo.app`.
 Il codice è tutto qui: se preferisci, puoi installarlo con Python come descritto sotto.
 
 **Primo avvio su Windows.** SmartScreen può mostrare «Windows ha protetto il PC»: *Ulteriori informazioni → Esegui comunque*.
@@ -79,11 +79,11 @@ Il codice è tutto qui: se preferisci, puoi installarlo con Python come descritt
 ```bash
 python -m venv .venv && . .venv/bin/activate
 # Non è (ancora) su PyPI: si installa direttamente da GitHub
-pip install "segnaposto @ git+https://github.com/Fabrika-06-Academy/segnaposto"
+pip install "segnaposto @ git+https://github.com/Fabrika-06-Academy/riserbo"
 # con documenti, OCR e finestra dell'app:
-# pip install "segnaposto[app] @ git+https://github.com/Fabrika-06-Academy/segnaposto"
+# pip install "riserbo[app] @ git+https://github.com/Fabrika-06-Academy/riserbo"
 # oppure, da una copia del repository: pip install -e ".[app]"
-segnaposto scarica-modello   # il riconoscitore di entità, circa 110 MB, una volta sola (altrimenti lo scarica al primo uso)
+riserbo scarica-modello   # il riconoscitore di entità, circa 110 MB, una volta sola (altrimenti lo scarica al primo uso)
 ```
 
 Tutto gira sul tuo computer o sul tuo server. Nessun dato viene mandato fuori.
@@ -92,22 +92,22 @@ Tutto gira sul tuo computer o sul tuo server. Nessun dato viene mandato fuori.
 
 ```bash
 # Pseudonimizzare: la tabella va in un file a parte (permessi 600, scade dopo 30 giorni)
-segnaposto pseudonimizza email.txt --tabella pratica-123.tabella.json --anagrafica clienti.csv --mostra > email-pulita.txt
+riserbo pseudonimizza email.txt --tabella pratica-123.tabella.json --anagrafica clienti.csv --mostra > email-pulita.txt
 
 # ... email-pulita.txt va al modello in cloud, la risposta torna in risposta.txt ...
 
 # Ripristinare: esce con codice 2 se il modello ha inventato segnaposto
-segnaposto ripristina risposta.txt --tabella pratica-123.tabella.json > risposta-vera.txt
+riserbo ripristina risposta.txt --tabella pratica-123.tabella.json > risposta-vera.txt
 
 # Misurare le fughe sul tuo set di prova
-segnaposto valuta esempi/set-di-prova.jsonl --anagrafica esempi/anagrafica.csv
+riserbo valuta esempi/set-di-prova.jsonl --anagrafica esempi/anagrafica.csv
 ```
 
 ## Uso da Python
 
 ```python
-from segnaposto import Segnaposto, Tabella, ripristina
-from segnaposto.riconoscitori import carica_anagrafica, riconoscitore_codice
+from riserbo import Segnaposto, Tabella, ripristina
+from riserbo.riconoscitori import carica_anagrafica, riconoscitore_codice
 
 sp = Segnaposto(riconoscitori=[
     carica_anagrafica("clienti.csv", entita="CLIENTE"),
@@ -134,8 +134,8 @@ sp = Segnaposto(controllo_finale=controllo)
 ## L'app dal terminale
 
 ```bash
-pip install "segnaposto[app] @ git+https://github.com/Fabrika-06-Academy/segnaposto"   # documenti, OCR e finestra nativa
-segnaposto app            # finestra nativa; senza pywebview, o con --browser, si apre nel browser (127.0.0.1, chiave casuale)
+pip install "riserbo[app] @ git+https://github.com/Fabrika-06-Academy/riserbo"   # documenti, OCR e finestra nativa
+riserbo app            # finestra nativa; senza pywebview, o con --browser, si apre nel browser (127.0.0.1, chiave casuale)
 ```
 
 ## Il cancello: per n8n, Make e i programmi che usano ChatGPT o Claude
@@ -147,8 +147,8 @@ chi si ricorda di usarla.
 Nell'app: pannello **Automazioni → Attiva il cancello** (o dal menu dell'icona). Da terminale, anche su un server:
 
 ```bash
-segnaposto cancello                     # 127.0.0.1:8788
-segnaposto cancello --openai https://openrouter.ai/api     # un servizio compatibile con OpenAI
+riserbo cancello                     # 127.0.0.1:8788
+riserbo cancello --openai https://openrouter.ai/api     # un servizio compatibile con OpenAI
 ```
 
 | Programma | Base URL |
@@ -183,7 +183,7 @@ Funziona su chatgpt.com, claude.ai, gemini.google.com, Copilot, Le Chat di Mistr
 Edge e Brave. Installazione, finché non è sul Chrome Web Store:
 
 1. Nell'app: **Automazioni → Estensione del browser → Collega l'estensione** e copia il codice.
-2. Scarica `segnaposto-estensione.zip` dall'[ultima versione](https://github.com/Fabrika-06-Academy/segnaposto/releases/latest)
+2. Scarica `riserbo-estensione.zip` dall'[ultima versione](https://github.com/Fabrika-06-Academy/riserbo/releases/latest)
    e decomprimilo.
 3. In Chrome apri `chrome://extensions`, attiva **Modalità sviluppatore**, premi **Carica estensione non pacchettizzata** e
    scegli la cartella.
@@ -209,7 +209,7 @@ Strumenti: `elenca_documenti`, `leggi_documento` (Word, PDF anche scansionati, E
 Da terminale, per qualunque client MCP via stdio:
 
 ```json
-{"mcpServers": {"segnaposto": {"command": "python", "args": ["-m", "segnaposto", "mcp", "--cartella", "/Users/io/Clienti"]}}}
+{"mcpServers": {"segnaposto": {"command": "python", "args": ["-m", "riserbo", "mcp", "--cartella", "/Users/io/Clienti"]}}}
 ```
 
 ## Come servizio locale
@@ -217,12 +217,12 @@ Da terminale, per qualunque client MCP via stdio:
 Per usarlo da un'automazione (n8n, Make in locale), da un gestionale o da un sito:
 
 ```bash
-segnaposto servi --porta 8765          # ascolta solo su 127.0.0.1
+riserbo servi --porta 8765          # ascolta solo su 127.0.0.1
 curl -X POST localhost:8765/pseudonimizza -d '{"testo": "Scrive Mario Rossi della Bianchi Srl"}'
 ```
 
 Risponde con il testo pseudonimizzato, i dati trovati e la tabella dei segnaposto, che resta al chiamante. Non salva e non
-registra i testi. Un esempio di servizio systemd è in `deploy/segnaposto.service`. Non esporlo direttamente su internet.
+registra i testi. Un esempio di servizio systemd è in `deploy/riserbo.service`. Non esporlo direttamente su internet.
 
 ## Misurare prima di fidarsi
 
@@ -230,7 +230,7 @@ Nessuno strumento trova tutto. Prima di usarlo su un processo vero:
 
 1. prendi **cento testi veri** del processo (email, reclami, schede) e annota a mano cosa va tolto;
 2. scrivili in un file JSONL come `esempi/set-di-prova.jsonl`;
-3. lancia `segnaposto valuta` e guarda due numeri: le **fughe** (quello che resta leggibile) e le **sostituzioni non annotate** (il testo rovinato, che fa lavorare peggio il modello).
+3. lancia `riserbo valuta` e guarda due numeri: le **fughe** (quello che resta leggibile) e le **sostituzioni non annotate** (il testo rovinato, che fa lavorare peggio il modello).
 
 Una soglia ragionevole: zero fughe sui dati a forma fissa, sotto l'uno per cento su nomi e aziende, e un controllo a campione in produzione.
 
@@ -250,7 +250,7 @@ MIT. © 2026 Andrea Prando, [Fabrika 06](https://fabrika06.com).
 
 **Modello del riconoscitore di entità.** [DeepMount00/Italian_NER_XXL_v2](https://huggingface.co/DeepMount00/Italian_NER_XXL_v2),
 licenza Apache 2.0, convertito in ONNX int8 dal workflow `modello` e pubblicato nella release
-[modello-ner-1](https://github.com/Fabrika-06-Academy/segnaposto/releases/tag/modello-ner-1) con le impronte SHA-256 dei file.
+[modello-ner-1](https://github.com/Fabrika-06-Academy/riserbo/releases/tag/modello-ner-1) con le impronte SHA-256 dei file.
 Fino alla versione 0.5 segnaposto usava il modello spaCy `it_core_news_sm`, che ha licenza CC BY-NC-SA 3.0 (non
 commerciale): dalla 0.6 non è più usato né distribuito.
 

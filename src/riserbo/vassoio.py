@@ -1,10 +1,10 @@
-"""L'icona vicino all'orologio: segnaposto resta attivo anche a finestra chiusa.
+"""L'icona vicino all'orologio: Riserbo resta attivo anche a finestra chiusa.
 
   Mac:      icona nella barra dei menu in alto (AppKit, già presente con pywebview); a finestra chiusa sparisce dal Dock.
   Windows:  icona nell'area di notifica in basso a destra (WinForms NotifyIcon via pythonnet, già presente con pywebview).
 
 Dal menu dell'icona: aprire la finestra, proteggere o ripristinare gli appunti, iniziare una nuova pratica,
-scegliere se aprire segnaposto all'accensione, uscire davvero.
+scegliere se aprire Riserbo all'accensione, uscire davvero.
 """
 
 from __future__ import annotations
@@ -22,7 +22,9 @@ from typing import Callable
 MAC = sys.platform == "darwin"
 WIN = os.name == "nt"
 QUI = Path(__file__).parent
-ETICHETTA_MAC = "com.fabrika06.segnaposto"
+ETICHETTA_MAC = "com.fabrika06.riserbo"
+VECCHIA_ETICHETTA_MAC = "com.fabrika06.segnaposto"  # quando l'app si chiamava segnaposto
+VOCE_WIN, VECCHIA_VOCE_WIN = "Riserbo", "segnaposto"
 ARGOMENTO_SOTTOFONDO = "--in-sottofondo"
 
 
@@ -46,8 +48,8 @@ def avvio_possibile() -> bool:
     return bool(getattr(sys, "frozen", False)) and (MAC or WIN)
 
 
-def _plist_mac() -> Path:
-    return Path.home() / "Library" / "LaunchAgents" / f"{ETICHETTA_MAC}.plist"
+def _plist_mac(etichetta: str = ETICHETTA_MAC) -> Path:
+    return Path.home() / "Library" / "LaunchAgents" / f"{etichetta}.plist"
 
 
 def avvio_automatico() -> bool:
@@ -57,7 +59,7 @@ def avvio_automatico() -> bool:
         if WIN:
             import winreg
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run") as k:
-                winreg.QueryValueEx(k, "segnaposto")
+                winreg.QueryValueEx(k, VOCE_WIN)
                 return True
     except OSError:
         pass
@@ -79,12 +81,34 @@ def imposta_avvio(attivo: bool) -> None:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0,
                             winreg.KEY_SET_VALUE) as k:
             if attivo:
-                winreg.SetValueEx(k, "segnaposto", 0, winreg.REG_SZ, f'"{sys.executable}" {ARGOMENTO_SOTTOFONDO}')
+                winreg.SetValueEx(k, VOCE_WIN, 0, winreg.REG_SZ, f'"{sys.executable}" {ARGOMENTO_SOTTOFONDO}')
             else:
                 try:
-                    winreg.DeleteValue(k, "segnaposto")
+                    winreg.DeleteValue(k, VOCE_WIN)
                 except FileNotFoundError:
                     pass
+
+
+def migra_avvio() -> None:
+    """L'app si chiamava segnaposto: se partiva all'accensione col vecchio nome, ora parte questa."""
+    if not avvio_possibile():
+        return
+    try:
+        if MAC and _plist_mac(VECCHIA_ETICHETTA_MAC).exists():
+            _plist_mac(VECCHIA_ETICHETTA_MAC).unlink()
+            imposta_avvio(True)
+        elif WIN:
+            import winreg
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0,
+                                winreg.KEY_SET_VALUE | winreg.KEY_QUERY_VALUE) as k:
+                try:
+                    winreg.QueryValueEx(k, VECCHIA_VOCE_WIN)
+                except FileNotFoundError:
+                    return
+                winreg.DeleteValue(k, VECCHIA_VOCE_WIN)
+            imposta_avvio(True)
+    except OSError:
+        pass
 
 
 # ---------------------------------------------------------------- Mac
@@ -120,7 +144,7 @@ def _classe_bersaglio():
 
 
 def mostra_nel_dock(visibile: bool) -> None:
-    """Mac: a finestra chiusa segnaposto vive solo nella barra dei menu, senza icona nel Dock."""
+    """Mac: a finestra chiusa Riserbo vive solo nella barra dei menu, senza icona nel Dock."""
     if not MAC:
         return
     try:
@@ -167,7 +191,7 @@ class Vassoio:
         img.setSize_((18, 18))
         img.setTemplate_(True)  # bianca o nera secondo il tema della barra
         item.button().setImage_(img)
-        item.button().setToolTip_("segnaposto")
+        item.button().setToolTip_("Riserbo")
         item.setMenu_(menu)
         self._rif += [bersaglio, menu, item, img]
         self.attivo = True
@@ -202,7 +226,7 @@ class Vassoio:
             try:
                 ni = NotifyIcon()
                 ni.Icon = Icon.FromHandle(Bitmap(str(QUI / "vassoio-win.png")).GetHicon())
-                ni.Text = "segnaposto"
+                ni.Text = "Riserbo"
                 menu = ContextMenuStrip()
                 for voce in self.voci:
                     if voce is None:
@@ -344,7 +368,7 @@ def togli_istanza(chiave: str) -> None:
 
 
 def risveglia_istanza() -> bool:
-    """True se segnaposto è già aperto: gli chiede di mostrare la finestra."""
+    """True se Riserbo è già aperto: gli chiede di mostrare la finestra."""
     try:
         d = json.loads(_file_istanza().read_text())
         req = urllib.request.Request(f"http://127.0.0.1:{int(d['porta'])}/api/mostra", data=b"{}", method="POST",

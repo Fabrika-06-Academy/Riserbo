@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
-from segnaposto import Tabella
-from segnaposto.motore import Segnaposto, ripristina
-from segnaposto.riconoscitori import carica_anagrafica, riconoscitore_codice
+from riserbo import Tabella
+from riserbo.motore import Segnaposto, ripristina
+from riserbo.riconoscitori import carica_anagrafica, riconoscitore_codice
 
 ESEMPI = Path(__file__).parent.parent / "esempi"
 
@@ -111,7 +111,7 @@ def test_coerenza_nel_documento_e_falsi_tecnici(sp):
 
 def test_nome_dal_dominio_vince_sulle_etichette_sbagliate():
     from presidio_analyzer import Pattern, PatternRecognizer
-    from segnaposto.motore import Segnaposto
+    from riserbo.motore import Segnaposto
     # Simula l'errore visto su un PDF vero: il modello prende «Didattica» da sola per un segreto.
     finto = PatternRecognizer(supported_entity="SEGRETO", supported_language="it", name="RiconoscitoreItaliano",
                               patterns=[Pattern("finto", r"\bDidattica\b", 0.9)])

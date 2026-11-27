@@ -3,8 +3,8 @@ import threading
 import urllib.request
 from http.server import ThreadingHTTPServer
 
-from segnaposto.motore import Segnaposto
-from segnaposto.servizio import crea_gestore
+from riserbo.motore import Segnaposto
+from riserbo.servizio import crea_gestore
 
 
 def test_servizio_pseudonimizza():

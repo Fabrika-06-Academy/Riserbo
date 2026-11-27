@@ -23,7 +23,7 @@ import numpy as np
 from presidio_analyzer import EntityRecognizer, RecognizerResult
 
 VERSIONE_MODELLO = "modello-ner-1"
-URL_BASE = f"https://github.com/Fabrika-06-Academy/segnaposto/releases/download/{VERSIONE_MODELLO}/"
+URL_BASE = f"https://github.com/Fabrika-06-Academy/riserbo/releases/download/{VERSIONE_MODELLO}/"
 FILE = ("modello.onnx", "tokenizer.json", "etichette.json", "LEGGIMI.txt")
 SHA256 = {
     "LEGGIMI.txt": "b4a6ba7df1382959b7cca5ae4529a64bd3c38cd33cd5837386a96786b7236845",
@@ -57,14 +57,18 @@ ENTITA = sorted(set(MAPPA.values()))
 MAX_TOKEN = 510
 
 
-def cartella_cache() -> Path:
+def _base_cache() -> Path:
     if sys.platform == "darwin":
         base = Path.home() / "Library" / "Caches"
     elif os.name == "nt":
         base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
     else:
         base = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache"))
-    return base / "segnaposto" / VERSIONE_MODELLO
+    return base
+
+
+def cartella_cache() -> Path:
+    return _base_cache() / "riserbo" / VERSIONE_MODELLO
 
 
 def trova_modello() -> Path | None:
@@ -73,10 +77,11 @@ def trova_modello() -> Path | None:
     if os.environ.get("SEGNAPOSTO_MODELLO"):
         candidati.append(Path(os.environ["SEGNAPOSTO_MODELLO"]))
     try:
-        candidati.append(Path(str(files("segnaposto").joinpath("modello"))))
+        candidati.append(Path(str(files("riserbo").joinpath("modello"))))
     except Exception:
         pass
     candidati.append(cartella_cache())
+    candidati.append(_base_cache() / "segnaposto" / VERSIONE_MODELLO)  # scaricato quando l'app si chiamava segnaposto
     for c in candidati:
         if all((c / f).exists() for f in FILE[:3]):
             return c
@@ -93,7 +98,7 @@ def scarica_modello(avanzamento=print) -> Path:
         finale = dest / f
         if finale.exists() and hashlib.sha256(finale.read_bytes()).hexdigest() == attese.get(f):
             continue
-        avanzamento(f"segnaposto: scarico il riconoscitore di entità ({f})…")
+        avanzamento(f"Riserbo: scarico il riconoscitore di entità ({f})…")
         tmp = dest / (f + ".parziale")
         with apri(URL_BASE + f, 120) as r, open(tmp, "wb") as out:
             h = hashlib.sha256()
@@ -123,7 +128,7 @@ class RiconoscitoreItaliano(EntityRecognizer):
         c = self._cartella or trova_modello()
         if c is None:
             if not self._scarica:
-                raise RuntimeError("Il riconoscitore di entità non è installato: lancia «segnaposto scarica-modello».")
+                raise RuntimeError("Il riconoscitore di entità non è installato: lancia «riserbo scarica-modello».")
             c = scarica_modello()
         self.tok = Tokenizer.from_file(str(c / "tokenizer.json"))
         self.tok.no_truncation()

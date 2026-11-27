@@ -1,4 +1,4 @@
-"""Appunti e scorciatoie da tastiera globali: segnaposto funziona da qualunque programma.
+"""Appunti e scorciatoie da tastiera globali: Riserbo funziona da qualunque programma.
 
 Il flusso: selezioni il testo in Outlook (o nel gestionale, o in WhatsApp Web), copi, premi la scorciatoia e negli
 appunti c'è la versione con i segnaposto; incolli nella chat. Copi la risposta, premi l'altra scorciatoia e negli

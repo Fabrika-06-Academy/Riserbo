@@ -1,4 +1,4 @@
-from segnaposto.validatori import carattere_controllo_cf, codice_fiscale_valido, iban_valido, partita_iva_valida, targa_valida
+from riserbo.validatori import carattere_controllo_cf, codice_fiscale_valido, iban_valido, partita_iva_valida, targa_valida
 
 
 def test_codice_fiscale():

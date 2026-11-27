@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "segnaposto",
+  "name": "Riserbo",
   "version": "0.10.0",
-  "description": "Protegge i dati personali prima di mandarli a ChatGPT, Claude e Gemini e rimette i nomi veri nelle risposte, sul tuo schermo. Lavora con l'app segnaposto.",
-  "homepage_url": "https://github.com/Fabrika-06-Academy/segnaposto",
+  "description": "Protegge i dati personali prima di mandarli a ChatGPT, Claude e Gemini e rimette i nomi veri nelle risposte, sul tuo schermo. Lavora con l'app Riserbo.",
+  "homepage_url": "https://github.com/Fabrika-06-Academy/riserbo",
   "permissions": ["storage"],
   "host_permissions": ["http://127.0.0.1/*"],
   "background": {"service_worker": "sfondo.js"},
@@ -17,7 +17,7 @@
   }],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "segnaposto",
+    "default_title": "Riserbo",
     "default_icon": {"16": "icone/icona-16.png", "32": "icone/icona-32.png", "48": "icone/icona-48.png"}
   },
   "icons": {"16": "icone/icona-16.png", "32": "icone/icona-32.png", "48": "icone/icona-48.png", "128": "icone/icona-128.png"}

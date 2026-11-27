@@ -33,7 +33,7 @@ def main() -> None:
     quantize_dynamic(str(grezzo), str(out / "modello.onnx"), weight_type=QuantType.QInt8)
     grezzo.unlink()
     (out / "LEGGIMI.txt").write_text(
-        f"Riconoscitore di entità per segnaposto.\nModello originale: https://huggingface.co/{REPO} (licenza Apache 2.0, "
+        f"Riconoscitore di entità per Riserbo.\nModello originale: https://huggingface.co/{REPO} (licenza Apache 2.0, "
         f"autore DeepMount00).\nConvertito in ONNX e quantizzato int8 per l'esecuzione senza PyTorch.\n", encoding="utf-8")
     hash_ = {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(out.iterdir()) if f.name != "sha256.json"}
     (out / "sha256.json").write_text(json.dumps(hash_, indent=1))

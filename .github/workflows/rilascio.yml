@@ -13,9 +13,9 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            nome: segnaposto-mac-apple-silicon.zip
+            nome: riserbo-mac-apple-silicon.zip
           - os: windows-latest
-            nome: segnaposto-windows.zip
+            nome: riserbo-windows.zip
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
@@ -27,9 +27,9 @@ jobs:
       - name: Riconoscitore di entità dentro l'app (niente download al primo avvio)
         shell: bash
         run: |
-          python -c "from segnaposto.ner import scarica_modello; import shutil; shutil.copytree(scarica_modello(), 'src/segnaposto/modello', dirs_exist_ok=True)"
-          ls -la src/segnaposto/modello
-      - run: pyinstaller --noconfirm --clean segnaposto.spec
+          python -c "from riserbo.ner import scarica_modello; import shutil; shutil.copytree(scarica_modello(), 'src/riserbo/modello', dirs_exist_ok=True)"
+          ls -la src/riserbo/modello
+      - run: pyinstaller --noconfirm --clean riserbo.spec
         working-directory: packaging
       - name: Prova del pacchetto (modello, documenti, finestra)
         shell: bash
@@ -37,15 +37,15 @@ jobs:
           SEGNAPOSTO_PROVA: "1"
           SEGNAPOSTO_PROVA_ESITO: ${{ github.workspace }}/esito-prova.txt
         run: |
-          if [ "$RUNNER_OS" = "macOS" ]; then packaging/dist/segnaposto.app/Contents/MacOS/segnaposto; else packaging/dist/segnaposto/segnaposto.exe; fi
+          if [ "$RUNNER_OS" = "macOS" ]; then packaging/dist/Riserbo.app/Contents/MacOS/riserbo; else packaging/dist/riserbo/riserbo.exe; fi
           cat esito-prova.txt
           grep -q "pacchetto completo" esito-prova.txt
       - name: Prova del server MCP (come lo avvia Claude Desktop)
         shell: bash
         run: |
           mkdir -p prova-mcp && printf 'Contratto di Mario Rossi, CF RSSMRA80A01L840J.\n' > prova-mcp/contratto.txt
-          if [ "$RUNNER_OS" = "macOS" ]; then BIN=packaging/dist/segnaposto.app/Contents/MacOS/segnaposto; DIR="$PWD/prova-mcp"
-          else BIN=packaging/dist/segnaposto/segnaposto-mcp.exe; DIR="$(pwd -W)/prova-mcp"; fi
+          if [ "$RUNNER_OS" = "macOS" ]; then BIN=packaging/dist/Riserbo.app/Contents/MacOS/riserbo; DIR="$PWD/prova-mcp"
+          else BIN=packaging/dist/riserbo/riserbo-mcp.exe; DIR="$(pwd -W)/prova-mcp"; fi
           printf '%s\n' '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
             '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
             '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"leggi_documento","arguments":{"documento":"contratto.txt"}}}' \
@@ -56,22 +56,22 @@ jobs:
       - name: Pacchetto Mac (zip e dmg)
         if: runner.os == 'macOS'
         run: |
-          ditto -c -k --keepParent packaging/dist/segnaposto.app "${{ matrix.nome }}"
-          mkdir -p dmg && cp -R packaging/dist/segnaposto.app dmg/ && ln -s /Applications dmg/Applicazioni
-          hdiutil create -volname "segnaposto" -srcfolder dmg -ov -format UDZO segnaposto-mac-apple-silicon.dmg
+          ditto -c -k --keepParent packaging/dist/Riserbo.app "${{ matrix.nome }}"
+          mkdir -p dmg && cp -R packaging/dist/Riserbo.app dmg/ && ln -s /Applications dmg/Applicazioni
+          hdiutil create -volname "Riserbo" -srcfolder dmg -ov -format UDZO riserbo-mac-apple-silicon.dmg
       - name: Estensione del browser (zip)
         if: runner.os == 'macOS'
         run: |
           python -c "import json; m=json.load(open('estensione/manifest.json')); assert m['version']=='${GITHUB_REF_NAME#v}', m['version']" || [ "${GITHUB_REF_TYPE}" != "tag" ]
-          cd estensione && zip -r ../segnaposto-estensione.zip . -x ".*"
+          cd estensione && zip -r ../riserbo-estensione.zip . -x ".*"
       - name: Pacchetto Windows
         if: runner.os == 'Windows'
-        run: Compress-Archive -Path packaging/dist/segnaposto -DestinationPath "${{ matrix.nome }}"
+        run: Compress-Archive -Path packaging/dist/riserbo -DestinationPath "${{ matrix.nome }}"
       - uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           fail_on_unmatched_files: false
           files: |
             ${{ matrix.nome }}
-            segnaposto-mac-apple-silicon.dmg
-            segnaposto-estensione.zip
+            riserbo-mac-apple-silicon.dmg
+            riserbo-estensione.zip

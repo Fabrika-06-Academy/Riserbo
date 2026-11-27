@@ -35,7 +35,7 @@ def nuovo_codice() -> str:
 
 def crea_gestore(stato, codice: str):
     class Gestore(BaseHTTPRequestHandler):
-        server_version = "segnaposto-browser"
+        server_version = "riserbo-browser"
 
         def log_message(self, *a) -> None:
             pass
@@ -56,7 +56,7 @@ def crea_gestore(stato, codice: str):
             host = (self.headers.get("Host") or "").rsplit(":", 1)[0]
             if (origine and not origine.startswith(ORIGINI_AMMESSE)) or host not in ("127.0.0.1", "localhost"):
                 return self._json(403, {"errore": "Richiesta rifiutata."})
-            if not secrets.compare_digest(self.headers.get("X-Segnaposto-Token", ""), codice):
+            if not secrets.compare_digest((self.headers.get("X-Riserbo-Token") or self.headers.get("X-Segnaposto-Token") or ""), codice):
                 return self._json(401, {"errore": "Codice di collegamento sbagliato: copialo di nuovo dall'app (Automazioni → Browser)."})
             n = int(self.headers.get("Content-Length") or 0)
             if n > MAX_TESTO * 4:
@@ -74,7 +74,7 @@ def crea_gestore(stato, codice: str):
             if percorso == "/proteggi":
                 testo = str(dati.get("testo", ""))[:MAX_TESTO]
                 if stato.sp is None:
-                    raise ValueError("segnaposto sta ancora caricando il modello italiano: riprova tra qualche secondo.")
+                    raise ValueError("Riserbo sta ancora caricando il modello italiano: riprova tra qualche secondo.")
                 with stato.lock:
                     stato.ultimo_uso = time.time()
                     r = stato.sp.pseudonimizza(testo, stato.tabella, forzati=stato.forzati,

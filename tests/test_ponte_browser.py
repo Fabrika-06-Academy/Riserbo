@@ -6,8 +6,8 @@ import urllib.request
 
 import pytest
 
-from segnaposto.app import Stato
-from segnaposto.ponte_browser import avvia_ponte
+from riserbo.app import Stato
+from riserbo.ponte_browser import avvia_ponte
 
 
 @pytest.fixture(scope="module")
@@ -48,7 +48,7 @@ def test_rifiuti(ponte, codice, intest, atteso):
 
 
 def test_dall_app(monkeypatch, tmp_path):
-    from segnaposto import app as modulo, ponte_browser
+    from riserbo import app as modulo, ponte_browser
     monkeypatch.setattr(modulo, "_file_impostazioni", lambda: tmp_path / "impostazioni.json")
     monkeypatch.setattr(ponte_browser, "PORTA_PREDEFINITA", 0)
     st = Stato(None)

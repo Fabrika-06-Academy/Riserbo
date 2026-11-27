@@ -173,7 +173,7 @@ def _pdf(nome: str, dati: bytes) -> Documento:
         if not ocr.disponibile():
             if len(scansioni) == len(pagine):
                 raise ValueError("Questo PDF è una scansione (immagini, niente testo): serve il riconoscimento del testo (OCR), "
-                                 "che non è installato. Installa segnaposto con l'opzione [ocr].")
+                                 "che non è installato. Installa riserbo con l'opzione [ocr].")
             doc.avvisi.append(f"{len(scansioni)} pagine su {len(pagine)} sembrano scansioni e non sono state lette (OCR non installato).")
         else:
             for i in scansioni:

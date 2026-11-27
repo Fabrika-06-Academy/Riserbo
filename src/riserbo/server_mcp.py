@@ -1,9 +1,9 @@
-"""Server MCP: Claude Desktop (e gli altri agenti MCP) leggono i tuoi documenti attraverso segnaposto.
+"""Server MCP: Claude Desktop (e gli altri agenti MCP) leggono i tuoi documenti attraverso Riserbo.
 
-Il modello vede solo i segnaposto: nomi dei file compresi. Quando scrive la risposta, segnaposto rimette i valori veri
+Il modello vede solo i segnaposto: nomi dei file compresi. Quando scrive la risposta, Riserbo rimette i valori veri
 e la salva sul tuo disco o la mette negli appunti: il testo con i dati veri non torna mai al modello.
 
-    segnaposto mcp --cartella ~/Documenti/Clienti [--cartella ...]
+    riserbo mcp --cartella ~/Documenti/Clienti [--cartella ...]
 
 Claude Desktop lo avvia da sé (stdio, JSON-RPC una riga per messaggio): l'app scrive la configurazione con un clic.
 Il protocollo è scritto qui, senza la libreria `mcp`: poche righe, nessuna dipendenza in più nell'app.
@@ -29,10 +29,10 @@ MAX_ELENCO = 300
 INATTIVITA = 4 * 3600
 
 ISTRUZIONI = (
-    "segnaposto protegge i dati personali: i documenti che leggi hanno nomi, codici fiscali, IBAN, indirizzi e simili "
+    "Riserbo protegge i dati personali: i documenti che leggi hanno nomi, codici fiscali, IBAN, indirizzi e simili "
     "sostituiti da segnaposto come [PERSONA_1] o [IBAN_2]. Usa i segnaposto esattamente come li trovi, senza "
     "inventarne di nuovi e senza chiedere i valori veri. Per consegnare un testo con i dati veri usa salva_documento "
-    "o copia_negli_appunti: segnaposto li rimette sul computer della persona e tu non li vedrai."
+    "o copia_negli_appunti: Riserbo li rimette sul computer della persona e tu non li vedrai."
 )
 
 STRUMENTI = [
@@ -115,7 +115,7 @@ class ServerMCP:
     def _dentro(self, p: Path) -> Path:
         p = p.expanduser().resolve()
         if not any(p == r or r in p.parents for r in self.radici):
-            raise ValueError("Questo percorso è fuori dalle cartelle permesse a segnaposto.")
+            raise ValueError("Questo percorso è fuori dalle cartelle permesse a Riserbo.")
         return p
 
     def _risolvi(self, rif: str, prefisso: str) -> Path:
@@ -240,7 +240,7 @@ class ServerMCP:
                 threading.Thread(target=self.carica, daemon=True).start()  # il modello si scalda mentre si parla
                 return {"jsonrpc": "2.0", "id": ident, "result": {
                     "protocolVersion": chiesta if chiesta in VERSIONI_PROTOCOLLO else VERSIONI_PROTOCOLLO[0],
-                    "capabilities": {"tools": {}}, "serverInfo": {"name": "segnaposto", "version": __version__},
+                    "capabilities": {"tools": {}}, "serverInfo": {"name": "riserbo", "version": __version__},
                     "instructions": ISTRUZIONI}}
             if metodo == "ping":
                 return {"jsonrpc": "2.0", "id": ident, "result": {}}
@@ -282,7 +282,7 @@ class ServerMCP:
 
 def main_mcp(argv: list[str]) -> int:
     import argparse
-    ap = argparse.ArgumentParser(prog="segnaposto mcp")
+    ap = argparse.ArgumentParser(prog="riserbo mcp")
     ap.add_argument("--cartella", action="append", default=[], help="cartella che l'agente può leggere (si ripete)")
     a = ap.parse_args(argv)
     cartelle = [Path(c).expanduser() for c in a.cartella] or cartelle_predefinite()
@@ -299,6 +299,18 @@ def main_mcp(argv: list[str]) -> int:
 
 
 # ---------------------------------------------------------------- configurazione di Claude Desktop
+
+VOCE, VECCHIA_VOCE = "riserbo", "segnaposto"  # il nome del server MCP in Claude Desktop, ora e quando l'app si chiamava segnaposto
+
+
+def migra_claude_desktop() -> bool:
+    """Se Claude Desktop usa ancora la voce «segnaposto» (o un'altra copia dell'app), la riscrive per questa. True se ha scritto."""
+    st = stato_claude_desktop()
+    if st["collegato"] and not st["aggiornato"] and getattr(sys, "frozen", False) and st["cartelle"]:
+        collega_claude_desktop(st["cartelle"])
+        return True
+    return False
+
 
 def file_config_claude() -> list[Path]:
     """Dove Claude Desktop legge i server MCP. Su Windows l'app dello Store usa una cartella sua."""
@@ -318,13 +330,13 @@ def comando_mcp() -> tuple[str, list[str]]:
     if getattr(sys, "frozen", False):
         exe = Path(sys.executable)
         if os.name == "nt":  # la versione con console: Claude Desktop parla con lei su stdin/stdout
-            exe = exe.with_name("segnaposto-mcp.exe")
+            exe = exe.with_name("riserbo-mcp.exe")
         return str(exe), ["mcp"]
-    return sys.executable, ["-m", "segnaposto", "mcp"]
+    return sys.executable, ["-m", "riserbo", "mcp"]
 
 
 def collega_claude_desktop(cartelle: list[str]) -> list[str]:
-    """Aggiunge (o aggiorna) segnaposto tra i server MCP di Claude Desktop. Copia di sicurezza prima di scrivere."""
+    """Aggiunge (o aggiorna) Riserbo tra i server MCP di Claude Desktop. Copia di sicurezza prima di scrivere."""
     comando, argomenti = comando_mcp()
     for c in cartelle:
         argomenti += ["--cartella", c]
@@ -336,8 +348,10 @@ def collega_claude_desktop(cartelle: list[str]) -> list[str]:
         if p.exists():
             testo = p.read_text(encoding="utf-8")
             conf = json.loads(testo) if testo.strip() else {}
-            p.with_suffix(".json.prima-di-segnaposto").write_text(testo, encoding="utf-8")
-        conf.setdefault("mcpServers", {})["segnaposto"] = {"command": comando, "args": argomenti}
+            p.with_suffix(".json.prima-di-riserbo").write_text(testo, encoding="utf-8")
+        server = conf.setdefault("mcpServers", {})
+        server.pop(VECCHIA_VOCE, None)
+        server[VOCE] = {"command": comando, "args": argomenti}
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(json.dumps(conf, indent=2, ensure_ascii=False), encoding="utf-8")
         scritti.append(str(p))
@@ -348,19 +362,21 @@ def scollega_claude_desktop() -> None:
     for p in file_config_claude():
         if p.exists():
             conf = json.loads(p.read_text(encoding="utf-8") or "{}")
-            if conf.get("mcpServers", {}).pop("segnaposto", None) is not None:
+            server = conf.get("mcpServers", {})
+            if [server.pop(k, None) for k in (VOCE, VECCHIA_VOCE)] != [None, None]:
                 p.write_text(json.dumps(conf, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def stato_claude_desktop() -> dict:
     for p in file_config_claude():
         try:
-            voce = json.loads(p.read_text(encoding="utf-8")).get("mcpServers", {}).get("segnaposto")
+            server = json.loads(p.read_text(encoding="utf-8")).get("mcpServers", {})
+            voce = server.get(VOCE) or server.get(VECCHIA_VOCE)
         except (OSError, ValueError):
             continue
         if voce:
             a = voce.get("args", [])
             cartelle = [a[i + 1] for i, x in enumerate(a[:-1]) if x == "--cartella"]
             return {"collegato": True, "cartelle": cartelle, "comando": voce.get("command"),
-                    "aggiornato": voce.get("command") == comando_mcp()[0]}
+                    "aggiornato": voce.get("command") == comando_mcp()[0] and VOCE in server}
     return {"collegato": False, "cartelle": [], "installato": any(p.parent.is_dir() for p in file_config_claude())}

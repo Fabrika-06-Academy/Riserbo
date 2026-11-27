@@ -6,8 +6,8 @@ import sys
 
 import pytest
 
-from segnaposto.documenti import _scrivi_docx
-from segnaposto.server_mcp import ServerMCP, collega_claude_desktop, scollega_claude_desktop, stato_claude_desktop
+from riserbo.documenti import _scrivi_docx
+from riserbo.server_mcp import ServerMCP, collega_claude_desktop, scollega_claude_desktop, stato_claude_desktop
 
 
 @pytest.fixture()
@@ -32,7 +32,7 @@ def test_protocollo_e_documenti(sp, cartella):
     appunti = []
     srv = ServerMCP([cartella], motore=sp, scrivi_appunti=appunti.append)
     init = srv.gestisci({"jsonrpc": "2.0", "id": 0, "method": "initialize", "params": {"protocolVersion": "2025-06-18"}})
-    assert init["result"]["protocolVersion"] == "2025-06-18" and init["result"]["serverInfo"]["name"] == "segnaposto"
+    assert init["result"]["protocolVersion"] == "2025-06-18" and init["result"]["serverInfo"]["name"] == "riserbo"
     assert srv.gestisci({"jsonrpc": "2.0", "method": "notifications/initialized"}) is None
     nomi = {s["name"] for s in srv.gestisci({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})["result"]["tools"]}
     assert nomi == {"elenca_documenti", "leggi_documento", "salva_documento", "copia_negli_appunti"}
@@ -73,7 +73,7 @@ def test_avvio_vero_su_stdio(cartella):
         {"jsonrpc": "2.0", "id": 0, "method": "initialize", "params": {"protocolVersion": "2025-03-26"}},
         {"jsonrpc": "2.0", "method": "notifications/initialized"},
         {"jsonrpc": "2.0", "id": 1, "method": "tools/list"}]) + "\n"
-    p = subprocess.run([sys.executable, "-m", "segnaposto", "mcp", "--cartella", str(cartella)], input=ingresso,
+    p = subprocess.run([sys.executable, "-m", "riserbo", "mcp", "--cartella", str(cartella)], input=ingresso,
                        capture_output=True, text=True, timeout=120)
     righe = [json.loads(r) for r in p.stdout.splitlines()]
     assert [r["id"] for r in righe] == [0, 1], p.stdout + p.stderr
@@ -81,7 +81,7 @@ def test_avvio_vero_su_stdio(cartella):
 
 
 def test_configurazione_claude_desktop(monkeypatch, tmp_path):
-    from segnaposto import server_mcp
+    from riserbo import server_mcp
     conf = tmp_path / "Claude" / "claude_desktop_config.json"
     conf.parent.mkdir()
     conf.write_text(json.dumps({"mcpServers": {"altro": {"command": "x"}}, "tema": "scuro"}))
@@ -90,9 +90,24 @@ def test_configurazione_claude_desktop(monkeypatch, tmp_path):
     collega_claude_desktop(["/Users/a/Clienti"])
     d = json.loads(conf.read_text())
     assert d["tema"] == "scuro" and "altro" in d["mcpServers"]  # il resto della configurazione non si tocca
-    assert d["mcpServers"]["segnaposto"]["args"][-2:] == ["--cartella", "/Users/a/Clienti"]
-    assert (tmp_path / "Claude" / "claude_desktop_config.json.prima-di-segnaposto").exists()
+    assert d["mcpServers"]["riserbo"]["args"][-2:] == ["--cartella", "/Users/a/Clienti"]
+    assert (tmp_path / "Claude" / "claude_desktop_config.json.prima-di-riserbo").exists()
     st = stato_claude_desktop()
     assert st["collegato"] and st["cartelle"] == ["/Users/a/Clienti"]
     scollega_claude_desktop()
-    assert "segnaposto" not in json.loads(conf.read_text())["mcpServers"]
+    assert "riserbo" not in json.loads(conf.read_text())["mcpServers"]
+
+
+def test_la_vecchia_voce_segnaposto_diventa_riserbo(monkeypatch, tmp_path):
+    from riserbo import server_mcp
+    conf = tmp_path / "claude_desktop_config.json"
+    conf.write_text(json.dumps({"mcpServers": {"segnaposto": {"command": "/Applications/segnaposto.app/Contents/MacOS/segnaposto",
+                                                              "args": ["mcp", "--cartella", "/Users/a/Clienti"]}}}))
+    monkeypatch.setattr(server_mcp, "file_config_claude", lambda: [conf])
+    st = stato_claude_desktop()
+    assert st["collegato"] and st["aggiornato"] is False and st["cartelle"] == ["/Users/a/Clienti"]
+    monkeypatch.setattr(server_mcp.sys, "frozen", True, raising=False)
+    assert server_mcp.migra_claude_desktop() is True
+    server = json.loads(conf.read_text())["mcpServers"]
+    assert list(server) == ["riserbo"] and server["riserbo"]["args"][-1] == "/Users/a/Clienti"
+    assert server_mcp.migra_claude_desktop() is False  # una volta sola

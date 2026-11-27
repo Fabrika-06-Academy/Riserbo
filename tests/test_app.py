@@ -184,3 +184,31 @@ def test_collega_claude_desktop_dall_app(app, monkeypatch, tmp_path):
     assert d["collegato"] and d["cartelle"] == [str(tmp_path)]
     assert json.loads(conf.read_text())["mcpServers"]["riserbo"]["args"][-1] == str(tmp_path)
     assert not post(app, "/api/mcp", {"azione": "scollega"})["collegato"]
+
+
+def test_preferenze_salvate_sul_computer(monkeypatch, tmp_path):
+    """La finestra cambia porta a ogni avvio: le preferenze della pagina vanno nel file delle impostazioni."""
+    from riserbo import app as modulo
+    monkeypatch.setattr(modulo, "_file_impostazioni", lambda: tmp_path / "impostazioni.json")
+    porta = [0]
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), crea_gestore(Stato(Segnaposto()), "k", porta, lambda: None))
+    porta[0] = httpd.server_address[1]
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{porta[0]}"
+    try:
+        post(base, "/api/pref", {"k": "sp-in-chiaro", "v": "Fabrika 06\nRiserbo"}, chiave="k")
+        with pytest.raises(urllib.error.HTTPError):
+            post(base, "/api/pref", {"k": "chiave_strana", "v": "x"}, chiave="k")
+    finally:
+        httpd.shutdown()
+    assert json.loads((tmp_path / "impostazioni.json").read_text())["pagina"] == {"sp-in-chiaro": "Fabrika 06\nRiserbo"}
+    st = Stato(None)  # al prossimo avvio la pagina le riceve già scritte
+    porta2 = [0]
+    h2 = ThreadingHTTPServer(("127.0.0.1", 0), crea_gestore(st, "k2", porta2, lambda: None))
+    porta2[0] = h2.server_address[1]
+    threading.Thread(target=h2.serve_forever, daemon=True).start()
+    try:
+        html = urllib.request.urlopen(f"http://127.0.0.1:{porta2[0]}/?t=k2").read().decode()
+    finally:
+        h2.shutdown()
+    assert 'var PREF={"sp-in-chiaro": "Fabrika 06\\nRiserbo"}' in html

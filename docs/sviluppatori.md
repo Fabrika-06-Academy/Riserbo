@@ -159,6 +159,22 @@ L'estensione (cartella `estensione/`, Manifest V3) non contiene il modello: parl
 (`ponte_browser.py`) con l'intestazione `X-Riserbo-Token`. Le pagine web non possono usare il canale: l'app accetta solo
 richieste senza `Origin` o con `Origin` di un'estensione. Percorsi: `/stato`, `/proteggi`, `/valori`, `/nuova`.
 
+## La modalità automatica per le app di AI
+
+`automatica.py`: un thread guarda ogni 0,2 secondi l'app in primo piano (Mac: `NSWorkspace.frontmostApplication`,
+Windows: `GetForegroundWindow` e il nome dell'eseguibile) e il contatore degli appunti (`NSPasteboard.changeCount`,
+`GetClipboardSequenceNumber`). Entrando in ChatGPT, Claude, Copilot o Perplexity, se gli appunti contengono dati
+personali li sostituisce con la versione protetta; uscendo, se dentro l'app è stato copiato qualcosa rimette i nomi veri,
+altrimenti rimette il testo di prima. Le app riconosciute sono in `APP_AI`. Si accende dalla Guida, dal menu dell'icona o
+con `"automatica": true` nelle impostazioni.
+
+## Le impostazioni
+
+Sul computer, in un file JSON: Mac `~/Library/Application Support/riserbo/impostazioni.json`, Windows
+`%APPDATA%\riserbo\impostazioni.json`, Linux `~/.config/riserbo/impostazioni.json`. Contiene le scelte della pagina
+(«Cosa nascondere», «Sempre in chiaro»: la finestra cambia porta a ogni avvio, quindi il suo localStorage non basterebbe),
+cancello, estensione, modalità automatica, cartelle di Claude Desktop. Mai testi né tabelle.
+
 ## Il nome
 
 Fino alla versione 0.10 lo strumento si chiamava **segnaposto**: il comando `segnaposto` funziona ancora come alias di

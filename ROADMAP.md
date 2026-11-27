@@ -10,6 +10,10 @@ in cloud: browser, appunti, automazioni, agenti. Un passo alla volta, ognuno usa
   app locale, pacchetti per Mac e Windows, servizio HTTP locale.
 - **v0.3**: finestra nativa. Documenti in ingresso: Word, PDF con testo, Excel, CSV, email .eml con allegati. Colonne
   riconosciute dall'intestazione, indirizzi, correzioni a mano (clic e selezione), salvataggio nel formato d'origine.
+- **v0.12**: modalità automatica per le app di AI sul computer (ChatGPT, Claude, Copilot, Perplexity): gli appunti si
+  proteggono entrando nell'app e tornano veri uscendo. Guida nell'app, aperta al primo avvio, con lo stato di ogni modo
+  d'uso. Le preferenze della pagina si salvano sul computer (prima si perdevano a ogni chiusura).
+- **v0.11.1**: estensione, le risposte modificabili (bozza di email di ChatGPT) si leggono con i nomi veri in un riquadro privato.
 - **v0.11**: il nome diventa **Riserbo** (prima *segnaposto*: la parola resta per i segnaposto). README e pagine nuove,
   con schema, esempi e immagini; parte tecnica in `docs/sviluppatori.md`.
 - **v0.10**: estensione per il browser (ChatGPT, Claude, Gemini, Copilot, Mistral, Perplexity, DeepSeek): protegge il

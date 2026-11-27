@@ -57,11 +57,13 @@ un'ora senza usarla o chiudendo l'app.
 |---|---|---|
 | **Nel browser** | Estensione per ChatGPT, Claude, Gemini, Copilot, Mistral, Perplexity e DeepSeek. Quando premi Invio i dati diventano segnaposto *nel riquadro*, così vedi cosa parte; nelle risposte leggi i nomi veri. Se la risposta è un testo modificabile (per esempio la bozza di email di ChatGPT), il pulsante **[–] Nomi veri** la mostra con i nomi in un riquadro privato, pronta da copiare. | tutti |
 | **Nella finestra di Riserbo** | Trascini un documento: Word, PDF anche scansionati, foto, Excel, CSV, email di Outlook e Mail. Ottieni il testo protetto, lo stesso file nel suo formato o un **PDF oscurato**. | chi lavora sui documenti |
+| **Nelle app di AI sul computer** | Le app di ChatGPT, Claude, Copilot e Perplexity: con la **modalità automatica**, quando passi all'app gli appunti diventano la versione protetta (⌘V incolla già i segnaposto) e quando esci tornano i nomi veri. Nessuna scorciatoia da ricordare. | chi usa le app desktop |
 | **In qualunque programma** | Copi il testo, premi **⌃⌥P** (Ctrl+Alt+P su Windows) e incolli la versione protetta. Copi la risposta, premi **⌃⌥R** e tornano i nomi veri. | chi lavora in Outlook, nel gestionale, in WhatsApp Web |
 | **Nelle automazioni** | n8n, Make, script e programmi che usano le API di OpenAI o Anthropic passano da Riserbo: basta cambiare il «Base URL». Ogni richiesta esce protetta, anche in streaming, con un registro di cosa è uscito. | chi automatizza |
 | **In Claude Desktop** | Claude legge i documenti delle cartelle che scegli *attraverso* Riserbo: vede solo segnaposto, anche nei nomi dei file. Quando salva una risposta, i nomi veri li rimette Riserbo sul tuo disco. | chi usa gli agenti |
 
-Riserbo resta acceso nell'icona **[–]** vicino all'orologio e può partire all'accensione.
+Riserbo resta acceso nell'icona **[–]** vicino all'orologio e può partire all'accensione. Al primo avvio si apre la
+**Guida**, che spiega ogni modo d'uso e mostra quali sono già attivi; si riapre dal pulsante «Guida».
 
 <p align="center"><img src="docs/immagini/rimetti-light.png" width="860" alt="La risposta della chat con i segnaposto e, a destra, con i nomi veri evidenziati"></p>
 

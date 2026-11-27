@@ -1,0 +1,59 @@
+"""Modalità automatica: entrando in un'app di AI gli appunti si proteggono, uscendo tornano i nomi veri."""
+
+from riserbo.app import Stato, proteggi_testo, rimetti_testo
+from riserbo.automatica import Guardiano, riconosci
+
+
+class Finto:
+    def __init__(self):
+        self.app, self.appunti, self.n, self.avvisi = None, "", 0, []
+
+    def scrivi(self, t):
+        self.appunti = t
+        self.n += 1
+
+    def copia(self, t):  # la persona copia qualcosa
+        self.scrivi(t)
+
+
+def guardiano(sp):
+    st, f = Stato(sp), Finto()
+    g = Guardiano(lambda t: proteggi_testo(st, t), lambda t: rimetti_testo(st, t), lambda a, b: f.avvisi.append(b),
+                  app_attiva=lambda: f.app, leggi=lambda: f.appunti, scrivi=f.scrivi, contatore=lambda: f.n)
+    return st, f, g
+
+
+def test_riconosce_le_app():
+    assert riconosci(("com.openai.chat", "ChatGPT")) == "ChatGPT"
+    assert riconosci(("Claude.exe",)) == "Claude"
+    assert riconosci(("com.apple.mail", "Mail")) is None
+
+
+def test_andata_e_ritorno(sp):
+    st, f, g = guardiano(sp)
+    f.copia("Rispondi a Laura Ferretti, IBAN IT60X0542811101000000123456.")
+    g.passo()                                   # in Mail: niente
+    assert "Laura" in f.appunti
+    f.app = "ChatGPT"; g.passo()                # entra in ChatGPT: appunti protetti
+    assert "Laura" not in f.appunti and "[IBAN_1]" in f.appunti and f.avvisi
+    persona = next(s for s, v in st.tabella.valori.items() if v == "Laura Ferretti")
+    f.copia(f"Gentile {persona}, confermo.")    # copia la risposta dentro ChatGPT
+    f.app = None; g.passo()                     # torna in Mail: nomi veri
+    assert f.appunti == "Gentile Laura Ferretti, confermo."
+
+
+def test_uscendo_senza_copiare_torna_il_testo_di_prima(sp):
+    st, f, g = guardiano(sp)
+    f.copia("Il cliente Marco Dal Santo chiede uno sconto.")
+    f.app = "Claude"; g.passo()
+    assert "Marco" not in f.appunti
+    f.app = None; g.passo()
+    assert f.appunti == "Il cliente Marco Dal Santo chiede uno sconto."
+
+
+def test_testo_senza_dati_non_si_tocca(sp):
+    st, f, g = guardiano(sp)
+    f.copia("Riassumi in tre punti il testo seguente.")
+    prima = f.n
+    f.app = "ChatGPT"; g.passo()
+    assert f.appunti == "Riassumi in tre punti il testo seguente." and f.n == prima and not f.avvisi

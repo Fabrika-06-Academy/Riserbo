@@ -108,6 +108,9 @@ class Stato:
         self.cancello_errore = ""
         self.ponte_httpd = None                # il canale per l'estensione del browser (ponte_browser.py)
         self.ponte_errore = ""
+        self.automatica = None                 # la modalità automatica per le app di AI (automatica.py)
+        self.avvisa = None                     # la notifica di sistema, quando c'è la finestra
+        self.pref = dict(leggi_impostazioni().get("pagina") or {})  # le preferenze della pagina, salvate sul computer
         self.nuova_pratica()
 
     def nuova_pratica(self) -> None:
@@ -189,6 +192,47 @@ def stato_cancello(stato: Stato) -> dict:
     c = stato.cancello
     return {"attivo": c is not None, "porta": porta, "indirizzi": indirizzi(porta), "errore": stato.cancello_errore,
             "registro": list(c.registro)[:40] if c else [], "protetti": sum(sum(v["dati"].values()) for v in c.registro) if c else 0}
+
+
+def proteggi_testo(stato: Stato, testo: str) -> tuple[str, int]:
+    """Pseudonimizza nella pratica corrente, con le scelte di «Cosa nascondere». (testo protetto, quanti dati)."""
+    if stato.sp is None:
+        return testo, 0
+    with stato.lock:
+        stato.ultimo_uso = time.time()
+        r = stato.sp.pseudonimizza(testo, stato.tabella, forzati=stato.forzati, ignora=stato.ignora | stato.in_chiaro,
+                                   escludi=stato.escludi)
+        stato.inviati = {s for s in stato.tabella.valori if s in r.testo}
+        stato.versione_pratica += 1
+    return r.testo, len(r.trovati)
+
+
+def rimetti_testo(stato: Stato, testo: str) -> tuple[str, int]:
+    with stato.lock:
+        stato.ultimo_uso = time.time()
+        conta = [0]
+
+        def sost(m):
+            v = stato.tabella.valori.get(m.group(0))
+            if v is None:
+                return m.group(0)
+            conta[0] += 1
+            return v
+        return SEGNAPOSTO.sub(sost, testo), conta[0]
+
+
+def accendi_automatica(stato: Stato) -> None:
+    from .automatica import Guardiano
+    if stato.automatica is None:
+        from .scorciatoie import notifica
+        stato.automatica = Guardiano(lambda t: proteggi_testo(stato, t), lambda t: rimetti_testo(stato, t),
+                                     lambda titolo, testo: (stato.avvisa or notifica)(titolo, testo))
+    stato.automatica.avvia()
+
+
+def spegni_automatica(stato: Stato) -> None:
+    if stato.automatica is not None:
+        stato.automatica.ferma()
 
 
 def accendi_ponte(stato: Stato, rigenera: bool = False) -> None:
@@ -304,7 +348,8 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
             if self.path.split("?")[0] == "/":
                 if f"t={chiave}" not in self.path:
                     return self._invia(403, "Apri l'app dal programma Riserbo.".encode("utf-8"), "text/plain; charset=utf-8")
-                html = pagina.replace("__CHIAVE__", chiave).replace("__VERSIONE__", __version__)
+                html = pagina.replace("__CHIAVE__", chiave).replace("__VERSIONE__", __version__).replace(
+                    "__PREF__", json.dumps(stato.pref).replace("</", "<\\/"))
                 return self._invia(200, html.encode("utf-8"), "text/html; charset=utf-8")
             self._json(404, {"errore": "non trovato"})
 
@@ -332,7 +377,11 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                 return self._json(200, {"pronto": stato.sp is not None, "errore": stato.errore_avvio, "versione": __version__,
                                         "pratica": stato.versione_pratica, "appunti": stato.ultimo_appunti,
                                         "scorciatoie": {"attive": sc.attive, "errore": sc.errore} if sc else None,
-                                        "vassoio": bool(stato.vassoio and stato.vassoio.attivo)})
+                                        "vassoio": bool(stato.vassoio and stato.vassoio.attivo),
+                                        "automatica": bool(stato.automatica and stato.automatica.attivo),
+                                        "automatica_ultimo": stato.automatica.ultimo if stato.automatica else "",
+                                        "desktop": sys.platform == "darwin" or os.name == "nt",
+                                        "ponte": stato.ponte_httpd is not None, "cancello": stato.cancello is not None})
             if percorso == "/api/cancello":
                 azione = dati.get("azione")
                 if dati.get("porta") and not 1024 <= int(dati["porta"]) <= 65535:
@@ -345,6 +394,21 @@ def crea_gestore(stato: Stato, chiave: str, porta_ref: list[int], ferma):
                     salva_impostazioni(cancello=stato.cancello is not None,
                                        **({"porta_cancello": int(dati["porta"])} if dati.get("porta") else {}))
                 return self._json(200, stato_cancello(stato))
+            if percorso == "/api/automatica":
+                if dati.get("azione") in ("accendi", "spegni"):
+                    accendi_automatica(stato) if dati["azione"] == "accendi" else spegni_automatica(stato)
+                    salva_impostazioni(automatica=bool(stato.automatica and stato.automatica.attivo))
+                from .automatica import APP_AI
+                return self._json(200, {"attiva": bool(stato.automatica and stato.automatica.attivo), "app": list(APP_AI),
+                                        "possibile": sys.platform == "darwin" or os.name == "nt",
+                                        "ultimo": stato.automatica.ultimo if stato.automatica else ""})
+            if percorso == "/api/pref":  # le preferenze della pagina: la finestra cambia porta a ogni avvio e le perderebbe
+                k, v = str(dati.get("k", "")), dati.get("v")
+                if not re.fullmatch(r"sp-[a-z-]{1,30}", k) or not isinstance(v, str) or len(v) > 20000:
+                    raise ValueError("Preferenza non valida.")
+                stato.pref[k] = v
+                salva_impostazioni(pagina=stato.pref)
+                return self._json(200, {"ok": True})
             if percorso == "/api/browser":
                 azione = dati.get("azione")
                 if azione in ("accendi", "rigenera"):
@@ -613,6 +677,10 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
                 stato.nuova_pratica()
             avvisa_fn("Riserbo", "Nuova pratica: la tabella precedente è stata cancellata.")
 
+        def automatica_da_menu(accesa: bool) -> None:
+            accendi_automatica(stato) if accesa else spegni_automatica(stato)
+            salva_impostazioni(automatica=accesa)
+
         def cancello_da_menu(acceso: bool) -> None:
             accendi_cancello(stato) if acceso else spegni_cancello(stato)
             salva_impostazioni(cancello=stato.cancello is not None)
@@ -627,6 +695,8 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
                       Voce("Proteggi gli appunti", lambda: proteggi_appunti(stato, avvisa_fn), tasto="proteggi"),
                       Voce("Rimetti i nomi negli appunti", lambda: ripristina_appunti(stato, avvisa_fn), tasto="ripristina"),
                       Voce("Nuova pratica", nuova), None,
+                      Voce("Modalità automatica per le app di AI", spunta=lambda: bool(stato.automatica and stato.automatica.attivo),
+                           cambia=automatica_da_menu),
                       Voce("Cancello per le automazioni", spunta=lambda: stato.cancello is not None, cambia=cancello_da_menu), None]
         if avvio_possibile():
             voci += [Voce("Apri all'accensione", spunta=avvio_automatico, cambia=imposta_avvio), None]
@@ -653,6 +723,10 @@ def avvia(sp: Segnaposto | None = None, apri_browser: bool = True, porta: int = 
         sc = Scorciatoie({"proteggi": lambda: proteggi_appunti(stato, avvisa_fn),
                           "ripristina": lambda: ripristina_appunti(stato, avvisa_fn)})
         stato.scorciatoie = sc
+
+        stato.avvisa = avvisa_fn
+        if leggi_impostazioni().get("automatica"):
+            accendi_automatica(stato)
 
         def all_avvio() -> None:
             try:  # l'app si chiamava segnaposto: avvio all'accensione e Claude Desktop passano a Riserbo
